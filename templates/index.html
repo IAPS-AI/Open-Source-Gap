@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECI Accessibility Gap</title>
+    <meta name="description" content="Interactive visualization of the performance gap between open and closed-source AI models on the Epoch AI ECI index.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 id="main-title">The performance gap between open and closed-source models on the ECI is around <span id="gap-value">--</span> months</h1>
+            <p class="subtitle">Source: Epoch AI Effective Compute Index.</p>
+        </header>
+
+        <div class="legend">
+            <div class="legend-item">
+                <span class="legend-marker closed-marker"></span>
+                <span>Closed model</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-marker closed-unmatched"></span>
+                <span>Closed model not yet matched by open models</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-marker open-marker"></span>
+                <span>Open model</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-connector"></span>
+                <span>Open model matched or exceeded ECI</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-connector-dashed"></span>
+                <span>Open model statistically equivalent (~)</span>
+            </div>
+        </div>
+
+        <div id="chart-container">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading ECI data...</p>
+            </div>
+            <div id="chart"></div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-avg-gap">--</div>
+                <div class="stat-label">Average Gap</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-ci">--</div>
+                <div class="stat-label">90% CI</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-matched">--</div>
+                <div class="stat-label">Matched Models</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-unmatched">--</div>
+                <div class="stat-label">Unmatched</div>
+            </div>
+        </div>
+
+        <details class="data-panel">
+            <summary class="data-summary">View Raw ECI Data</summary>
+            <div class="table-container">
+                <table id="eci-table">
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>Release Date</th>
+                            <th>ECI</th>
+                            <th>Type</th>
+                            <th>Organization</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be populated by script.js -->
+                    </tbody>
+                </table>
+            </div>
+        </details>
+
+        <footer class="footer">
+            <p>Data updates automatically from <a href="https://epoch.ai" target="_blank" rel="noopener">Epoch AI</a>. Last updated: <span id="last-updated">--</span></p>
+        </footer>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
