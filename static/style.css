@@ -72,6 +72,15 @@ body {
     color: var(--color-text-muted);
 }
 
+
+.text-open {
+    color: var(--color-open);
+}
+
+.text-closed {
+    color: var(--color-closed);
+}
+
 /* Legend */
 .legend {
     display: flex;
