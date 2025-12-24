@@ -13,11 +13,9 @@
     
     <!-- Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <!-- PapaParse -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
     <!-- Styles -->
-    <link rel="stylesheet" href="./static/style.css">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="container">
@@ -53,7 +51,7 @@
             <div id="chart"></div>
         </div>
 
-        <div class="stats-panel">
+                <div class="stats-panel">
             <div class="stat-card">
                 <div class="stat-value" id="stat-avg-gap">--</div>
                 <div class="stat-label">Average Gap</div>
@@ -72,8 +70,16 @@
             </div>
         </div>
 
+        <div class="header">
+            <h1>ECI Growth Trends (Pre vs Post April 2024)</h1>
+            <p class="subtitle">Comparing the rate of ECI increases before and after April 2024 (All Models).</p>
+        </div>
+        <div id="trend-chart-container" style="position: relative; min-height: 500px; margin-bottom: 2rem;">
+             <div id="trend-chart" style="width: 100%; height: 500px;"></div>
+        </div>
+
         <details class="data-panel">
-            <summary class="data-summary">View Raw ECI Data</summary>
+            <summary class="data-summary">View Raw ECI Data (All Models)</summary>
             <div class="table-container">
                 <table id="eci-table">
                     <thead>
@@ -97,6 +103,6 @@
         </footer>
     </div>
 
-    <script src="./static/script.js"></script>
+    <script src="/static/script.js"></script>
 </body>
 </html>

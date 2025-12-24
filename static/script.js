@@ -20,7 +20,7 @@ const COLORS = {
  */
 async function init() {
     try {
-        const response = await fetch('/api/data');
+        const response = await fetch('data.json');
         if (!response.ok) {
             throw new Error(`HTTP error: ${response.status}`);
         }
