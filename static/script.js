@@ -20,9 +20,11 @@ const COLORS = {
  */
 async function init() {
     try {
-        const response = await fetch('data.json');
+        const url = 'data.json';
+        console.log(`Fetching data from: ${url}`);
+        const response = await fetch(url);
         if (!response.ok) {
-            throw new Error(`HTTP error: ${response.status}`);
+            throw new Error(`HTTP error: ${response.status} ${response.statusText} at ${response.url}`);
         }
         const data = await response.json();
 
@@ -41,8 +43,20 @@ async function init() {
 
     } catch (error) {
         console.error('Failed to load data:', error);
+
+        let errorMsg = 'Failed to load data.';
+        if (error.message.includes('HTTP error')) {
+            errorMsg += ` Server responded with ${error.message.replace('HTTP error:', 'Status')}.`;
+            errorMsg += '<br><br><b>Troubleshooting:</b><br>1. Check if data.json exists.<br>2. Check console for URL.<br>3. Hard refresh (Ctrl+F5).';
+        } else {
+            errorMsg += ` Error: ${error.message}`;
+        }
+
         document.getElementById('loading').innerHTML = `
-            <p style="color: #e53935;">Failed to load data. Please try refreshing.</p>
+            <div style="color: #e53935; text-align: center;">
+                <p><strong>${errorMsg}</strong></p>
+                <p style="font-size: 0.9em; margin-top: 10px; color: #666;">If this persists on GitHub Pages, verify the repository permissions and that the deployment action succeeded.</p>
+            </div>
         `;
     }
 }
