@@ -142,6 +142,59 @@ function renderTrendChart(data) {
                 borderwidth: 1,
                 align: 'left',
                 font: { size: 12, color: COLORS.text }
+                shapes: [
+                    {
+                        type: 'line',
+                        y0: 130,
+                        y1: 130,
+                        x0: 0,
+                        x1: 1,
+                        xref: 'paper',
+                        line: {
+                            color: 'rgba(150, 150, 150, 0.5)',
+                            width: 1,
+                            dash: 'dot'
+                        }
+                    },
+                    {
+                        type: 'line',
+                        y0: 150,
+                        y1: 150,
+                        x0: 0,
+                        x1: 1,
+                        xref: 'paper',
+                        line: {
+                            color: 'rgba(150, 150, 150, 0.5)',
+                            width: 1,
+                            dash: 'dot'
+                        }
+                    }
+                ],
+                annotations: [
+                    // ...existing annotations...
+                    {
+                        x: 1,
+                        y: 130,
+                        xref: 'paper',
+                        yref: 'y',
+                        text: 'Claude 3.5 Sonnet (130)',
+                        showarrow: false,
+                        xanchor: 'right',
+                        yanchor: 'bottom',
+                        font: { size: 10, color: '#888' }
+                    },
+                    {
+                        x: 1,
+                        y: 150,
+                        xref: 'paper',
+                        yref: 'y',
+                        text: 'GPT-5 (150)',
+                        showarrow: false,
+                        xanchor: 'right',
+                        yanchor: 'bottom',
+                        font: { size: 10, color: '#888' }
+                    }
+                ]
             };
 
             // Add to layout annotations if we had access to layout, but here we construct layout below.
