@@ -168,7 +168,7 @@ function renderTrendChart(data) {
         margin: { l: 60, r: 60, t: 40, b: 60 },
         height: 500,
         xaxis: { title: 'Date' },
-        yaxis: { title: 'ECI' },
+        yaxis: { title: 'ECI Score' },
         annotations: [
             ...annotations,
             {
