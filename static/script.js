@@ -230,7 +230,7 @@ function renderTrendChart(data) {
     // Attempt to reuse config if possible or redefine
     const config = {
         responsive: true,
-        displayModeBar: true,
+        displayModeBar: 'hover',
         modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
         displaylogo: false,
     };
@@ -541,7 +541,7 @@ function renderChart(data) {
 
     const config = {
         responsive: true,
-        displayModeBar: true,
+        displayModeBar: 'hover',
         modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
         displaylogo: false,
     };
