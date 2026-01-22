@@ -940,6 +940,27 @@ function renderHistoricalChart(data) {
         });
     }
 
+    // Add ±1 std dev band around the gap line
+    if (stats.std_horizontal_gap !== undefined) {
+        const stdDev = stats.std_horizontal_gap;
+        const upperBound = historicalGaps.map(g => Math.max(0, g.gap_months + stdDev));
+        const lowerBound = historicalGaps.map(g => Math.max(0, g.gap_months - stdDev));
+        const dates = historicalGaps.map(g => g.date);
+
+        // Create filled area for ±1 std dev
+        traces.push({
+            x: [...dates, ...dates.slice().reverse()],
+            y: [...upperBound, ...lowerBound.slice().reverse()],
+            fill: 'toself',
+            fillcolor: 'rgba(92, 107, 192, 0.15)',
+            line: { color: 'transparent' },
+            type: 'scatter',
+            name: `±1 Std Dev (${stdDev.toFixed(1)} mo)`,
+            hoverinfo: 'skip',
+            showlegend: true,
+        });
+    }
+
     // Main gap line
     traces.push({
         x: historicalGaps.map(g => g.date),
@@ -950,7 +971,7 @@ function renderHistoricalChart(data) {
         line: { color: COLORS.open, width: 2 },
         marker: { color: COLORS.open, size: 6 },
         hovertemplate: historicalGaps.map(g =>
-            `<b>%{x|%b %Y}</b><br>Gap: ${g.gap_months} mo<br>` +
+            `<b>%{x|%b %Y}</b><br>Gap: ${g.gap_months} mo ± ${(stats.std_horizontal_gap || 0).toFixed(1)}<br>` +
             `${labels.openModel} frontier: ${g.open_frontier_model || 'N/A'}<br>` +
             `${labels.closedModel} frontier: ${g.reference_model || 'N/A'}<extra></extra>`
         ),
