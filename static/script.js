@@ -854,27 +854,26 @@ function renderHistoricalChart(data) {
         });
     }
 
-    // Add average gap reference line and 90% CI band in average mode
-    if (!isCurrentGapMode && stats.avg_horizontal_gap_months) {
-        const startDate = historicalGaps[0]?.date;
-        const endDate = historicalGaps[historicalGaps.length - 1]?.date;
+    // Add 90% CI band (shown in both modes)
+    const startDate = historicalGaps[0]?.date;
+    const endDate = historicalGaps[historicalGaps.length - 1]?.date;
 
-        // 90% CI shaded band
-        if (stats.ci_90_low !== undefined && stats.ci_90_high !== undefined) {
-            traces.push({
-                x: [startDate, endDate, endDate, startDate],
-                y: [stats.ci_90_low, stats.ci_90_low, stats.ci_90_high, stats.ci_90_high],
-                fill: 'toself',
-                fillcolor: 'rgba(107, 114, 128, 0.15)',
-                line: { color: 'transparent' },
-                type: 'scatter',
-                name: `90% CI (${stats.ci_90_low} - ${stats.ci_90_high} mo)`,
-                hoverinfo: 'skip',
-                showlegend: true,
-            });
-        }
+    if (stats.ci_90_low !== undefined && stats.ci_90_high !== undefined && startDate && endDate) {
+        traces.push({
+            x: [startDate, endDate, endDate, startDate],
+            y: [stats.ci_90_low, stats.ci_90_low, stats.ci_90_high, stats.ci_90_high],
+            fill: 'toself',
+            fillcolor: 'rgba(107, 114, 128, 0.2)',
+            line: { color: 'rgba(107, 114, 128, 0.4)', width: 1 },
+            type: 'scatter',
+            name: `90% CI (${stats.ci_90_low} - ${stats.ci_90_high} mo)`,
+            hoverinfo: 'skip',
+            showlegend: true,
+        });
+    }
 
-        // Average line
+    // Add average gap reference line in average mode
+    if (!isCurrentGapMode && stats.avg_horizontal_gap_months && startDate && endDate) {
         traces.push({
             x: [startDate, endDate],
             y: [stats.avg_horizontal_gap_months, stats.avg_horizontal_gap_months],
