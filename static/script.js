@@ -18,7 +18,7 @@ const COLORS = {
 // Global state
 let appState = {
     data: null,
-    gapMetric: 'average', // 'average' or 'current'
+    gapMetric: 'current', // 'average' or 'current'
     framing: 'open', // 'open' or 'china'
 };
 
