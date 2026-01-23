@@ -204,13 +204,13 @@ def calculate_trends(df: pd.DataFrame, score_col: str = "eci") -> dict:
             # Can't compute exponential growth, use defaults
             pct_growth = 0
             multiples_per_year = 1
-            doubling_time_years = float('inf')
+            doubling_time_years = None  # Use None instead of inf for JSON compatibility
         else:
             exp_slope, _, _, _, _ = linregress(log_dates, log_scores)
             k_annual = exp_slope * 365.25
             pct_growth = (np.exp(k_annual) - 1) * 100
             multiples_per_year = np.exp(k_annual)
-            doubling_time_years = np.log(2) / k_annual if k_annual > 0 else float('inf')
+            doubling_time_years = np.log(2) / k_annual if k_annual > 0 else None
 
         return {
             "name": name,
