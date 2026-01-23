@@ -756,7 +756,8 @@ function renderTrendChart(data) {
         const scoreLabel = appState.currentBenchmark === 'eci' ? 'ECI' : 'Score';
         const framingLabel = appState.framing === 'china' ? 'China vs US/Other' : 'Open vs Closed';
         trendTitle.textContent = `${scoreLabel} Growth Trends: ${framingLabel}`;
-        trendSubtitle.textContent = `Comparing ${scoreLabel.toLowerCase()} growth rates between ${cat1Name.toLowerCase()} and ${cat2Name.toLowerCase()} models.`;
+        const scoreLabelLower = appState.currentBenchmark === 'eci' ? 'ECI' : 'score';
+        trendSubtitle.textContent = `Comparing ${scoreLabelLower} growth rates between ${cat1Name.toLowerCase()} and ${cat2Name.toLowerCase()} models.`;
     }
 
     // Add "current date" vertical line logic
