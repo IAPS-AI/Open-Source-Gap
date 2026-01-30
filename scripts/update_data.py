@@ -89,7 +89,8 @@ def calculate_horizontal_gaps(
     df: pd.DataFrame,
     score_col: str = "eci",
     threshold: float = ECI_MATCH_THRESHOLD,
-    model_col: str = "Model"
+    model_col: str = "Model",
+    threshold_type: str = "additive",
 ) -> list[dict]:
     """
     Calculate horizontal gaps between closed and open models.
@@ -99,6 +100,8 @@ def calculate_horizontal_gaps(
         score_col: Column name for the score/metric
         threshold: Gap matching threshold
         model_col: Column name for model identifier
+        threshold_type: "additive" (score >= closed - threshold) or
+                        "ratio" (score >= closed * threshold)
     """
     if len(df) == 0:
         return []
@@ -124,8 +127,13 @@ def calculate_horizontal_gaps(
             if open_row["date"] <= closed_date:
                 continue
 
-            # Match if open model is within threshold of closed model
-            if open_row[score_col] >= closed_score - threshold:
+            # Match based on threshold type
+            if threshold_type == "ratio":
+                target = closed_score * threshold
+            else:
+                target = closed_score - threshold
+
+            if open_row[score_col] >= target:
                 matching_open = open_row
                 match_type = "exact"
                 break
@@ -434,7 +442,8 @@ def calculate_historical_gaps(
     df: pd.DataFrame,
     score_col: str = "eci",
     threshold: float = ECI_MATCH_THRESHOLD,
-    model_col: str = "Model"
+    model_col: str = "Model",
+    threshold_type: str = "additive",
 ) -> list[dict]:
     """
     Calculate the gap metric at various points in history.
@@ -484,7 +493,12 @@ def calculate_historical_gaps(
         best_closed_score = best_closed[score_col]
 
         # Find the first closed model to achieve the best open's score level
-        closed_at_open_level = df_closed[df_closed[score_col] >= best_open_score - threshold].sort_values("date")
+        if threshold_type == "ratio" and threshold > 0:
+            # For ratio matching: find closed models whose score * threshold <= best_open_score
+            # i.e., closed models that the best open model has "matched"
+            closed_at_open_level = df_closed[df_closed[score_col] * threshold <= best_open_score].sort_values("date")
+        else:
+            closed_at_open_level = df_closed[df_closed[score_col] >= best_open_score - threshold].sort_values("date")
 
         if len(closed_at_open_level) > 0:
             first_closed_at_level = closed_at_open_level.iloc[0]
@@ -496,7 +510,10 @@ def calculate_historical_gaps(
             gap_months = max(0, gap_months)
 
             # Determine if the frontier is "matched" (open has caught up to closed frontier)
-            is_matched = best_open_score >= best_closed_score - threshold
+            if threshold_type == "ratio" and threshold > 0:
+                is_matched = best_open_score >= best_closed_score * threshold
+            else:
+                is_matched = best_open_score >= best_closed_score - threshold
         else:
             # No closed model at this level yet (open is ahead - very rare)
             gap_months = 0
@@ -520,9 +537,19 @@ def calculate_historical_gaps(
 def calculate_statistics(
     df: pd.DataFrame,
     gaps: list[dict],
-    score_col: str = "eci"
+    score_col: str = "eci",
+    threshold: float = 0,
+    threshold_type: str = "additive",
 ) -> dict:
-    """Calculate summary statistics."""
+    """Calculate summary statistics.
+
+    Args:
+        df: DataFrame with model data
+        gaps: Pre-computed gap list from calculate_horizontal_gaps
+        score_col: Column name for scores
+        threshold: Matching threshold (used for ratio-based matching of sampled levels)
+        threshold_type: "additive" or "ratio"
+    """
     df_open = df[df["Open"]].copy()
     df_closed = df[~df["Open"]].copy()
 
@@ -547,10 +574,25 @@ def calculate_statistics(
     start_score = max(df_open[score_col].min(), df_closed[score_col].min())
     end_score = max(df_open[score_col].max(), df_closed[score_col].max())
 
+    # Use log-spaced sampling when data spans >10x range (exponential growth)
+    score_ratio = end_score / start_score if start_score > 0 else 1
+    if score_ratio > 10 and start_score > 0:
+        sample_scores = np.geomspace(start_score, end_score, 100)
+    else:
+        sample_scores = np.linspace(start_score, end_score, 100)
+
     horizontal_gaps = []
     df_open_possible = df_open.sort_values("date").copy()
 
-    for cur_score in np.linspace(start_score, end_score, 100):
+    for cur_score in sample_scores:
+        # For ratio matching, the open model target at this level is cur_score * threshold
+        # but we're sampling "closed model achievement levels", so we compare
+        # open models reaching cur_score (or cur_score * threshold for ratio)
+        if threshold_type == "ratio" and threshold > 0:
+            open_target = cur_score * threshold
+        else:
+            open_target = cur_score
+
         closed_candidates = df_closed[df_closed[score_col] >= cur_score].sort_values("date")
         if len(closed_candidates) == 0:
             continue
@@ -560,7 +602,7 @@ def calculate_statistics(
         for _, row in df_open_possible.iterrows():
             if pd.isna(row[score_col]) or pd.isna(row["date"]):
                 continue
-            if row[score_col] >= cur_score:
+            if row[score_col] >= open_target:
                 cur_open_model = row
                 gap = (cur_open_model["date"] - cur_closed_model["date"]).days / 30.5
                 horizontal_gaps.append(gap)
@@ -964,17 +1006,22 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
     gaps = calculate_horizontal_gaps(
         df_frontier,
         score_col="score",
-        threshold=0,  # We handle ratio matching via the score comparison
-        model_col="model"
+        threshold=METR_RATIO_THRESHOLD,
+        model_col="model",
+        threshold_type="ratio",
     )
 
-    stats = calculate_statistics(df_frontier, gaps, score_col="score")
+    stats = calculate_statistics(
+        df_frontier, gaps, score_col="score",
+        threshold=METR_RATIO_THRESHOLD, threshold_type="ratio",
+    )
 
     historical_gaps = calculate_historical_gaps(
         df_frontier,
         score_col="score",
-        threshold=0,
-        model_col="model"
+        threshold=METR_RATIO_THRESHOLD,
+        model_col="model",
+        threshold_type="ratio",
     )
 
     # Calculate trends using log scale for horizon (exponential growth)
@@ -997,9 +1044,9 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
         df_cu_combined = pd.concat([df_china_models, df_us_models]).sort_values("date")
         df_cu_frontier = df_cu_combined[df_cu_combined["group_rank"] <= 1].copy()
 
-        china_gaps = calculate_horizontal_gaps(df_cu_frontier, score_col="score", threshold=0, model_col="model")
-        china_stats = calculate_statistics(df_cu_frontier, china_gaps, score_col="score")
-        china_historical = calculate_historical_gaps(df_cu_frontier, score_col="score", threshold=0, model_col="model")
+        china_gaps = calculate_horizontal_gaps(df_cu_frontier, score_col="score", threshold=METR_RATIO_THRESHOLD, model_col="model", threshold_type="ratio")
+        china_stats = calculate_statistics(df_cu_frontier, china_gaps, score_col="score", threshold=METR_RATIO_THRESHOLD, threshold_type="ratio")
+        china_historical = calculate_historical_gaps(df_cu_frontier, score_col="score", threshold=METR_RATIO_THRESHOLD, model_col="model", threshold_type="ratio")
         china_framing = {
             "gaps": china_gaps,
             "statistics": china_stats,

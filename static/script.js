@@ -869,6 +869,7 @@ function renderTrendChart(data) {
             ...(isTrendMetr ? {
                 type: 'log',
                 range: [-2, 3], // 0.01 to 1000 minutes
+                dtick: 1, // Show only powers of 10
             } : {}),
         },
         annotations: [
@@ -1262,6 +1263,7 @@ function renderChart(data) {
             ...(isMetr ? {
                 type: 'log',
                 range: [-2, 3], // 0.01 to 1000 minutes
+                dtick: 1, // Show only powers of 10
             } : {
                 tickformat: '.0f',
             }),

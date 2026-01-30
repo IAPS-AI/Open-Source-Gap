@@ -3622,10 +3622,10 @@
           "closed_model": "gpt_4",
           "closed_date": "2023-03-14T00:00:00",
           "closed_score": 3.524514,
-          "open_model": "qwen_2_5_72b",
-          "open_date": "2024-09-19T00:00:00",
-          "open_score": 5.155558,
-          "gap_months": 18.2,
+          "open_model": "qwen_2_72b",
+          "open_date": "2024-06-07T00:00:00",
+          "open_score": 2.243232,
+          "gap_months": 14.8,
           "matched": true,
           "match_type": "exact"
         },
@@ -3633,10 +3633,10 @@
           "closed_model": "gpt_4_1106_inspect",
           "closed_date": "2023-11-06T00:00:00",
           "closed_score": 3.609578,
-          "open_model": "qwen_2_5_72b",
-          "open_date": "2024-09-19T00:00:00",
-          "open_score": 5.155558,
-          "gap_months": 10.4,
+          "open_model": "qwen_2_72b",
+          "open_date": "2024-06-07T00:00:00",
+          "open_score": 2.243232,
+          "gap_months": 7.0,
           "matched": true,
           "match_type": "exact"
         },
@@ -3644,10 +3644,10 @@
           "closed_model": "gpt_4_0125",
           "closed_date": "2024-01-25T00:00:00",
           "closed_score": 5.358292,
-          "open_model": "deepseek_v3",
-          "open_date": "2024-12-26T00:00:00",
-          "open_score": 18.484012,
-          "gap_months": 11.0,
+          "open_model": "qwen_2_5_72b",
+          "open_date": "2024-09-19T00:00:00",
+          "open_score": 5.155558,
+          "gap_months": 7.8,
           "matched": true,
           "match_type": "exact"
         },
@@ -3655,10 +3655,10 @@
           "closed_model": "gpt_4o_inspect",
           "closed_date": "2024-05-13T00:00:00",
           "closed_score": 6.404471,
-          "open_model": "deepseek_v3",
-          "open_date": "2024-12-26T00:00:00",
-          "open_score": 18.484012,
-          "gap_months": 7.4,
+          "open_model": "qwen_2_5_72b",
+          "open_date": "2024-09-19T00:00:00",
+          "open_score": 5.155558,
+          "gap_months": 4.2,
           "matched": true,
           "match_type": "exact"
         },
@@ -3677,10 +3677,10 @@
           "closed_model": "o1_preview",
           "closed_date": "2024-09-12T00:00:00",
           "closed_score": 19.395096,
-          "open_model": "deepseek_r1",
-          "open_date": "2025-01-20T00:00:00",
-          "open_score": 26.923538,
-          "gap_months": 4.3,
+          "open_model": "deepseek_v3",
+          "open_date": "2024-12-26T00:00:00",
+          "open_score": 18.484012,
+          "gap_months": 3.4,
           "matched": true,
           "match_type": "exact"
         },
@@ -3688,10 +3688,10 @@
           "closed_model": "claude_3_5_sonnet_20241022_inspect",
           "closed_date": "2024-10-22T00:00:00",
           "closed_score": 19.776241,
-          "open_model": "deepseek_r1",
-          "open_date": "2025-01-20T00:00:00",
-          "open_score": 26.923538,
-          "gap_months": 3.0,
+          "open_model": "deepseek_v3",
+          "open_date": "2024-12-26T00:00:00",
+          "open_score": 18.484012,
+          "gap_months": 2.1,
           "matched": true,
           "match_type": "exact"
         },
@@ -3699,10 +3699,10 @@
           "closed_model": "o1_inspect",
           "closed_date": "2024-12-05T00:00:00",
           "closed_score": 37.937543,
-          "open_model": "gpt-oss-120b",
-          "open_date": "2025-08-05T00:00:00",
-          "open_score": 44.754917,
-          "gap_months": 8.0,
+          "open_model": "deepseek_r1",
+          "open_date": "2025-01-20T00:00:00",
+          "open_score": 26.923538,
+          "gap_months": 1.5,
           "matched": true,
           "match_type": "exact"
         },
@@ -3710,11 +3710,12 @@
           "closed_model": "claude_3_7_sonnet_inspect",
           "closed_date": "2025-02-24T00:00:00",
           "closed_score": 59.763762,
-          "open_model": null,
-          "open_date": null,
-          "open_score": null,
-          "gap_months": 11.1,
-          "matched": false
+          "open_model": "deepseek_r1_0528",
+          "open_date": "2025-05-28T00:00:00",
+          "open_score": 32.174234,
+          "gap_months": 3.0,
+          "matched": true,
+          "match_type": "exact"
         },
         {
           "closed_model": "o3_inspect",
@@ -3748,28 +3749,27 @@
         }
       ],
       "statistics": {
-        "avg_horizontal_gap_months": 5.4,
-        "std_horizontal_gap": 2.9,
-        "ci_90_low": 2.2,
-        "ci_90_high": 9.5,
+        "avg_horizontal_gap_months": 4.5,
+        "std_horizontal_gap": 4.1,
+        "ci_90_low": -1.1,
+        "ci_90_high": 14.8,
         "current_vertical_gap": 262.8,
-        "total_matched": 11,
-        "total_unmatched": 4,
+        "total_matched": 12,
+        "total_unmatched": 3,
         "current_gap_estimate": {
-          "estimated_current_gap": 26.3,
-          "min_current_gap": 11.1,
+          "estimated_current_gap": 26.2,
+          "min_current_gap": 9.5,
           "confidence": "high",
           "unmatched_ages": [
-            11.1,
             9.5,
             5.8,
             2.2
           ],
           "method": "survival_analysis_mle",
           "prior_params": {
-            "mu": 2.492,
-            "sigma": 0.923,
-            "prior_mean_months": 18.5
+            "mu": 2.061,
+            "sigma": 1.16,
+            "prior_mean_months": 15.4
           }
         }
       },
@@ -3830,7 +3830,7 @@
       "historical_gaps": [
         {
           "date": "2024-06-14T00:00:00",
-          "gap_months": 14.8,
+          "gap_months": 63.6,
           "matched": false,
           "reference_model": "gpt_4o_inspect",
           "reference_score": 6.4,
@@ -3839,7 +3839,7 @@
         },
         {
           "date": "2024-07-14T00:00:00",
-          "gap_months": 14.8,
+          "gap_months": 63.6,
           "matched": false,
           "reference_model": "claude_3_5_sonnet_20240620_inspect",
           "reference_score": 10.8,
@@ -3848,7 +3848,7 @@
         },
         {
           "date": "2024-08-14T00:00:00",
-          "gap_months": 14.8,
+          "gap_months": 63.6,
           "matched": false,
           "reference_model": "claude_3_5_sonnet_20240620_inspect",
           "reference_score": 10.8,
@@ -3857,7 +3857,7 @@
         },
         {
           "date": "2024-09-14T00:00:00",
-          "gap_months": 14.8,
+          "gap_months": 63.6,
           "matched": false,
           "reference_model": "o1_preview",
           "reference_score": 19.4,
@@ -3866,7 +3866,7 @@
         },
         {
           "date": "2024-10-14T00:00:00",
-          "gap_months": 7.8,
+          "gap_months": 67.0,
           "matched": false,
           "reference_model": "o1_preview",
           "reference_score": 19.4,
@@ -3875,7 +3875,7 @@
         },
         {
           "date": "2024-11-14T00:00:00",
-          "gap_months": 7.8,
+          "gap_months": 67.0,
           "matched": false,
           "reference_model": "claude_3_5_sonnet_20241022_inspect",
           "reference_score": 19.8,
@@ -3884,7 +3884,7 @@
         },
         {
           "date": "2024-12-14T00:00:00",
-          "gap_months": 7.8,
+          "gap_months": 67.0,
           "matched": false,
           "reference_model": "o1_inspect",
           "reference_score": 37.9,
@@ -3893,7 +3893,7 @@
         },
         {
           "date": "2025-01-14T00:00:00",
-          "gap_months": 3.4,
+          "gap_months": 70.2,
           "matched": false,
           "reference_model": "o1_inspect",
           "reference_score": 37.9,
@@ -3902,8 +3902,8 @@
         },
         {
           "date": "2025-02-14T00:00:00",
-          "gap_months": 1.5,
-          "matched": false,
+          "gap_months": 71.0,
+          "matched": true,
           "reference_model": "o1_inspect",
           "reference_score": 37.9,
           "open_frontier_model": "deepseek_r1",
@@ -3911,7 +3911,7 @@
         },
         {
           "date": "2025-03-14T00:00:00",
-          "gap_months": 1.5,
+          "gap_months": 71.0,
           "matched": false,
           "reference_model": "claude_3_7_sonnet_inspect",
           "reference_score": 59.8,
@@ -3920,7 +3920,7 @@
         },
         {
           "date": "2025-04-14T00:00:00",
-          "gap_months": 1.5,
+          "gap_months": 71.0,
           "matched": false,
           "reference_model": "claude_3_7_sonnet_inspect",
           "reference_score": 59.8,
@@ -3929,7 +3929,7 @@
         },
         {
           "date": "2025-05-14T00:00:00",
-          "gap_months": 1.5,
+          "gap_months": 71.0,
           "matched": false,
           "reference_model": "o3_inspect",
           "reference_score": 120.7,
@@ -3938,7 +3938,7 @@
         },
         {
           "date": "2025-06-14T00:00:00",
-          "gap_months": 5.7,
+          "gap_months": 75.2,
           "matched": false,
           "reference_model": "o3_inspect",
           "reference_score": 120.7,
@@ -3947,7 +3947,7 @@
         },
         {
           "date": "2025-07-14T00:00:00",
-          "gap_months": 5.7,
+          "gap_months": 75.2,
           "matched": false,
           "reference_model": "o3_inspect",
           "reference_score": 120.7,
@@ -3956,7 +3956,7 @@
         },
         {
           "date": "2025-08-14T00:00:00",
-          "gap_months": 5.3,
+          "gap_months": 77.5,
           "matched": false,
           "reference_model": "gpt_5_2025_08_07_inspect",
           "reference_score": 214.0,
@@ -3965,7 +3965,7 @@
         },
         {
           "date": "2025-09-14T00:00:00",
-          "gap_months": 5.3,
+          "gap_months": 77.5,
           "matched": false,
           "reference_model": "gpt_5_2025_08_07_inspect",
           "reference_score": 214.0,
@@ -3974,7 +3974,7 @@
         },
         {
           "date": "2025-10-14T00:00:00",
-          "gap_months": 5.3,
+          "gap_months": 77.5,
           "matched": false,
           "reference_model": "gpt_5_2025_08_07_inspect",
           "reference_score": 214.0,
@@ -3983,7 +3983,7 @@
         },
         {
           "date": "2025-11-14T00:00:00",
-          "gap_months": 8.4,
+          "gap_months": 80.6,
           "matched": false,
           "reference_model": "gpt_5_2025_08_07_inspect",
           "reference_score": 214.0,
@@ -3992,7 +3992,7 @@
         },
         {
           "date": "2025-12-14T00:00:00",
-          "gap_months": 8.4,
+          "gap_months": 80.6,
           "matched": false,
           "reference_model": "claude_opus_4_5_inspect",
           "reference_score": 320.4,
@@ -4001,7 +4001,7 @@
         },
         {
           "date": "2026-01-14T00:00:00",
-          "gap_months": 8.4,
+          "gap_months": 80.6,
           "matched": false,
           "reference_model": "claude_opus_4_5_inspect",
           "reference_score": 320.4,
@@ -4048,10 +4048,10 @@
             "closed_model": "gpt_4",
             "closed_date": "2023-03-14T00:00:00",
             "closed_score": 3.524514,
-            "open_model": "qwen_2_5_72b",
-            "open_date": "2024-09-19T00:00:00",
-            "open_score": 5.155558,
-            "gap_months": 18.2,
+            "open_model": "qwen_2_72b",
+            "open_date": "2024-06-07T00:00:00",
+            "open_score": 2.243232,
+            "gap_months": 14.8,
             "matched": true,
             "match_type": "exact"
           },
@@ -4059,10 +4059,10 @@
             "closed_model": "gpt_4_1106_inspect",
             "closed_date": "2023-11-06T00:00:00",
             "closed_score": 3.609578,
-            "open_model": "qwen_2_5_72b",
-            "open_date": "2024-09-19T00:00:00",
-            "open_score": 5.155558,
-            "gap_months": 10.4,
+            "open_model": "qwen_2_72b",
+            "open_date": "2024-06-07T00:00:00",
+            "open_score": 2.243232,
+            "gap_months": 7.0,
             "matched": true,
             "match_type": "exact"
           },
@@ -4070,10 +4070,10 @@
             "closed_model": "gpt_4_0125",
             "closed_date": "2024-01-25T00:00:00",
             "closed_score": 5.358292,
-            "open_model": "deepseek_v3",
-            "open_date": "2024-12-26T00:00:00",
-            "open_score": 18.484012,
-            "gap_months": 11.0,
+            "open_model": "qwen_2_5_72b",
+            "open_date": "2024-09-19T00:00:00",
+            "open_score": 5.155558,
+            "gap_months": 7.8,
             "matched": true,
             "match_type": "exact"
           },
@@ -4081,10 +4081,10 @@
             "closed_model": "gpt_4o_inspect",
             "closed_date": "2024-05-13T00:00:00",
             "closed_score": 6.404471,
-            "open_model": "deepseek_v3",
-            "open_date": "2024-12-26T00:00:00",
-            "open_score": 18.484012,
-            "gap_months": 7.4,
+            "open_model": "qwen_2_5_72b",
+            "open_date": "2024-09-19T00:00:00",
+            "open_score": 5.155558,
+            "gap_months": 4.2,
             "matched": true,
             "match_type": "exact"
           },
@@ -4103,10 +4103,10 @@
             "closed_model": "o1_preview",
             "closed_date": "2024-09-12T00:00:00",
             "closed_score": 19.395096,
-            "open_model": "deepseek_r1",
-            "open_date": "2025-01-20T00:00:00",
-            "open_score": 26.923538,
-            "gap_months": 4.3,
+            "open_model": "deepseek_v3",
+            "open_date": "2024-12-26T00:00:00",
+            "open_score": 18.484012,
+            "gap_months": 3.4,
             "matched": true,
             "match_type": "exact"
           },
@@ -4114,10 +4114,10 @@
             "closed_model": "claude_3_5_sonnet_20241022_inspect",
             "closed_date": "2024-10-22T00:00:00",
             "closed_score": 19.776241,
-            "open_model": "deepseek_r1",
-            "open_date": "2025-01-20T00:00:00",
-            "open_score": 26.923538,
-            "gap_months": 3.0,
+            "open_model": "deepseek_v3",
+            "open_date": "2024-12-26T00:00:00",
+            "open_score": 18.484012,
+            "gap_months": 2.1,
             "matched": true,
             "match_type": "exact"
           },
@@ -4125,10 +4125,10 @@
             "closed_model": "o1_inspect",
             "closed_date": "2024-12-05T00:00:00",
             "closed_score": 37.937543,
-            "open_model": "kimi_k2_thinking",
-            "open_date": "2025-11-06T00:00:00",
-            "open_score": 57.599525,
-            "gap_months": 11.0,
+            "open_model": "deepseek_r1",
+            "open_date": "2025-01-20T00:00:00",
+            "open_score": 26.923538,
+            "gap_months": 1.5,
             "matched": true,
             "match_type": "exact"
           },
@@ -4136,11 +4136,12 @@
             "closed_model": "claude_3_7_sonnet_inspect",
             "closed_date": "2025-02-24T00:00:00",
             "closed_score": 59.763762,
-            "open_model": null,
-            "open_date": null,
-            "open_score": null,
-            "gap_months": 11.1,
-            "matched": false
+            "open_model": "deepseek_r1_0528",
+            "open_date": "2025-05-28T00:00:00",
+            "open_score": 32.174234,
+            "gap_months": 3.0,
+            "matched": true,
+            "match_type": "exact"
           },
           {
             "closed_model": "o3_inspect",
@@ -4174,35 +4175,34 @@
           }
         ],
         "statistics": {
-          "avg_horizontal_gap_months": 5.5,
-          "std_horizontal_gap": 3.0,
-          "ci_90_low": 2.2,
-          "ci_90_high": 9.5,
+          "avg_horizontal_gap_months": 4.7,
+          "std_horizontal_gap": 4.1,
+          "ci_90_low": -1.1,
+          "ci_90_high": 14.8,
           "current_vertical_gap": 262.8,
-          "total_matched": 11,
-          "total_unmatched": 4,
+          "total_matched": 12,
+          "total_unmatched": 3,
           "current_gap_estimate": {
-            "estimated_current_gap": 26.5,
-            "min_current_gap": 11.1,
+            "estimated_current_gap": 26.2,
+            "min_current_gap": 9.5,
             "confidence": "high",
             "unmatched_ages": [
-              11.1,
               9.5,
               5.8,
               2.2
             ],
             "method": "survival_analysis_mle",
             "prior_params": {
-              "mu": 2.521,
-              "sigma": 0.914,
-              "prior_mean_months": 18.9
+              "mu": 2.061,
+              "sigma": 1.16,
+              "prior_mean_months": 15.4
             }
           }
         },
         "historical_gaps": [
           {
             "date": "2024-06-14T00:00:00",
-            "gap_months": 14.8,
+            "gap_months": 63.6,
             "matched": false,
             "reference_model": "gpt_4o_inspect",
             "reference_score": 6.4,
@@ -4211,7 +4211,7 @@
           },
           {
             "date": "2024-07-14T00:00:00",
-            "gap_months": 14.8,
+            "gap_months": 63.6,
             "matched": false,
             "reference_model": "claude_3_5_sonnet_20240620_inspect",
             "reference_score": 10.8,
@@ -4220,7 +4220,7 @@
           },
           {
             "date": "2024-08-14T00:00:00",
-            "gap_months": 14.8,
+            "gap_months": 63.6,
             "matched": false,
             "reference_model": "claude_3_5_sonnet_20240620_inspect",
             "reference_score": 10.8,
@@ -4229,7 +4229,7 @@
           },
           {
             "date": "2024-09-14T00:00:00",
-            "gap_months": 14.8,
+            "gap_months": 63.6,
             "matched": false,
             "reference_model": "o1_preview",
             "reference_score": 19.4,
@@ -4238,7 +4238,7 @@
           },
           {
             "date": "2024-10-14T00:00:00",
-            "gap_months": 7.8,
+            "gap_months": 67.0,
             "matched": false,
             "reference_model": "o1_preview",
             "reference_score": 19.4,
@@ -4247,7 +4247,7 @@
           },
           {
             "date": "2024-11-14T00:00:00",
-            "gap_months": 7.8,
+            "gap_months": 67.0,
             "matched": false,
             "reference_model": "claude_3_5_sonnet_20241022_inspect",
             "reference_score": 19.8,
@@ -4256,7 +4256,7 @@
           },
           {
             "date": "2024-12-14T00:00:00",
-            "gap_months": 7.8,
+            "gap_months": 67.0,
             "matched": false,
             "reference_model": "o1_inspect",
             "reference_score": 37.9,
@@ -4265,7 +4265,7 @@
           },
           {
             "date": "2025-01-14T00:00:00",
-            "gap_months": 3.4,
+            "gap_months": 70.2,
             "matched": false,
             "reference_model": "o1_inspect",
             "reference_score": 37.9,
@@ -4274,8 +4274,8 @@
           },
           {
             "date": "2025-02-14T00:00:00",
-            "gap_months": 1.5,
-            "matched": false,
+            "gap_months": 71.0,
+            "matched": true,
             "reference_model": "o1_inspect",
             "reference_score": 37.9,
             "open_frontier_model": "deepseek_r1",
@@ -4283,7 +4283,7 @@
           },
           {
             "date": "2025-03-14T00:00:00",
-            "gap_months": 1.5,
+            "gap_months": 71.0,
             "matched": false,
             "reference_model": "claude_3_7_sonnet_inspect",
             "reference_score": 59.8,
@@ -4292,7 +4292,7 @@
           },
           {
             "date": "2025-04-14T00:00:00",
-            "gap_months": 1.5,
+            "gap_months": 71.0,
             "matched": false,
             "reference_model": "claude_3_7_sonnet_inspect",
             "reference_score": 59.8,
@@ -4301,7 +4301,7 @@
           },
           {
             "date": "2025-05-14T00:00:00",
-            "gap_months": 1.5,
+            "gap_months": 71.0,
             "matched": false,
             "reference_model": "o3_inspect",
             "reference_score": 120.7,
@@ -4310,7 +4310,7 @@
           },
           {
             "date": "2025-06-14T00:00:00",
-            "gap_months": 5.7,
+            "gap_months": 75.2,
             "matched": false,
             "reference_model": "o3_inspect",
             "reference_score": 120.7,
@@ -4319,7 +4319,7 @@
           },
           {
             "date": "2025-07-14T00:00:00",
-            "gap_months": 5.7,
+            "gap_months": 75.2,
             "matched": false,
             "reference_model": "o3_inspect",
             "reference_score": 120.7,
@@ -4328,7 +4328,7 @@
           },
           {
             "date": "2025-08-14T00:00:00",
-            "gap_months": 5.7,
+            "gap_months": 75.2,
             "matched": false,
             "reference_model": "gpt_5_2025_08_07_inspect",
             "reference_score": 214.0,
@@ -4337,7 +4337,7 @@
           },
           {
             "date": "2025-09-14T00:00:00",
-            "gap_months": 5.7,
+            "gap_months": 75.2,
             "matched": false,
             "reference_model": "gpt_5_2025_08_07_inspect",
             "reference_score": 214.0,
@@ -4346,7 +4346,7 @@
           },
           {
             "date": "2025-10-14T00:00:00",
-            "gap_months": 5.7,
+            "gap_months": 75.2,
             "matched": false,
             "reference_model": "gpt_5_2025_08_07_inspect",
             "reference_score": 214.0,
@@ -4355,7 +4355,7 @@
           },
           {
             "date": "2025-11-14T00:00:00",
-            "gap_months": 8.4,
+            "gap_months": 80.6,
             "matched": false,
             "reference_model": "gpt_5_2025_08_07_inspect",
             "reference_score": 214.0,
@@ -4364,7 +4364,7 @@
           },
           {
             "date": "2025-12-14T00:00:00",
-            "gap_months": 8.4,
+            "gap_months": 80.6,
             "matched": false,
             "reference_model": "claude_opus_4_5_inspect",
             "reference_score": 320.4,
@@ -4373,7 +4373,7 @@
           },
           {
             "date": "2026-01-14T00:00:00",
-            "gap_months": 8.4,
+            "gap_months": 80.6,
             "matched": false,
             "reference_model": "claude_opus_4_5_inspect",
             "reference_score": 320.4,
@@ -10167,5 +10167,5 @@
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-01-30T18:55:10.657633"
+  "last_updated": "2026-01-30T21:10:32.297822"
 }
