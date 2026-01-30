@@ -800,7 +800,6 @@ function renderTrendChart(data) {
     const yAxisTitle = appState.currentBenchmark === 'eci' ? 'ECI Score' :
                        appState.currentBenchmark === 'metr_time_horizon' ? 'p50 Time Horizon (minutes)' :
                        (benchmarkMetadata?.unit || 'Score');
-    const useLogScale = appState.currentBenchmark === 'metr_time_horizon';
 
     // ECI-specific reference annotations (only show for ECI benchmark)
     const eciAnnotations = appState.currentBenchmark === 'eci' ? [
@@ -835,7 +834,6 @@ function renderTrendChart(data) {
         xaxis: { title: 'Model Release Date' },
         yaxis: {
             title: yAxisTitle,
-            ...(useLogScale ? { type: 'log', dtick: 1 } : {}),
         },
         annotations: [
             ...annotations,
