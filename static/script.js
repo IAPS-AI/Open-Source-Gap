@@ -426,21 +426,17 @@ function updateDisplay() {
  */
 function showExplainer(stats, gaps) {
     const explainer = document.getElementById('current-gap-explainer');
-    const list = document.getElementById('unmatched-ages-list');
-    const minBound = document.getElementById('min-bound-value');
+    if (!explainer) return;
 
-    if (!explainer || !list) return;
-
-    // Get unmatched models with their ages
     const unmatched = gaps.filter(g => !g.matched);
     const estimate = stats.current_gap_estimate || {};
+    const method = estimate.method || 'survival_analysis_mle';
 
-    // Populate the list
     const scoreField = appState.currentBenchmark === 'eci' ? 'closed_eci' : 'closed_score';
     const metadata = getBenchmarkMetadata();
     const scoreName = metadata?.unit || 'Score';
 
-    list.innerHTML = unmatched
+    const unmatchedListHtml = unmatched
         .sort((a, b) => b.gap_months - a.gap_months)
         .map(g => {
             const score = g[scoreField] ?? g.closed_eci ?? g.closed_score;
@@ -448,15 +444,40 @@ function showExplainer(stats, gaps) {
         })
         .join('');
 
-    // Set minimum bound
-    if (minBound) {
-        minBound.textContent = estimate.min_current_gap || '--';
-    }
+    // Build explainer content based on method
+    const content = explainer.querySelector('.explainer-content');
+    if (!content) return;
 
-    // Set the average gap value in the explainer text
-    const explainerAvgGap = document.getElementById('explainer-avg-gap');
-    if (explainerAvgGap && stats.avg_horizontal_gap_months !== undefined) {
-        explainerAvgGap.textContent = stats.avg_horizontal_gap_months.toFixed(1);
+    if (method === 'oldest_unmatched') {
+        content.innerHTML = `
+            <p>The <strong>estimated current gap</strong> is the age of the <strong>oldest unmatched</strong> frontier model &mdash; the minimum time the open-source frontier has been behind.</p>
+            <p>These frontier models have not yet been matched by an open-source model:</p>
+            <ul>${unmatchedListHtml}</ul>
+            <p>The oldest unmatched model has been waiting <strong>${estimate.min_current_gap} months</strong>, so the current gap is at least this long.</p>
+        `;
+    } else {
+        // Survival analysis explanation
+        const avgGap = stats.avg_horizontal_gap_months?.toFixed(1) || '--';
+        const minBoundVal = estimate.min_current_gap || '--';
+        content.innerHTML = `
+            <p>The <strong>average gap</strong> (${avgGap} months) is based on historical matched pairs, but this may underestimate the <em>current</em> gap because it doesn't fully account for models that haven't been matched yet.</p>
+            <p>The <strong>estimated current gap</strong> treats unmatched frontier models as <strong>censored observations</strong> &mdash; they tell us the gap is <em>at least</em> as long as their age:</p>
+            <ul>${unmatchedListHtml}</ul>
+            <p><strong>Methodology:</strong> We use survival analysis with Maximum Likelihood Estimation:</p>
+            <ol>
+                <li><strong>Fit prior:</strong> A log-normal distribution is fit to historical matched gaps</li>
+                <li><strong>Censored likelihood:</strong> Unmatched models contribute P(gap &gt; observed_age) to the likelihood</li>
+                <li><strong>Truncated expectation:</strong> For each unmatched model, compute E[gap | gap &gt; age] using the truncated log-normal formula</li>
+                <li><strong>Weighted estimate:</strong> Combine expectations, weighting older models more heavily (they're more informative)</li>
+            </ol>
+            <p class="explainer-note">
+                <strong>Minimum bound:</strong> ${minBoundVal} months &mdash; the gap cannot be shorter than the age of the oldest unmatched model.
+            </p>
+            <div class="distribution-section">
+                <p><strong>Gap Distribution (Log-Normal Prior):</strong></p>
+                <div id="distribution-chart" style="width: 100%; height: 200px;"></div>
+            </div>
+        `;
     }
 
     explainer.classList.remove('hidden');
@@ -467,7 +488,7 @@ function showExplainer(stats, gaps) {
     // Add toggle listener to render chart when opened (Plotly needs visible container)
     if (!explainer._hasToggleListener) {
         explainer.addEventListener('toggle', function() {
-            if (this.open && this._currentEstimate) {
+            if (this.open && this._currentEstimate && this._currentEstimate.prior_params) {
                 requestAnimationFrame(() => {
                     renderDistributionChart(this._currentEstimate);
                 });
