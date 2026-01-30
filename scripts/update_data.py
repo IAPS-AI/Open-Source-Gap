@@ -295,13 +295,18 @@ def calculate_trends(df: pd.DataFrame, score_col: str = "eci", use_apr_2024_spli
 
     return trends
 
-def estimate_current_gap(gaps: list[dict], matched_gaps_months: list[float], use_survival_analysis: bool = True) -> dict:
+def estimate_current_gap(gaps: list[dict], matched_gaps_months: list[float], use_survival_analysis: bool = True, prior_from_first_match: bool = False) -> dict:
     """
     Estimate the current gap using unmatched models.
 
     When use_survival_analysis=True (default), fits a log-normal distribution
     to historical matched gaps and uses it to estimate expected gap for
     censored (unmatched) observations.
+
+    When prior_from_first_match=True, the prior is fitted only to matched
+    gaps where the closed model was released after the first match event.
+    This avoids contaminating the prior with gaps from an era when no
+    open-source competitor existed.
 
     When use_survival_analysis=False, the estimate is simply the age of the
     oldest unmatched model (the known minimum gap).
@@ -328,6 +333,16 @@ def estimate_current_gap(gaps: list[dict], matched_gaps_months: list[float], use
             "unmatched_ages": [round(a, 1) for a in unmatched_ages],
             "method": "oldest_unmatched",
         }
+
+    # Optionally filter the prior to only gaps from the competitive era
+    if prior_from_first_match:
+        matched = [g for g in gaps if g["matched"] and g.get("open_date")]
+        if matched:
+            first_match_date = min(g["open_date"] for g in matched)
+            matched_gaps_months = [
+                g["gap_months"] for g in matched
+                if g["closed_date"] >= first_match_date
+            ]
 
     if not matched_gaps_months or len(matched_gaps_months) < 3:
         estimated = oldest_unmatched * 1.3
@@ -502,6 +517,7 @@ def calculate_statistics(
     gaps: list[dict],
     score_col: str = "eci",
     use_survival_analysis: bool = True,
+    prior_from_first_match: bool = False,
 ) -> dict:
     """Calculate summary statistics."""
     df_open = df[df["Open"]].copy()
@@ -575,7 +591,11 @@ def calculate_statistics(
     matched_gaps_months = [g["gap_months"] for g in matched_gaps]
 
     # Estimate current gap using unmatched models
-    current_gap_estimate = estimate_current_gap(gaps, matched_gaps_months, use_survival_analysis=use_survival_analysis)
+    current_gap_estimate = estimate_current_gap(
+        gaps, matched_gaps_months,
+        use_survival_analysis=use_survival_analysis,
+        prior_from_first_match=prior_from_first_match,
+    )
 
     return {
         "avg_horizontal_gap_months": round(avg_gap, 1),
@@ -954,7 +974,7 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
         model_col="model"
     )
 
-    stats = calculate_statistics(df_frontier, gaps, score_col="score", use_survival_analysis=False)
+    stats = calculate_statistics(df_frontier, gaps, score_col="score", prior_from_first_match=True)
 
     historical_gaps = calculate_historical_gaps(
         df_frontier,
@@ -984,7 +1004,7 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
         df_cu_frontier = df_cu_combined[df_cu_combined["group_rank"] <= 1].copy()
 
         china_gaps = calculate_horizontal_gaps(df_cu_frontier, score_col="score", threshold=0, model_col="model")
-        china_stats = calculate_statistics(df_cu_frontier, china_gaps, score_col="score", use_survival_analysis=False)
+        china_stats = calculate_statistics(df_cu_frontier, china_gaps, score_col="score", prior_from_first_match=True)
         china_historical = calculate_historical_gaps(df_cu_frontier, score_col="score", threshold=0, model_col="model")
         china_framing = {
             "gaps": china_gaps,
