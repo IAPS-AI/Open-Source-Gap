@@ -1079,7 +1079,11 @@ function renderChart(data) {
     }
 
     // Add horizontal connector lines and annotations for matched gaps
-    matchedGaps.forEach(gap => {
+    // For log-scale charts, filter annotations to avoid overlap
+    const sortedMatchedGaps = [...matchedGaps].sort((a, b) => getGapClosedScore(a) - getGapClosedScore(b));
+    let lastLabelledLogScore = -Infinity;
+
+    sortedMatchedGaps.forEach(gap => {
         const closedDate = new Date(gap.closed_date);
         const openDate = new Date(gap.open_date);
         const midDate = new Date((closedDate.getTime() + openDate.getTime()) / 2);
@@ -1099,18 +1103,28 @@ function renderChart(data) {
         });
 
         // Gap annotation above the line
-        annotations.push({
-            x: midDate.toISOString().split('T')[0],
-            y: closedScore,
-            text: `${gap.gap_months} mo`,
-            showarrow: isMetr,
-            ...(isMetr ? { arrowhead: 0, arrowcolor: COLORS.open, ax: 0, ay: -30 } : {}),
-            font: {
-                size: 11,
-                color: COLORS.open,
-            },
-            yshift: isMetr ? 0 : 15,
-        });
+        // On log-scale charts, skip labels too close together (< 0.4 decades apart)
+        const logScore = isMetr ? Math.log10(closedScore) : closedScore;
+        const minSpacing = isMetr ? 0.4 : 0;
+        const tooClose = isMetr && (logScore - lastLabelledLogScore) < minSpacing;
+
+        if (!tooClose) {
+            lastLabelledLogScore = logScore;
+            annotations.push({
+                x: midDate.toISOString().split('T')[0],
+                y: closedScore,
+                text: `${gap.gap_months} mo`,
+                showarrow: true,
+                arrowhead: 0,
+                arrowcolor: isMetr ? 'rgba(0,0,0,0)' : COLORS.open,
+                ax: 0,
+                ay: -25,
+                font: {
+                    size: 11,
+                    color: COLORS.open,
+                },
+            });
+        }
     });
 
     // Add dashed extensions for unmatched closed models
