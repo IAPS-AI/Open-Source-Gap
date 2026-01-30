@@ -1078,8 +1078,11 @@ function renderChart(data) {
         });
     }
 
-    // Add horizontal connector lines and annotations for matched gaps
-    // For log-scale charts, filter annotations to avoid overlap
+    // Add horizontal connector lines for matched gaps
+    // For METR log-scale, collect label data for a text trace instead of annotations
+    const gapLabelX = [];
+    const gapLabelY = [];
+    const gapLabelText = [];
     const sortedMatchedGaps = [...matchedGaps].sort((a, b) => getGapClosedScore(a) - getGapClosedScore(b));
     let lastLabelledLogScore = -Infinity;
 
@@ -1102,30 +1105,41 @@ function renderChart(data) {
             },
         });
 
-        // Gap annotation above the line
-        // On log-scale charts, skip labels too close together (< 0.4 decades apart)
-        const logScore = isMetr ? Math.log10(closedScore) : closedScore;
-        const minSpacing = isMetr ? 0.4 : 0;
-        const tooClose = isMetr && (logScore - lastLabelledLogScore) < minSpacing;
-
-        if (!tooClose) {
-            lastLabelledLogScore = logScore;
+        if (isMetr) {
+            // For log-scale, skip labels too close together (< 0.4 decades apart)
+            const logScore = Math.log10(closedScore);
+            if ((logScore - lastLabelledLogScore) >= 0.4) {
+                lastLabelledLogScore = logScore;
+                // Offset the label Y upward by a factor (multiply score for log-scale offset)
+                gapLabelX.push(midDate.toISOString().split('T')[0]);
+                gapLabelY.push(closedScore * 1.8);
+                gapLabelText.push(`${gap.gap_months} mo`);
+            }
+        } else {
             annotations.push({
                 x: midDate.toISOString().split('T')[0],
                 y: closedScore,
                 text: `${gap.gap_months} mo`,
-                showarrow: true,
-                arrowhead: 0,
-                arrowcolor: isMetr ? 'rgba(0,0,0,0)' : COLORS.open,
-                ax: 0,
-                ay: -25,
-                font: {
-                    size: 11,
-                    color: COLORS.open,
-                },
+                showarrow: false,
+                font: { size: 11, color: COLORS.open },
+                yshift: 15,
             });
         }
     });
+
+    // Add gap labels as a text trace for METR (more reliable on log axes)
+    if (isMetr && gapLabelX.length > 0) {
+        traces.push({
+            x: gapLabelX,
+            y: gapLabelY,
+            mode: 'text',
+            text: gapLabelText,
+            textfont: { size: 11, color: COLORS.open },
+            textposition: 'top center',
+            hoverinfo: 'skip',
+            showlegend: false,
+        });
+    }
 
     // Add dashed extensions for unmatched closed models
     const today = new Date().toISOString().split('T')[0];
