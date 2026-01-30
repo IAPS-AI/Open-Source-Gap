@@ -837,6 +837,7 @@ function renderTrendChart(data) {
             title: yAxisTitle,
             ...(isTrendMetr ? {
                 type: 'log',
+                range: [-2, 3], // 0.01 to 1000 minutes
             } : {}),
         },
         annotations: [
@@ -1228,6 +1229,7 @@ function renderChart(data) {
             zeroline: false,
             ...(isMetr ? {
                 type: 'log',
+                range: [-2, 3], // 0.01 to 1000 minutes
             } : {
                 tickformat: '.0f',
             }),
