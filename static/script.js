@@ -152,7 +152,7 @@ function populateBenchmarkSelector() {
 
     // Add options for each benchmark
     const benchmarks = appState.data.benchmarks;
-    const benchmarkOrder = ['eci', 'gpqa_diamond', 'math_level_5', 'otis_mock_aime', 'swe_bench_verified', 'simpleqa_verified', 'frontiermath_public', 'chess_puzzles'];
+    const benchmarkOrder = ['eci', 'metr_time_horizon', 'gpqa_diamond', 'math_level_5', 'otis_mock_aime', 'swe_bench_verified', 'simpleqa_verified', 'frontiermath_public', 'chess_puzzles'];
 
     // Sort benchmarks with ECI first, then alphabetically
     const sortedBenchmarks = Object.keys(benchmarks).sort((a, b) => {
@@ -200,14 +200,25 @@ function updateBenchmarkDisplay() {
     // Update source subtitle
     const sourceEl = document.getElementById('benchmark-source');
     if (sourceEl) {
-        sourceEl.textContent = `Source: Epoch AI ${metadata.name} (Frontier Models only).`;
+        if (appState.currentBenchmark === 'metr_time_horizon') {
+            const dt = metadata.post_2023_doubling_time_days;
+            const dtStr = dt ? ` Capability doubling time: ~${Math.round(dt)} days (post-2023).` : '';
+            sourceEl.textContent = `Source: METR Time Horizon v1.0 + v1.1 (Frontier Models only).${dtStr}`;
+        } else {
+            sourceEl.textContent = `Source: Epoch AI ${metadata.name} (Frontier Models only).`;
+        }
     }
 
     // Update score column header
     const scoreHeader = document.getElementById('score-header');
     if (scoreHeader) {
-        const unit = metadata.unit || 'Score';
-        scoreHeader.textContent = appState.currentBenchmark === 'eci' ? 'ECI' : unit;
+        if (appState.currentBenchmark === 'eci') {
+            scoreHeader.textContent = 'ECI';
+        } else if (appState.currentBenchmark === 'metr_time_horizon') {
+            scoreHeader.textContent = 'p50 Horizon (min)';
+        } else {
+            scoreHeader.textContent = metadata.unit || 'Score';
+        }
     }
 
     // Update trend chart title
@@ -234,18 +245,24 @@ function updateBenchmarkDisplay() {
     if (chartNote && metadata?.threshold !== undefined) {
         const thresholdValue = metadata.threshold;
 
-        // Generate appropriate threshold description based on benchmark type
-        let thresholdDesc;
-        if (appState.currentBenchmark === 'eci') {
-            thresholdDesc = `${thresholdValue} ECI point${thresholdValue !== 1 ? 's' : ''}`;
+        if (appState.currentBenchmark === 'metr_time_horizon') {
+            chartNote.innerHTML = `Note: Score is the <strong>p50 time horizon</strong> &mdash; the task duration (in human-expert minutes) where the model achieves 50% success probability.<br>
+                A model is deemed to have <strong>caught up</strong> if its p50 horizon meets or exceeds the reference model's.<br>
+                <em>Data merged from METR Time Horizon v1.0 and v1.1, with v1.1 taking precedence for shared models.<br>
+                Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
         } else {
-            // For percentage-based benchmarks (Accuracy, Resolve Rate, Score, etc.)
-            thresholdDesc = `${thresholdValue} percentage point${thresholdValue !== 1 ? 's' : ''}`;
-        }
+            // Generate appropriate threshold description based on benchmark type
+            let thresholdDesc;
+            if (appState.currentBenchmark === 'eci') {
+                thresholdDesc = `${thresholdValue} ECI point${thresholdValue !== 1 ? 's' : ''}`;
+            } else {
+                thresholdDesc = `${thresholdValue} percentage point${thresholdValue !== 1 ? 's' : ''}`;
+            }
 
-        chartNote.innerHTML = `Note: A model is deemed to have caught up if its score is <strong>within ${thresholdDesc}</strong> of the reference model.<br>
-            <em>Average gap is computed by sampling 100 score levels and measuring time-to-match at each level, starting from the level where reference models first appear.<br>
-            Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
+            chartNote.innerHTML = `Note: A model is deemed to have caught up if its score is <strong>within ${thresholdDesc}</strong> of the reference model.<br>
+                <em>Average gap is computed by sampling 100 score levels and measuring time-to-match at each level, starting from the level where reference models first appear.<br>
+                Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
+        }
     }
 }
 
@@ -779,8 +796,11 @@ function renderTrendChart(data) {
         yshift: 10,
     });
 
-    // Y-axis title based on benchmark
-    const yAxisTitle = appState.currentBenchmark === 'eci' ? 'ECI Score' : (benchmarkMetadata?.unit || 'Score');
+    // Y-axis title and scale based on benchmark
+    const yAxisTitle = appState.currentBenchmark === 'eci' ? 'ECI Score' :
+                       appState.currentBenchmark === 'metr_time_horizon' ? 'p50 Time Horizon (minutes, log scale)' :
+                       (benchmarkMetadata?.unit || 'Score');
+    const useLogScale = appState.currentBenchmark === 'metr_time_horizon';
 
     // ECI-specific reference annotations (only show for ECI benchmark)
     const eciAnnotations = appState.currentBenchmark === 'eci' ? [
@@ -813,7 +833,10 @@ function renderTrendChart(data) {
         margin: { l: 60, r: 60, t: 40, b: 60 },
         height: 500,
         xaxis: { title: 'Model Release Date' },
-        yaxis: { title: yAxisTitle },
+        yaxis: {
+            title: yAxisTitle,
+            ...(useLogScale ? { type: 'log', dtick: 1 } : {}),
+        },
         annotations: [
             ...annotations,
             ...eciAnnotations
@@ -1179,7 +1202,10 @@ function renderChart(data) {
     }
 
     // Y-axis title based on benchmark
-    const chartYAxisTitle = appState.currentBenchmark === 'eci' ? 'ECI Score' : (metadata?.unit || 'Score');
+    const chartYAxisTitle = appState.currentBenchmark === 'eci' ? 'ECI Score' :
+                            appState.currentBenchmark === 'metr_time_horizon' ? 'p50 Time Horizon (minutes, log scale)' :
+                            (metadata?.unit || 'Score');
+    const chartUseLogScale = appState.currentBenchmark === 'metr_time_horizon';
 
     // Layout
     const layout = {
@@ -1196,9 +1222,10 @@ function renderChart(data) {
             title: chartYAxisTitle,
             titlefont: { size: 12, color: COLORS.annotation },
             tickfont: { size: 11, color: COLORS.annotation },
-            tickformat: '.0f',
+            tickformat: chartUseLogScale ? '' : '.0f',
             gridcolor: COLORS.gridline,
             zeroline: false,
+            ...(chartUseLogScale ? { type: 'log', dtick: 1 } : {}),
         },
         shapes: shapes,
         annotations: annotations,
@@ -1484,12 +1511,23 @@ function renderTable(models) {
         const score = model[scoreField] ?? model.eci ?? model.score;
         const scoreValue = score !== null && score !== undefined ? score.toFixed(1) : '-';
 
+        // For METR, show additional info in the score cell
+        let scoreDisplay = scoreValue;
+        if (appState.currentBenchmark === 'metr_time_horizon' && model.average_score !== undefined) {
+            scoreDisplay = `${scoreValue} min`;
+        }
+
+        // Show source version for METR
+        const orgDisplay = model.source_version
+            ? `${model.organization} <span style="color: #999; font-size: 0.85em;">(v${model.source_version})</span>`
+            : model.organization;
+
         row.innerHTML = `
-            <td>${model.model}</td>
+            <td>${model.display_name || model.model}</td>
             <td>${new Date(model.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</td>
-            <td>${scoreValue}</td>
+            <td>${scoreDisplay}</td>
             <td><span class=\"model-type ${typeClass}\">${typeLabel}</span></td>
-            <td>${model.organization}</td>
+            <td>${orgDisplay}</td>
         `;
         tableBody.appendChild(row);
     });

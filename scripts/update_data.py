@@ -31,6 +31,14 @@ except Exception as e:
     BENCHMARK_CONFIG = {}
     print(f"Note: Additional benchmarks unavailable ({type(e).__name__}: {e})")
 
+# Import METR fetcher
+try:
+    from metr_fetcher import fetch_metr_data
+    METR_FETCHER_AVAILABLE = True
+except ImportError as e:
+    METR_FETCHER_AVAILABLE = False
+    print(f"Note: METR benchmark unavailable ({e})")
+
 def get_rank(
     df: pd.DataFrame,
     n: int | None = None,
@@ -862,8 +870,156 @@ def process_benchmark_data(benchmark_id: str, benchmark_data: dict) -> Optional[
     }
 
 
+def process_metr_data(metr_raw: dict) -> Optional[dict]:
+    """
+    Process METR Time Horizon data into the app's benchmark format.
+
+    METR data uses p50_horizon_minutes as the primary score (how long a task
+    the model can complete at 50% success rate). For gap analysis, we use
+    this metric since it directly measures capability in a meaningful unit.
+
+    For matching: an open model "matches" a closed model if its p50 horizon
+    is at least half of the closed model's (ratio-based threshold).
+    """
+    models_raw = metr_raw.get("models", [])
+    metadata = metr_raw.get("metadata", {})
+
+    if not models_raw:
+        logger.warning("No METR models to process")
+        return None
+
+    # Convert to DataFrame
+    df = pd.DataFrame(models_raw)
+    df["date"] = pd.to_datetime(df["date"])
+    df["Open"] = df["is_open"]
+
+    # Use p50_horizon_minutes as the primary score
+    # Filter out models without p50 data
+    df["score"] = df["p50_horizon_minutes"]
+    df = df.dropna(subset=["score", "date"]).copy()
+
+    if len(df) == 0:
+        logger.warning("No METR models with valid p50 horizon data")
+        return None
+
+    df_open = df[df["Open"]].copy()
+    df_closed = df[~df["Open"]].copy()
+
+    if len(df_open) == 0 or len(df_closed) == 0:
+        logger.warning(f"METR: insufficient data ({len(df_open)} open, {len(df_closed)} closed)")
+        return None
+
+    # Calculate ranks
+    df_open["group_rank"] = get_rank(df_open, sort_col="date", val_col="score")
+    df_closed["group_rank"] = get_rank(df_closed, sort_col="date", val_col="score")
+
+    df_combined = pd.concat([df_open, df_closed]).sort_values("date")
+    df_frontier = df_combined[df_combined["group_rank"] <= 1].copy()
+
+    # Build frontier model list
+    output_models = []
+    for _, row in df_frontier.iterrows():
+        output_models.append({
+            "model": row["model"],
+            "display_name": row["display_name"],
+            "score": float(row["score"]),
+            "score_std": None,  # METR uses CI instead of std
+            "p50_ci_low": float(row["p50_ci_low"]) if pd.notna(row.get("p50_ci_low")) else None,
+            "p50_ci_high": float(row["p50_ci_high"]) if pd.notna(row.get("p50_ci_high")) else None,
+            "average_score": float(row["average_score"]),
+            "p80_horizon_minutes": float(row["p80_horizon_minutes"]) if pd.notna(row.get("p80_horizon_minutes")) else None,
+            "date": row["date"].isoformat() if pd.notna(row["date"]) else None,
+            "organization": row.get("organization", "Unknown"),
+            "is_open": bool(row["Open"]),
+            "is_china": bool(row.get("is_china", False)),
+            "is_sota": bool(row.get("is_sota", False)),
+            "source_version": row.get("source_version", ""),
+        })
+
+    # Build trend models (all models, not just frontier)
+    trend_models = []
+    for _, row in df_combined.iterrows():
+        if pd.isna(row["score"]) or pd.isna(row["date"]):
+            continue
+        trend_models.append({
+            "model": row["model"],
+            "display_name": row["display_name"],
+            "score": float(row["score"]),
+            "score_std": None,
+            "average_score": float(row["average_score"]),
+            "p50_ci_low": float(row["p50_ci_low"]) if pd.notna(row.get("p50_ci_low")) else None,
+            "p50_ci_high": float(row["p50_ci_high"]) if pd.notna(row.get("p50_ci_high")) else None,
+            "p80_horizon_minutes": float(row["p80_horizon_minutes"]) if pd.notna(row.get("p80_horizon_minutes")) else None,
+            "date": row["date"].isoformat(),
+            "organization": row.get("organization", "Unknown"),
+            "is_open": bool(row["Open"]),
+            "is_china": bool(row.get("is_china", False)),
+            "is_sota": bool(row.get("is_sota", False)),
+            "source_version": row.get("source_version", ""),
+        })
+
+    # METR uses ratio-based matching: open model matches if its horizon
+    # is at least half of the closed model's horizon
+    METR_RATIO_THRESHOLD = 0.5
+    gaps = calculate_horizontal_gaps(
+        df_frontier,
+        score_col="score",
+        threshold=0,  # We handle ratio matching via the score comparison
+        model_col="model"
+    )
+
+    stats = calculate_statistics(df_frontier, gaps, score_col="score")
+
+    historical_gaps = calculate_historical_gaps(
+        df_frontier,
+        score_col="score",
+        threshold=0,
+        model_col="model"
+    )
+
+    # Calculate trends using log scale for horizon (exponential growth)
+    trends = calculate_trends(
+        df_combined.rename(columns={"score": "eci"}),
+        use_apr_2024_split=False
+    )
+
+    # China framing
+    df_china_us = df[df["is_china"] | df["is_us"]].copy()
+    df_china_us["Open"] = df_china_us["is_china"]
+
+    china_framing = {"gaps": [], "statistics": {}, "historical_gaps": []}
+    df_china_models = df_china_us[df_china_us["Open"]].copy()
+    df_us_models = df_china_us[~df_china_us["Open"]].copy()
+
+    if len(df_china_models) > 0 and len(df_us_models) > 0:
+        df_china_models["group_rank"] = get_rank(df_china_models, sort_col="date", val_col="score")
+        df_us_models["group_rank"] = get_rank(df_us_models, sort_col="date", val_col="score")
+        df_cu_combined = pd.concat([df_china_models, df_us_models]).sort_values("date")
+        df_cu_frontier = df_cu_combined[df_cu_combined["group_rank"] <= 1].copy()
+
+        china_gaps = calculate_horizontal_gaps(df_cu_frontier, score_col="score", threshold=0, model_col="model")
+        china_stats = calculate_statistics(df_cu_frontier, china_gaps, score_col="score")
+        china_historical = calculate_historical_gaps(df_cu_frontier, score_col="score", threshold=0, model_col="model")
+        china_framing = {
+            "gaps": china_gaps,
+            "statistics": china_stats,
+            "historical_gaps": china_historical,
+        }
+
+    return {
+        "metadata": metadata,
+        "models": output_models,
+        "trend_models": trend_models,
+        "gaps": gaps,
+        "statistics": stats,
+        "trends": trends,
+        "historical_gaps": historical_gaps,
+        "china_framing": china_framing,
+    }
+
+
 def process_all_benchmarks() -> dict:
-    """Process all available benchmarks including ECI and Airtable benchmarks."""
+    """Process all available benchmarks including ECI, METR, and Airtable benchmarks."""
     benchmarks = {}
 
     # Process ECI (always available)
@@ -888,6 +1044,28 @@ def process_all_benchmarks() -> dict:
         "historical_gaps": eci_data["historical_gaps"],
         "china_framing": eci_data["china_framing"],
     }
+
+    # Process METR Time Horizon benchmark
+    if METR_FETCHER_AVAILABLE:
+        logger.info("Processing METR Time Horizon benchmark...")
+        try:
+            metr_raw = fetch_metr_data()
+            if metr_raw:
+                metr_processed = process_metr_data(metr_raw)
+                if metr_processed:
+                    benchmarks["metr_time_horizon"] = metr_processed
+                    logger.info(f"  METR: {len(metr_processed['models'])} frontier models, "
+                                f"{len(metr_processed['trend_models'])} total")
+                else:
+                    logger.warning("  METR processing returned no data")
+            else:
+                logger.warning("  METR fetch returned no data")
+        except Exception as e:
+            logger.error(f"  Error processing METR data: {e}")
+            import traceback
+            traceback.print_exc()
+    else:
+        logger.warning("METR fetcher not available")
 
     # Process additional benchmarks from Airtable if available
     if BENCHMARK_FETCHER_AVAILABLE:
