@@ -1,14 +1,25 @@
-# ECI Accessibility Gap
+# Open Source Gap
 
-An interactive visualization of the performance gap between frontier open and closed-source AI models, based on the [Epoch AI Epoch Capabilities Index (ECI)](https://epoch.ai).
+An interactive visualization of the performance gap between frontier open and closed-source AI models across multiple benchmarks.
 
 ## Overview
 
-This application visualizes how long it takes for open-source models to "match" the performance of state-of-the-art closed-source models. It calculates the time gap between a closed model's release and the first open model that subsequently matches or exceeds its ECI score.
+This application visualizes how long it takes for open-source models to "match" the performance of state-of-the-art closed-source models. It calculates the time gap between a closed model's release and the first open model that subsequently matches or exceeds its score on various benchmarks.
+
+**Supported Benchmarks:**
+-   **Epoch Capabilities Index (ECI)** - Comprehensive AI capabilities index from Epoch AI
+-   **GPQA Diamond** - Graduate-level science questions (Diamond subset)
+-   **MATH Level 5** - Competition mathematics problems (hardest level)
+-   **OTIS Mock AIME** - Mock AIME competition problems
+-   **SWE-Bench Verified** - Software engineering bug fixing benchmark
+-   **SimpleQA Verified** - Simple factual question answering
+-   **FrontierMath (Public)** - Frontier-level mathematics problems
+-   **Chess Puzzles** - Chess tactical puzzles
 
 **Key Features:**
+-   **Multi-Benchmark Support:** Compare gaps across different AI capability dimensions.
 -   **Interactive Timeline:** Explore model releases and performance gaps over time.
--   **Frontier Tracking:** Focuses on the "frontier" of AI capabilities (rank 1 models).
+-   **Frontier Tracking:** Focuses on the "frontier" of AI capabilities.
 -   **Statistical Analysis:** Automatically calculates the average gap and confidence intervals.
 -   **Live Data:** Fetches the latest scores daily from Epoch AI.
 
@@ -21,8 +32,8 @@ This application visualizes how long it takes for open-source models to "match" 
 ### Installation
 1.  Clone the repository:
     ```bash
-    git clone https://github.com/TheoBearman/ECI-Accessibility-Gap.git
-    cd ECI-Accessibility-Gap
+    git clone https://github.com/TheoBearman/Open-Source-Gap.git
+    cd Open-Source-Gap
     ```
 
 2.  Install dependencies:

@@ -1,4 +1,4 @@
-/* ECI Accessibility Gap - Premium Styling */
+/* Open Source Gap - Premium Styling */
 
 :root {
     /* Colors matching reference image */
@@ -42,6 +42,32 @@ body {
     color: var(--color-text);
     line-height: 1.6;
     min-height: 100vh;
+}
+
+/* Title Bar */
+.title-bar {
+    background: linear-gradient(135deg, var(--color-open) 0%, #3f51b5 100%);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+}
+
+.title-bar-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.site-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.site-tagline {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin: var(--spacing-xs) 0 0 0;
 }
 
 .container {

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Benchmark Accessibility Gap</title>
-    <meta name="description" content="Interactive visualization of the performance gap between frontier open and closed-source AI models across various benchmarks.">
+    <title>Open Source Gap</title>
+    <meta name="description" content="Interactive visualization of the performance gap between frontier open and closed-source AI models across various benchmarks including ECI, GPQA, MATH, SWE-Bench, and more.">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,6 +18,12 @@
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
+    <div class="title-bar">
+        <div class="title-bar-content">
+            <h1 class="site-title">Open Source Gap</h1>
+            <p class="site-tagline">Tracking AI accessibility across benchmarks</p>
+        </div>
+    </div>
     <div class="container">
         <header class="header">
             <h1 id="main-title">The performance gap between frontier <span class="text-open" id="category-open">open</span> and <span class="text-closed" id="category-closed">closed-source</span> models on <span id="benchmark-name">ECI</span> is around <span id="gap-value">--</span> months</h1>
