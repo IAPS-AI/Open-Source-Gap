@@ -1827,7 +1827,7 @@
           "closed_date": "2025-04-16T00:00:00",
           "open_model": null,
           "open_date": null,
-          "gap_months": 9.6,
+          "gap_months": 9.7,
           "matched": false,
           "closed_eci": 146.63779738234308,
           "open_eci": null
@@ -1837,7 +1837,7 @@
           "closed_date": "2025-06-10T00:00:00",
           "open_model": null,
           "open_date": null,
-          "gap_months": 7.8,
+          "gap_months": 7.9,
           "matched": false,
           "closed_eci": 148.81442297849998,
           "open_eci": null
@@ -1874,20 +1874,20 @@
         }
       ],
       "statistics": {
-        "avg_horizontal_gap_months": 4.8,
-        "std_horizontal_gap": 2.5,
-        "ci_90_low": 1.1,
-        "ci_90_high": 8.0,
+        "avg_horizontal_gap_months": 4.5,
+        "std_horizontal_gap": 2.2,
+        "ci_90_low": 4.1,
+        "ci_90_high": 4.8,
         "current_vertical_gap": 8.3,
         "total_matched": 8,
         "total_unmatched": 5,
         "current_gap_estimate": {
-          "estimated_current_gap": 10.0,
-          "min_current_gap": 9.6,
+          "estimated_current_gap": 10.4,
+          "min_current_gap": 9.7,
           "confidence": "medium",
           "unmatched_ages": [
-            9.6,
-            7.8,
+            9.7,
+            7.9,
             5.9,
             3.9,
             2.6
@@ -1896,8 +1896,8 @@
           "prior_from_first_match": false,
           "prior_params": {
             "mu": 1.587,
-            "sigma": 0.518,
-            "prior_mean_months": 5.6
+            "sigma": 0.553,
+            "prior_mean_months": 5.7
           }
         }
       },
@@ -2297,7 +2297,7 @@
             "closed_date": "2024-04-09T00:00:00",
             "open_model": "Qwen2.5-72B",
             "open_date": "2024-09-19T00:00:00",
-            "gap_months": 5.3,
+            "gap_months": 5.4,
             "matched": true,
             "match_type": "exact",
             "closed_eci": 127.53656995843508,
@@ -2374,7 +2374,7 @@
             "closed_date": "2025-06-10T00:00:00",
             "open_model": null,
             "open_date": null,
-            "gap_months": 7.8,
+            "gap_months": 7.9,
             "matched": false,
             "closed_eci": 148.81442297849998,
             "open_eci": null
@@ -2411,19 +2411,19 @@
           }
         ],
         "statistics": {
-          "avg_horizontal_gap_months": 7.0,
-          "std_horizontal_gap": 3.8,
-          "ci_90_low": 1.1,
-          "ci_90_high": 13.8,
+          "avg_horizontal_gap_months": 7.5,
+          "std_horizontal_gap": 4.0,
+          "ci_90_low": 6.9,
+          "ci_90_high": 8.2,
           "current_vertical_gap": 6.4,
           "total_matched": 10,
           "total_unmatched": 4,
           "current_gap_estimate": {
-            "estimated_current_gap": 8.7,
-            "min_current_gap": 7.8,
+            "estimated_current_gap": 8.9,
+            "min_current_gap": 7.9,
             "confidence": "high",
             "unmatched_ages": [
-              7.8,
+              7.9,
               5.9,
               3.9,
               2.6
@@ -2431,9 +2431,9 @@
             "method": "survival_analysis_mle",
             "prior_from_first_match": false,
             "prior_params": {
-              "mu": 1.828,
-              "sigma": 0.395,
-              "prior_mean_months": 6.7
+              "mu": 1.83,
+              "sigma": 0.415,
+              "prior_mean_months": 6.8
             }
           }
         },
@@ -3656,7 +3656,7 @@
           "open_model": "qwen_2_72b",
           "open_date": "2024-06-07T00:00:00",
           "open_score": 2.243232,
-          "gap_months": 63.6,
+          "gap_months": 63.7,
           "matched": true,
           "match_type": "exact"
         },
@@ -3667,7 +3667,7 @@
           "open_model": "qwen_2_72b",
           "open_date": "2024-06-07T00:00:00",
           "open_score": 2.243232,
-          "gap_months": 48.2,
+          "gap_months": 48.3,
           "matched": true,
           "match_type": "exact"
         },
@@ -3678,7 +3678,7 @@
           "open_model": "qwen_2_72b",
           "open_date": "2024-06-07T00:00:00",
           "open_score": 2.243232,
-          "gap_months": 26.7,
+          "gap_months": 26.8,
           "matched": true,
           "match_type": "exact"
         },
@@ -3722,7 +3722,7 @@
           "open_model": "deepseek_v3",
           "open_date": "2024-12-26T00:00:00",
           "open_score": 18.484012,
-          "gap_months": 7.4,
+          "gap_months": 7.5,
           "matched": true,
           "match_type": "exact"
         },
@@ -3787,7 +3787,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 9.6,
+          "gap_months": 9.7,
           "matched": false
         },
         {
@@ -3822,10 +3822,10 @@
         }
       ],
       "statistics": {
-        "avg_horizontal_gap_months": 7.2,
-        "std_horizontal_gap": 4.3,
-        "ci_90_low": 1.5,
-        "ci_90_high": 18.2,
+        "avg_horizontal_gap_months": 7.4,
+        "std_horizontal_gap": 4.8,
+        "ci_90_low": 6.6,
+        "ci_90_high": 8.2,
         "current_vertical_gap": 262.8,
         "total_matched": 11,
         "total_unmatched": 5,
@@ -3835,7 +3835,7 @@
           "confidence": "high",
           "unmatched_ages": [
             11.3,
-            9.6,
+            9.7,
             5.9,
             2.6,
             2.4
@@ -4088,7 +4088,7 @@
             "open_model": "qwen_2_72b",
             "open_date": "2024-06-07T00:00:00",
             "open_score": 2.243232,
-            "gap_months": 63.6,
+            "gap_months": 63.7,
             "matched": true,
             "match_type": "exact"
           },
@@ -4099,7 +4099,7 @@
             "open_model": "qwen_2_72b",
             "open_date": "2024-06-07T00:00:00",
             "open_score": 2.243232,
-            "gap_months": 48.2,
+            "gap_months": 48.3,
             "matched": true,
             "match_type": "exact"
           },
@@ -4110,7 +4110,7 @@
             "open_model": "qwen_2_72b",
             "open_date": "2024-06-07T00:00:00",
             "open_score": 2.243232,
-            "gap_months": 26.7,
+            "gap_months": 26.8,
             "matched": true,
             "match_type": "exact"
           },
@@ -4154,7 +4154,7 @@
             "open_model": "deepseek_v3",
             "open_date": "2024-12-26T00:00:00",
             "open_score": 18.484012,
-            "gap_months": 7.4,
+            "gap_months": 7.5,
             "matched": true,
             "match_type": "exact"
           },
@@ -4219,7 +4219,7 @@
             "open_model": null,
             "open_date": null,
             "open_score": null,
-            "gap_months": 9.6,
+            "gap_months": 9.7,
             "matched": false
           },
           {
@@ -4254,10 +4254,10 @@
           }
         ],
         "statistics": {
-          "avg_horizontal_gap_months": 7.4,
-          "std_horizontal_gap": 4.4,
-          "ci_90_low": 1.5,
-          "ci_90_high": 18.2,
+          "avg_horizontal_gap_months": 7.7,
+          "std_horizontal_gap": 4.8,
+          "ci_90_low": 6.9,
+          "ci_90_high": 8.5,
           "current_vertical_gap": 262.8,
           "total_matched": 11,
           "total_unmatched": 5,
@@ -4267,7 +4267,7 @@
             "confidence": "high",
             "unmatched_ages": [
               11.3,
-              9.6,
+              9.7,
               5.9,
               2.6,
               2.4
@@ -10247,5 +10247,5 @@
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-02-04T01:19:01.460398"
+  "last_updated": "2026-02-04T09:20:16.658169"
 }
