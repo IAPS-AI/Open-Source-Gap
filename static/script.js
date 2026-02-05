@@ -1124,7 +1124,7 @@ function renderChart(data) {
                 symbol: 'square',
             },
             hovertemplate: matchedGaps.map(g =>
-                `<b>${g.open_model}</b><br>${scoreName}: ${getGapOpenScore(g)?.toFixed(1)} (matched ${getGapClosedScore(g)?.toFixed(1)})<br>Date: %{x}<extra></extra>`
+                `<b>${g.open_model}</b><br>${scoreName}: ${getGapOpenScore(g)?.toFixed(1)} (matched ${getGapClosedScore(g)?.toFixed(1)})<br>Gap: ${g.gap_months} months<br>Date: %{x}<extra></extra>`
             ),
         });
     }
