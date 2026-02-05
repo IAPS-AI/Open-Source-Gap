@@ -605,7 +605,7 @@
         {
           "model": "DeepSeek Coder 1.3B",
           "display_name": "DeepSeek Coder 1.3B",
-          "eci": 57.678134124902904,
+          "eci": 57.6781341249029,
           "eci_std": 13.280732469201242,
           "date": "2023-11-02T00:00:00",
           "organization": "DeepSeek,Peking University",
@@ -1858,7 +1858,7 @@
           "closed_date": "2025-08-07T00:00:00",
           "open_model": null,
           "open_date": null,
-          "gap_months": 5.9,
+          "gap_months": 6.0,
           "matched": false,
           "closed_eci": 150.0,
           "open_eci": null
@@ -1868,7 +1868,7 @@
           "closed_date": "2025-10-07T00:00:00",
           "open_model": null,
           "open_date": null,
-          "gap_months": 3.9,
+          "gap_months": 4.0,
           "matched": false,
           "closed_eci": 150.57774312166458,
           "open_eci": null
@@ -1898,8 +1898,8 @@
           "confidence": "high",
           "unmatched_ages": [
             7.9,
-            5.9,
-            3.9,
+            6.0,
+            4.0,
             2.6
           ],
           "method": "survival_analysis_mle",
@@ -1924,7 +1924,7 @@
           },
           "end_point": {
             "date": "2026-01-27T00:00:00",
-            "eci": 153.33546654317615
+            "eci": 153.33546654316888
           }
         },
         "early": {
@@ -2394,7 +2394,7 @@
             "closed_date": "2025-08-07T00:00:00",
             "open_model": null,
             "open_date": null,
-            "gap_months": 5.9,
+            "gap_months": 6.0,
             "matched": false,
             "closed_eci": 150.0,
             "open_eci": null
@@ -2404,7 +2404,7 @@
             "closed_date": "2025-10-07T00:00:00",
             "open_model": null,
             "open_date": null,
-            "gap_months": 3.9,
+            "gap_months": 4.0,
             "matched": false,
             "closed_eci": 150.57774312166458,
             "open_eci": null
@@ -2434,8 +2434,8 @@
             "confidence": "high",
             "unmatched_ages": [
               7.9,
-              5.9,
-              3.9,
+              6.0,
+              4.0,
               2.6
             ],
             "method": "survival_analysis_mle",
@@ -2734,9 +2734,9 @@
         "scale": 1,
         "source": "METR",
         "source_url": "https://metr.org/blog/2026-1-29-time-horizon-1-1/",
-        "doubling_time_days": 193.114,
+        "doubling_time_days": 188.657,
         "doubling_time_ci": null,
-        "post_2023_doubling_time_days": 131.1,
+        "post_2023_doubling_time_days": 128.12,
         "versions_merged": [
           "1.0",
           "1.1"
@@ -2796,8 +2796,8 @@
           "display_name": "GPT 4",
           "score": 3.524514,
           "score_std": null,
-          "p50_ci_low": 1.565845,
-          "p50_ci_high": 6.904221,
+          "p50_ci_low": 1.604658,
+          "p50_ci_high": 7.051342,
           "average_score": 0.293044,
           "p80_horizon_minutes": 0.621658,
           "date": "2023-03-14T00:00:00",
@@ -2812,8 +2812,8 @@
           "display_name": "GPT 4 1106",
           "score": 3.609578,
           "score_std": null,
-          "p50_ci_low": 1.612843,
-          "p50_ci_high": 7.404578,
+          "p50_ci_low": 1.551401,
+          "p50_ci_high": 7.228748,
           "average_score": 0.28905,
           "p80_horizon_minutes": 0.563384,
           "date": "2023-11-06T00:00:00",
@@ -2844,8 +2844,8 @@
           "display_name": "GPT 4o",
           "score": 6.404471,
           "score_std": null,
-          "p50_ci_low": 3.480788,
-          "p50_ci_high": 11.840087,
+          "p50_ci_low": 3.524773,
+          "p50_ci_high": 11.764803,
           "average_score": 0.338424,
           "p80_horizon_minutes": 0.947734,
           "date": "2024-05-13T00:00:00",
@@ -2876,8 +2876,8 @@
           "display_name": "Claude 3 5 Sonnet 20240620",
           "score": 10.771603,
           "score_std": null,
-          "p50_ci_low": 5.051355,
-          "p50_ci_high": 21.078803,
+          "p50_ci_low": 4.980223,
+          "p50_ci_high": 21.221266,
           "average_score": 0.401502,
           "p80_horizon_minutes": 1.319663,
           "date": "2024-06-20T00:00:00",
@@ -2892,8 +2892,8 @@
           "display_name": "O1 Preview",
           "score": 19.395096,
           "score_std": null,
-          "p50_ci_low": 11.200629,
-          "p50_ci_high": 32.240276,
+          "p50_ci_low": 10.920737,
+          "p50_ci_high": 32.055073,
           "average_score": 0.451441,
           "p80_horizon_minutes": 3.407526,
           "date": "2024-09-12T00:00:00",
@@ -2924,8 +2924,8 @@
           "display_name": "Claude 3 5 Sonnet 20241022",
           "score": 19.776241,
           "score_std": null,
-          "p50_ci_low": 9.428118,
-          "p50_ci_high": 39.97822,
+          "p50_ci_low": 9.634222,
+          "p50_ci_high": 38.135934,
           "average_score": 0.452356,
           "p80_horizon_minutes": 2.110812,
           "date": "2024-10-22T00:00:00",
@@ -2940,8 +2940,8 @@
           "display_name": "O1",
           "score": 37.937543,
           "score_std": null,
-          "p50_ci_low": 20.093001,
-          "p50_ci_high": 64.742807,
+          "p50_ci_low": 20.591674,
+          "p50_ci_high": 64.002272,
           "average_score": 0.510512,
           "p80_horizon_minutes": 5.720742,
           "date": "2024-12-05T00:00:00",
@@ -2988,8 +2988,8 @@
           "display_name": "Claude 3 7 Sonnet",
           "score": 59.763762,
           "score_std": null,
-          "p50_ci_low": 32.800002,
-          "p50_ci_high": 107.300538,
+          "p50_ci_low": 33.081738,
+          "p50_ci_high": 107.730392,
           "average_score": 0.558217,
           "p80_horizon_minutes": 9.792108,
           "date": "2025-02-24T00:00:00",
@@ -3004,8 +3004,8 @@
           "display_name": "O3",
           "score": 120.730463,
           "score_std": null,
-          "p50_ci_low": 74.902088,
-          "p50_ci_high": 197.220228,
+          "p50_ci_low": 73.656299,
+          "p50_ci_high": 200.354363,
           "average_score": 0.636235,
           "p80_horizon_minutes": 23.909039,
           "date": "2025-04-16T00:00:00",
@@ -3052,8 +3052,8 @@
           "display_name": "GPT 5 2025 08 07",
           "score": 213.954459,
           "score_std": null,
-          "p50_ci_low": 116.325785,
-          "p50_ci_high": 466.427887,
+          "p50_ci_low": 119.737276,
+          "p50_ci_high": 460.177694,
           "average_score": 0.693697,
           "p80_horizon_minutes": 31.643807,
           "date": "2025-08-07T00:00:00",
@@ -3084,8 +3084,8 @@
           "display_name": "Gemini 3 Pro",
           "score": 236.654674,
           "score_std": null,
-          "p50_ci_low": 134.565523,
-          "p50_ci_high": 444.530184,
+          "p50_ci_low": 140.580776,
+          "p50_ci_high": 451.986523,
           "average_score": 0.709822,
           "p80_horizon_minutes": 43.435618,
           "date": "2025-11-18T00:00:00",
@@ -3100,12 +3100,28 @@
           "display_name": "Claude Opus 4 5",
           "score": 320.422486,
           "score_std": null,
-          "p50_ci_low": 170.452756,
-          "p50_ci_high": 732.109453,
+          "p50_ci_low": 169.761024,
+          "p50_ci_high": 757.994143,
           "average_score": 0.73007,
           "p80_horizon_minutes": 41.551151,
           "date": "2025-11-24T00:00:00",
           "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false,
+          "is_sota": true,
+          "source_version": "1.1"
+        },
+        {
+          "model": "gpt_5_2",
+          "display_name": "GPT 5 2",
+          "score": 394.383957,
+          "score_std": null,
+          "p50_ci_low": 197.665014,
+          "p50_ci_high": 1053.048037,
+          "average_score": 0.752875,
+          "p80_horizon_minutes": 55.134067,
+          "date": "2025-12-11T00:00:00",
+          "organization": "OpenAI",
           "is_open": false,
           "is_china": false,
           "is_sota": true,
@@ -3167,8 +3183,8 @@
           "score": 3.524514,
           "score_std": null,
           "average_score": 0.293044,
-          "p50_ci_low": 1.565845,
-          "p50_ci_high": 6.904221,
+          "p50_ci_low": 1.604658,
+          "p50_ci_high": 7.051342,
           "p80_horizon_minutes": 0.621658,
           "date": "2023-03-14T00:00:00",
           "organization": "OpenAI",
@@ -3183,8 +3199,8 @@
           "score": 3.609578,
           "score_std": null,
           "average_score": 0.28905,
-          "p50_ci_low": 1.612843,
-          "p50_ci_high": 7.404578,
+          "p50_ci_low": 1.551401,
+          "p50_ci_high": 7.228748,
           "p80_horizon_minutes": 0.563384,
           "date": "2023-11-06T00:00:00",
           "organization": "OpenAI",
@@ -3215,8 +3231,8 @@
           "score": 3.575399,
           "score_std": null,
           "average_score": 0.294753,
-          "p50_ci_low": 1.378102,
-          "p50_ci_high": 7.775096,
+          "p50_ci_low": 1.436252,
+          "p50_ci_high": 7.620849,
           "p80_horizon_minutes": 0.476819,
           "date": "2024-03-04T00:00:00",
           "organization": "Anthropic",
@@ -3231,8 +3247,8 @@
           "score": 3.225159,
           "score_std": null,
           "average_score": 0.271786,
-          "p50_ci_low": 1.57874,
-          "p50_ci_high": 5.808975,
+          "p50_ci_low": 1.569802,
+          "p50_ci_high": 5.948382,
           "p80_horizon_minutes": 0.617128,
           "date": "2024-04-09T00:00:00",
           "organization": "OpenAI",
@@ -3247,8 +3263,8 @@
           "score": 6.404471,
           "score_std": null,
           "average_score": 0.338424,
-          "p50_ci_low": 3.480788,
-          "p50_ci_high": 11.840087,
+          "p50_ci_low": 3.524773,
+          "p50_ci_high": 11.764803,
           "p80_horizon_minutes": 0.947734,
           "date": "2024-05-13T00:00:00",
           "organization": "OpenAI",
@@ -3279,8 +3295,8 @@
           "score": 10.771603,
           "score_std": null,
           "average_score": 0.401502,
-          "p50_ci_low": 5.051355,
-          "p50_ci_high": 21.078803,
+          "p50_ci_low": 4.980223,
+          "p50_ci_high": 21.221266,
           "p80_horizon_minutes": 1.319663,
           "date": "2024-06-20T00:00:00",
           "organization": "Anthropic",
@@ -3295,8 +3311,8 @@
           "score": 19.395096,
           "score_std": null,
           "average_score": 0.451441,
-          "p50_ci_low": 11.200629,
-          "p50_ci_high": 32.240276,
+          "p50_ci_low": 10.920737,
+          "p50_ci_high": 32.055073,
           "p80_horizon_minutes": 3.407526,
           "date": "2024-09-12T00:00:00",
           "organization": "OpenAI",
@@ -3327,8 +3343,8 @@
           "score": 19.776241,
           "score_std": null,
           "average_score": 0.452356,
-          "p50_ci_low": 9.428118,
-          "p50_ci_high": 39.97822,
+          "p50_ci_low": 9.634222,
+          "p50_ci_high": 38.135934,
           "p80_horizon_minutes": 2.110812,
           "date": "2024-10-22T00:00:00",
           "organization": "Anthropic",
@@ -3343,8 +3359,8 @@
           "score": 37.937543,
           "score_std": null,
           "average_score": 0.510512,
-          "p50_ci_low": 20.093001,
-          "p50_ci_high": 64.742807,
+          "p50_ci_low": 20.591674,
+          "p50_ci_high": 64.002272,
           "p80_horizon_minutes": 5.720742,
           "date": "2024-12-05T00:00:00",
           "organization": "OpenAI",
@@ -3391,8 +3407,8 @@
           "score": 59.763762,
           "score_std": null,
           "average_score": 0.558217,
-          "p50_ci_low": 32.800002,
-          "p50_ci_high": 107.300538,
+          "p50_ci_low": 33.081738,
+          "p50_ci_high": 107.730392,
           "p80_horizon_minutes": 9.792108,
           "date": "2025-02-24T00:00:00",
           "organization": "Anthropic",
@@ -3423,8 +3439,8 @@
           "score": 120.730463,
           "score_std": null,
           "average_score": 0.636235,
-          "p50_ci_low": 74.902088,
-          "p50_ci_high": 197.220228,
+          "p50_ci_low": 73.656299,
+          "p50_ci_high": 200.354363,
           "p80_horizon_minutes": 23.909039,
           "date": "2025-04-16T00:00:00",
           "organization": "OpenAI",
@@ -3450,6 +3466,22 @@
           "source_version": "1.0"
         },
         {
+          "model": "claude_4_opus_inspect",
+          "display_name": "Claude 4opus",
+          "score": 101.182643,
+          "score_std": null,
+          "average_score": 0.615452,
+          "p50_ci_low": 59.358719,
+          "p50_ci_high": 171.194064,
+          "p80_horizon_minutes": 16.642056,
+          "date": "2025-05-22T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false,
+          "is_sota": false,
+          "source_version": "1.1"
+        },
+        {
           "model": "claude_4_sonnet",
           "display_name": "Claude 4 Sonnet",
           "score": 74.942015,
@@ -3464,22 +3496,6 @@
           "is_china": false,
           "is_sota": false,
           "source_version": "1.0"
-        },
-        {
-          "model": "claude_4_opus_inspect",
-          "display_name": "Claude 4opus",
-          "score": 101.182643,
-          "score_std": null,
-          "average_score": 0.615452,
-          "p50_ci_low": 58.946462,
-          "p50_ci_high": 167.994946,
-          "p80_horizon_minutes": 16.642056,
-          "date": "2025-05-22T00:00:00",
-          "organization": "Anthropic",
-          "is_open": false,
-          "is_china": false,
-          "is_sota": false,
-          "source_version": "1.1"
         },
         {
           "model": "deepseek_r1_0528",
@@ -3567,8 +3583,8 @@
           "score": 213.954459,
           "score_std": null,
           "average_score": 0.693697,
-          "p50_ci_low": 116.325785,
-          "p50_ci_high": 466.427887,
+          "p50_ci_low": 119.737276,
+          "p50_ci_high": 460.177694,
           "p80_horizon_minutes": 31.643807,
           "date": "2025-08-07T00:00:00",
           "organization": "OpenAI",
@@ -3615,8 +3631,8 @@
           "score": 236.654674,
           "score_std": null,
           "average_score": 0.709822,
-          "p50_ci_low": 134.565523,
-          "p50_ci_high": 444.530184,
+          "p50_ci_low": 140.580776,
+          "p50_ci_high": 451.986523,
           "p80_horizon_minutes": 43.435618,
           "date": "2025-11-18T00:00:00",
           "organization": "Google DeepMind",
@@ -3631,8 +3647,8 @@
           "score": 236.548491,
           "score_std": null,
           "average_score": 0.708301,
-          "p50_ci_low": 135.858951,
-          "p50_ci_high": 467.647843,
+          "p50_ci_low": 133.824545,
+          "p50_ci_high": 461.504021,
           "p80_horizon_minutes": 40.998357,
           "date": "2025-11-19T00:00:00",
           "organization": "OpenAI",
@@ -3647,11 +3663,27 @@
           "score": 320.422486,
           "score_std": null,
           "average_score": 0.73007,
-          "p50_ci_low": 170.452756,
-          "p50_ci_high": 732.109453,
+          "p50_ci_low": 169.761024,
+          "p50_ci_high": 757.994143,
           "p80_horizon_minutes": 41.551151,
           "date": "2025-11-24T00:00:00",
           "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false,
+          "is_sota": true,
+          "source_version": "1.1"
+        },
+        {
+          "model": "gpt_5_2",
+          "display_name": "GPT 5 2",
+          "score": 394.383957,
+          "score_std": null,
+          "average_score": 0.752875,
+          "p50_ci_low": 197.665014,
+          "p50_ci_high": 1053.048037,
+          "p80_horizon_minutes": 55.134067,
+          "date": "2025-12-11T00:00:00",
+          "organization": "OpenAI",
           "is_open": false,
           "is_china": false,
           "is_sota": true,
@@ -3787,7 +3819,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 11.3,
+          "gap_months": 11.4,
           "matched": false
         },
         {
@@ -3807,7 +3839,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 5.9,
+          "gap_months": 6.0,
           "matched": false
         },
         {
@@ -3829,6 +3861,16 @@
           "open_score": null,
           "gap_months": 2.4,
           "matched": false
+        },
+        {
+          "closed_model": "gpt_5_2",
+          "closed_date": "2025-12-11T00:00:00",
+          "closed_score": 394.383957,
+          "open_model": null,
+          "open_date": null,
+          "open_score": null,
+          "gap_months": 1.8,
+          "matched": false
         }
       ],
       "statistics": {
@@ -3836,19 +3878,20 @@
         "std_horizontal_gap": 4.8,
         "ci_90_low": 6.6,
         "ci_90_high": 8.2,
-        "current_vertical_gap": 262.8,
+        "current_vertical_gap": 336.8,
         "total_matched": 11,
-        "total_unmatched": 5,
+        "total_unmatched": 6,
         "current_gap_estimate": {
-          "estimated_current_gap": 11.3,
-          "min_current_gap": 11.3,
+          "estimated_current_gap": 11.4,
+          "min_current_gap": 11.4,
           "confidence": "high",
           "unmatched_ages": [
-            11.3,
+            11.4,
             9.7,
-            5.9,
+            6.0,
             2.6,
-            2.4
+            2.4,
+            1.8
           ],
           "method": "oldest_unmatched"
         }
@@ -3856,17 +3899,17 @@
       "trends": {
         "overall": {
           "name": "Overall",
-          "absolute_growth_per_year": 27.63,
-          "percentage_growth_annualized": 271.3,
-          "multiples_per_year": 3.71,
-          "doubling_time_years": 0.53,
+          "absolute_growth_per_year": 32.64,
+          "percentage_growth_annualized": 279.7,
+          "multiples_per_year": 3.8,
+          "doubling_time_years": 0.52,
           "start_point": {
             "date": "2019-02-14T00:00:00",
-            "eci": -89.28469281727303
+            "eci": -108.66003780109168
           },
           "end_point": {
-            "date": "2025-11-24T00:00:00",
-            "eci": 97.95975465980882
+            "date": "2025-12-11T00:00:00",
+            "eci": 114.00035531409958
           }
         },
         "early": {
@@ -3886,22 +3929,22 @@
         },
         "recent": {
           "name": "Post-Jul 2022",
-          "absolute_growth_per_year": 85.4,
-          "percentage_growth_annualized": 612.7,
-          "multiples_per_year": 7.13,
-          "doubling_time_years": 0.35,
+          "absolute_growth_per_year": 100.4,
+          "percentage_growth_annualized": 647.3,
+          "multiples_per_year": 7.47,
+          "doubling_time_years": 0.34,
           "start_point": {
             "date": "2023-03-14T00:00:00",
-            "eci": -87.62457640343928
+            "eci": -107.89422632331843
           },
           "end_point": {
-            "date": "2025-11-24T00:00:00",
-            "eci": 142.9105351662438
+            "date": "2025-12-11T00:00:00",
+            "eci": 167.80414740159176
           }
         },
         "metadata": {
           "has_split": true,
-          "split_date": "2022-07-05T00:00:00",
+          "split_date": "2022-07-14T00:00:00",
           "split_label": "Jul 2022",
           "early_key": "early",
           "recent_key": "recent"
@@ -4074,8 +4117,8 @@
           "date": "2025-12-14T00:00:00",
           "gap_months": 8.4,
           "matched": false,
-          "reference_model": "claude_opus_4_5_inspect",
-          "reference_score": 320.4,
+          "reference_model": "gpt_5_2",
+          "reference_score": 394.4,
           "open_frontier_model": "kimi_k2_thinking",
           "open_frontier_score": 57.6
         },
@@ -4083,8 +4126,8 @@
           "date": "2026-01-14T00:00:00",
           "gap_months": 8.4,
           "matched": false,
-          "reference_model": "claude_opus_4_5_inspect",
-          "reference_score": 320.4,
+          "reference_model": "gpt_5_2",
+          "reference_score": 394.4,
           "open_frontier_model": "kimi_k2_thinking",
           "open_frontier_score": 57.6
         }
@@ -4219,7 +4262,7 @@
             "open_model": null,
             "open_date": null,
             "open_score": null,
-            "gap_months": 11.3,
+            "gap_months": 11.4,
             "matched": false
           },
           {
@@ -4239,7 +4282,7 @@
             "open_model": null,
             "open_date": null,
             "open_score": null,
-            "gap_months": 5.9,
+            "gap_months": 6.0,
             "matched": false
           },
           {
@@ -4261,6 +4304,16 @@
             "open_score": null,
             "gap_months": 2.4,
             "matched": false
+          },
+          {
+            "closed_model": "gpt_5_2",
+            "closed_date": "2025-12-11T00:00:00",
+            "closed_score": 394.383957,
+            "open_model": null,
+            "open_date": null,
+            "open_score": null,
+            "gap_months": 1.8,
+            "matched": false
           }
         ],
         "statistics": {
@@ -4268,19 +4321,20 @@
           "std_horizontal_gap": 4.8,
           "ci_90_low": 6.9,
           "ci_90_high": 8.5,
-          "current_vertical_gap": 262.8,
+          "current_vertical_gap": 336.8,
           "total_matched": 11,
-          "total_unmatched": 5,
+          "total_unmatched": 6,
           "current_gap_estimate": {
-            "estimated_current_gap": 11.3,
-            "min_current_gap": 11.3,
+            "estimated_current_gap": 11.4,
+            "min_current_gap": 11.4,
             "confidence": "high",
             "unmatched_ages": [
-              11.3,
+              11.4,
               9.7,
-              5.9,
+              6.0,
               2.6,
-              2.4
+              2.4,
+              1.8
             ],
             "method": "oldest_unmatched"
           }
@@ -4452,8 +4506,8 @@
             "date": "2025-12-14T00:00:00",
             "gap_months": 8.4,
             "matched": false,
-            "reference_model": "claude_opus_4_5_inspect",
-            "reference_score": 320.4,
+            "reference_model": "gpt_5_2",
+            "reference_score": 394.4,
             "open_frontier_model": "kimi_k2_thinking",
             "open_frontier_score": 57.6
           },
@@ -4461,8 +4515,8 @@
             "date": "2026-01-14T00:00:00",
             "gap_months": 8.4,
             "matched": false,
-            "reference_model": "claude_opus_4_5_inspect",
-            "reference_score": 320.4,
+            "reference_model": "gpt_5_2",
+            "reference_score": 394.4,
             "open_frontier_model": "kimi_k2_thinking",
             "open_frontier_score": 57.6
           }
@@ -6371,7 +6425,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 7.6,
+          "gap_months": 7.7,
           "matched": false
         },
         {
@@ -6391,7 +6445,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.7,
+          "gap_months": 2.8,
           "matched": false
         },
         {
@@ -6419,9 +6473,9 @@
           "confidence": "high",
           "unmatched_ages": [
             8.0,
-            7.6,
+            7.7,
             6.9,
-            2.7,
+            2.8,
             2.6
           ],
           "method": "survival_analysis_mle",
@@ -6442,7 +6496,7 @@
           "doubling_time_years": 1.28,
           "start_point": {
             "date": "2023-03-14T00:00:00",
-            "eci": 8.500007701120921
+            "eci": 8.500007701113645
           },
           "end_point": {
             "date": "2026-01-27T00:00:00",
@@ -10209,7 +10263,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 6.1,
+          "gap_months": 6.2,
           "matched": false
         },
         {
@@ -10219,7 +10273,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 5.9,
+          "gap_months": 6.0,
           "matched": false
         },
         {
@@ -10257,8 +10311,8 @@
           "confidence": "high",
           "unmatched_ages": [
             9.7,
-            6.1,
-            5.9,
+            6.2,
+            6.0,
             2.6,
             1.8
           ],
@@ -11370,7 +11424,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 12.1,
+          "gap_months": 12.2,
           "matched": false
         },
         {
@@ -11400,7 +11454,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 5.9,
+          "gap_months": 6.0,
           "matched": false
         },
         {
@@ -11417,20 +11471,20 @@
       "statistics": {
         "avg_horizontal_gap_months": 12.1,
         "std_horizontal_gap": 0.2,
-        "ci_90_low": 12.0,
+        "ci_90_low": 12.1,
         "ci_90_high": 12.1,
         "current_vertical_gap": 35.0,
         "total_matched": 0,
         "total_unmatched": 5,
         "current_gap_estimate": {
-          "estimated_current_gap": 18.1,
-          "min_current_gap": 12.1,
+          "estimated_current_gap": 18.3,
+          "min_current_gap": 12.2,
           "confidence": "low",
           "unmatched_ages": [
-            12.1,
+            12.2,
             9.7,
             6.9,
-            5.9,
+            6.0,
             1.8
           ],
           "method": "insufficient_data_heuristic"
@@ -13250,7 +13304,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 5.9,
+          "gap_months": 6.0,
           "matched": false
         },
         {
@@ -13293,12 +13347,12 @@
         "total_matched": 16,
         "total_unmatched": 5,
         "current_gap_estimate": {
-          "estimated_current_gap": 9.6,
+          "estimated_current_gap": 9.7,
           "min_current_gap": 6.0,
           "confidence": "high",
           "unmatched_ages": [
             6.0,
-            5.9,
+            6.0,
             2.6,
             1.8,
             1.8
@@ -13632,5 +13686,5 @@
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-02-04T18:02:42.485920"
+  "last_updated": "2026-02-05T01:18:40.097334"
 }
