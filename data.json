@@ -3919,7 +3919,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.2,
+          "gap_months": 2.3,
           "matched": false
         }
       ],
@@ -3941,7 +3941,7 @@
             6.4,
             3.0,
             2.8,
-            2.2
+            2.3
           ],
           "method": "oldest_unmatched"
         }
@@ -4371,7 +4371,7 @@
             "open_model": null,
             "open_date": null,
             "open_score": null,
-            "gap_months": 2.2,
+            "gap_months": 2.3,
             "matched": false
           }
         ],
@@ -4393,7 +4393,7 @@
               6.4,
               3.0,
               2.8,
-              2.2
+              2.3
             ],
             "method": "oldest_unmatched"
           }
@@ -9162,7 +9162,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 6.4,
+          "gap_months": 6.5,
           "matched": false
         },
         {
@@ -9172,7 +9172,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.6,
+          "gap_months": 4.7,
           "matched": false
         }
       ],
@@ -9190,8 +9190,8 @@
           "confidence": "high",
           "unmatched_ages": [
             8.9,
-            6.4,
-            4.6
+            6.5,
+            4.7
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -10480,7 +10480,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.2,
+          "gap_months": 2.3,
           "matched": false
         },
         {
@@ -10503,14 +10503,14 @@
         "total_matched": 8,
         "total_unmatched": 5,
         "current_gap_estimate": {
-          "estimated_current_gap": 9.6,
+          "estimated_current_gap": 9.5,
           "min_current_gap": 6.6,
           "confidence": "high",
           "unmatched_ages": [
             6.6,
             6.4,
             3.0,
-            2.2,
+            2.3,
             0.4
           ],
           "method": "survival_analysis_mle",
@@ -11692,7 +11692,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 7.3,
+          "gap_months": 7.4,
           "matched": false
         },
         {
@@ -11712,7 +11712,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.2,
+          "gap_months": 2.3,
           "matched": false
         }
       ],
@@ -11730,9 +11730,9 @@
           "confidence": "low",
           "unmatched_ages": [
             10.1,
-            7.3,
+            7.4,
             6.4,
-            2.2
+            2.3
           ],
           "method": "insufficient_data_heuristic"
         }
@@ -13638,7 +13638,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.2,
+          "gap_months": 2.3,
           "matched": false
         },
         {
@@ -13648,7 +13648,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.2,
+          "gap_months": 2.3,
           "matched": false
         }
       ],
@@ -13661,12 +13661,12 @@
         "total_matched": 19,
         "total_unmatched": 2,
         "current_gap_estimate": {
-          "estimated_current_gap": 6.2,
-          "min_current_gap": 2.2,
+          "estimated_current_gap": 6.3,
+          "min_current_gap": 2.3,
           "confidence": "high",
           "unmatched_ages": [
-            2.2,
-            2.2
+            2.3,
+            2.3
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -14006,5 +14006,5 @@
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-02-17T01:22:33.858801"
+  "last_updated": "2026-02-18T01:25:09.505060"
 }
