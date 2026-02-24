@@ -2315,6 +2315,15 @@
           "open_frontier_model": "Kimi K2 Thinking",
           "reference_eci": 154.2,
           "open_frontier_eci": 145.6
+        },
+        {
+          "date": "2026-02-24T00:00:00",
+          "gap_months": 7.6,
+          "matched": false,
+          "reference_model": "Gemini 3 Pro",
+          "open_frontier_model": "Kimi K2.5",
+          "reference_eci": 154.2,
+          "open_frontier_eci": 147.7
         }
       ],
       "china_framing": {
@@ -2767,6 +2776,15 @@
             "open_frontier_model": "Kimi K2 Thinking",
             "reference_eci": 154.2,
             "open_frontier_eci": 145.6
+          },
+          {
+            "date": "2026-02-24T00:00:00",
+            "gap_months": 7.6,
+            "matched": false,
+            "reference_model": "Gemini 3 Pro",
+            "open_frontier_model": "Kimi K2.5",
+            "reference_eci": 154.2,
+            "open_frontier_eci": 147.7
           }
         ]
       }
@@ -3967,7 +3985,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.4,
+          "gap_months": 2.5,
           "matched": false
         },
         {
@@ -3999,7 +4017,7 @@
             6.6,
             3.2,
             3.0,
-            2.4,
+            2.5,
             0.6
           ],
           "method": "oldest_unmatched"
@@ -4430,7 +4448,7 @@
             "open_model": null,
             "open_date": null,
             "open_score": null,
-            "gap_months": 2.4,
+            "gap_months": 2.5,
             "matched": false
           },
           {
@@ -4462,7 +4480,7 @@
               6.6,
               3.2,
               3.0,
-              2.4,
+              2.5,
               0.6
             ],
             "method": "oldest_unmatched"
@@ -6687,7 +6705,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 0.1,
+          "gap_months": 0.2,
           "matched": false
         }
       ],
@@ -6705,7 +6723,7 @@
           "confidence": "high",
           "unmatched_ages": [
             3.2,
-            0.1
+            0.2
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -10571,7 +10589,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.4,
+          "gap_months": 2.5,
           "matched": false
         },
         {
@@ -10601,7 +10619,7 @@
             6.8,
             6.6,
             3.2,
-            2.4,
+            2.5,
             0.6
           ],
           "method": "survival_analysis_mle",
@@ -11332,7 +11350,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 0.1,
+          "gap_months": 0.2,
           "matched": false
         }
       ],
@@ -11345,12 +11363,12 @@
         "total_matched": 5,
         "total_unmatched": 2,
         "current_gap_estimate": {
-          "estimated_current_gap": 6.2,
+          "estimated_current_gap": 6.1,
           "min_current_gap": 3.2,
           "confidence": "high",
           "unmatched_ages": [
             3.2,
-            0.1
+            0.2
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -11892,7 +11910,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 7.5,
+          "gap_months": 7.6,
           "matched": false
         },
         {
@@ -11912,7 +11930,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.4,
+          "gap_months": 2.5,
           "matched": false
         },
         {
@@ -11922,7 +11940,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 0.1,
+          "gap_months": 0.2,
           "matched": false
         }
       ],
@@ -11940,10 +11958,10 @@
           "confidence": "low",
           "unmatched_ages": [
             10.3,
-            7.5,
+            7.6,
             6.6,
-            2.4,
-            0.1
+            2.5,
+            0.2
           ],
           "method": "insufficient_data_heuristic"
         }
@@ -13879,7 +13897,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.4,
+          "gap_months": 2.5,
           "matched": false
         },
         {
@@ -13889,7 +13907,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.4,
+          "gap_months": 2.5,
           "matched": false
         }
       ],
@@ -13902,12 +13920,12 @@
         "total_matched": 19,
         "total_unmatched": 2,
         "current_gap_estimate": {
-          "estimated_current_gap": 6.4,
-          "min_current_gap": 2.4,
+          "estimated_current_gap": 6.6,
+          "min_current_gap": 2.5,
           "confidence": "high",
           "unmatched_ages": [
-            2.4,
-            2.4
+            2.5,
+            2.5
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -14247,5 +14265,5 @@
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-02-23T01:22:49.884895"
+  "last_updated": "2026-02-24T01:21:42.996533"
 }
