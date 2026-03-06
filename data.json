@@ -3975,7 +3975,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 3.3,
+          "gap_months": 3.4,
           "matched": false
         },
         {
@@ -3995,7 +3995,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 0.9,
+          "gap_months": 1.0,
           "matched": false
         }
       ],
@@ -4016,9 +4016,9 @@
             10.6,
             6.9,
             3.5,
-            3.3,
+            3.4,
             2.8,
-            0.9
+            1.0
           ],
           "method": "oldest_unmatched"
         }
@@ -4438,7 +4438,7 @@
             "open_model": null,
             "open_date": null,
             "open_score": null,
-            "gap_months": 3.3,
+            "gap_months": 3.4,
             "matched": false
           },
           {
@@ -4458,7 +4458,7 @@
             "open_model": null,
             "open_date": null,
             "open_score": null,
-            "gap_months": 0.9,
+            "gap_months": 1.0,
             "matched": false
           }
         ],
@@ -4479,9 +4479,9 @@
               10.6,
               6.9,
               3.5,
-              3.3,
+              3.4,
               2.8,
-              0.9
+              1.0
             ],
             "method": "oldest_unmatched"
           }
@@ -9344,7 +9344,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 3.3,
+          "gap_months": 3.4,
           "matched": false
         },
         {
@@ -9354,7 +9354,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 0.9,
+          "gap_months": 1.0,
           "matched": false
         }
       ],
@@ -9368,11 +9368,11 @@
         "total_unmatched": 2,
         "current_gap_estimate": {
           "estimated_current_gap": 9.2,
-          "min_current_gap": 3.3,
+          "min_current_gap": 3.4,
           "confidence": "high",
           "unmatched_ages": [
-            3.3,
-            0.9
+            3.4,
+            1.0
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -10629,7 +10629,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 0.9,
+          "gap_months": 1.0,
           "matched": false
         }
       ],
@@ -10650,7 +10650,7 @@
             6.9,
             3.5,
             2.8,
-            0.9
+            1.0
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -14304,5 +14304,5 @@
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-03-05T01:21:14.317408"
+  "last_updated": "2026-03-06T01:24:03.387144"
 }
