@@ -674,7 +674,7 @@ US_ORGANIZATIONS = {
 
 def is_china_org(org: str) -> bool:
     """Check if an organization is Chinese."""
-    if not org:
+    if not isinstance(org, str):
         return False
     org_lower = org.lower()
     for china_org in CHINA_ORGANIZATIONS:
@@ -685,7 +685,7 @@ def is_china_org(org: str) -> bool:
 
 def is_us_org(org: str) -> bool:
     """Check if an organization is US-based."""
-    if not org:
+    if not isinstance(org, str):
         return False
     org_lower = org.lower()
     for us_org in US_ORGANIZATIONS:
