@@ -14,9 +14,8 @@ import os
 import zipfile
 from datetime import datetime
 from typing import Optional
-from urllib.request import urlopen
-
 import pandas as pd
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -123,8 +122,17 @@ class CSVBenchmarkFetcher:
             return self._zip_data
 
         logger.info(f"Downloading benchmark data from {BENCHMARK_DATA_URL}...")
-        with urlopen(BENCHMARK_DATA_URL) as response:
-            self._zip_data = response.read()
+        # epoch.ai blocks the default urllib User-Agent with 403, so use
+        # requests with a browser-like UA.
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            )
+        }
+        response = requests.get(BENCHMARK_DATA_URL, headers=headers, timeout=60)
+        response.raise_for_status()
+        self._zip_data = response.content
         logger.info(f"  Downloaded {len(self._zip_data) / 1024:.1f} KB")
         return self._zip_data
 

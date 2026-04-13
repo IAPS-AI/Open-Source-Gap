@@ -1,4 +1,5 @@
 
+import io
 import json
 import logging
 import math
@@ -9,6 +10,7 @@ from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
+import requests
 from scipy.stats import linregress, norm
 
 # Configure logging
@@ -79,8 +81,27 @@ def fetch_eci_data() -> pd.DataFrame:
     """Fetch ECI scores from Epoch AI."""
     logger.info("Fetching data from Epoch AI...")
     try:
-        df = pd.read_csv(ECI_SCORES_URL)
+        # epoch.ai blocks the default urllib User-Agent with 403, so fetch
+        # via requests with a browser-like UA before handing to pandas.
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            )
+        }
+        response = requests.get(ECI_SCORES_URL, headers=headers, timeout=30)
+        response.raise_for_status()
+        df = pd.read_csv(io.StringIO(response.text))
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
+
+        # Upstream sometimes ships columns as all-NaN, which pandas infers
+        # as float64 and breaks `.str` accessor use. Fill expected-string
+        # columns with "Unknown" so downstream `.str.contains` calls work
+        # and JSON serialization never sees pd.NA.
+        for col in ("Model", "Display name", "Organization",
+                    "Country (of organization)", "Model accessibility"):
+            if col in df.columns:
+                df[col] = df[col].fillna("Unknown").astype(str)
         
         # Derive eci_std from confidence intervals (assuming 90% CI)
         # For 90% CI, z = 1.645, so std = (ci_high - ci_low) / (2 * 1.645)
