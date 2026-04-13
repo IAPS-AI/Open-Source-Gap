@@ -4,6 +4,7 @@ import json
 import logging
 import math
 import os
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
@@ -19,6 +20,15 @@ logger = logging.getLogger(__name__)
 
 # Constants
 ECI_SCORES_URL = "https://epoch.ai/data/eci_scores.csv"
+# Authoritative model metadata (Organization, Country, Publication date).
+# Used as a fallback lookup because eci_scores.csv currently ships these
+# columns as all-NaN upstream.
+ALL_AI_MODELS_URL = "https://epoch.ai/data/all_ai_models.csv"
+# epoch.ai blocks the default urllib User-Agent with 403.
+EPOCH_UA = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
 ECI_MATCH_THRESHOLD = 1.0  # ECI points - model is "matched" if within this range
 DAYS_PER_MONTH = 365.25 / 12  # 30.4375 - accurate average days per month accounting for leap years
 
@@ -77,32 +87,88 @@ def get_rank(
     ranks.index = ordered["index"]
     return ranks.reindex(df.index)
 
+def _fetch_epoch_csv(url: str, timeout: int = 30) -> pd.DataFrame:
+    """GET a CSV from epoch.ai with a browser UA (server 403s on urllib)."""
+    response = requests.get(url, headers={"User-Agent": EPOCH_UA}, timeout=timeout)
+    response.raise_for_status()
+    return pd.read_csv(io.StringIO(response.text))
+
+
+def _strip_date_suffix(name: str) -> str:
+    """Turn "Gemini 2.5 Flash (Sep 2025)" into "Gemini 2.5 Flash"."""
+    return re.sub(r"\s*\([^)]*\d{4}\)\s*$", "", str(name)).strip()
+
+
+def _backfill_from_all_ai_models(df: pd.DataFrame) -> pd.DataFrame:
+    """Fill Organization, Country, and date from all_ai_models.csv.
+
+    eci_scores.csv currently ships Organization, Country (of organization),
+    date, and model_versions as all-NaN. Until upstream fixes it, pull the
+    first three from epoch.ai's authoritative model metadata CSV, joining
+    on Model name with a date-suffix-stripped fallback (recovers ~97%).
+    """
+    try:
+        models = _fetch_epoch_csv(ALL_AI_MODELS_URL, timeout=60)
+    except Exception as e:
+        logger.warning(f"Could not fetch all_ai_models.csv for backfill: {e}")
+        return df
+
+    needed = ["Model", "Organization", "Country (of organization)", "Publication date"]
+    if not all(c in models.columns for c in needed):
+        logger.warning("all_ai_models.csv missing expected columns; skipping backfill")
+        return df
+
+    models = models[needed].copy()
+    models["Model"] = models["Model"].astype(str).str.strip()
+    models["_stripped"] = models["Model"].apply(_strip_date_suffix)
+
+    exact = (models.drop_duplicates("Model")
+                   .set_index("Model")[["Organization", "Country (of organization)", "Publication date"]])
+    stripped = (models.drop_duplicates("_stripped")
+                      .set_index("_stripped")[["Organization", "Country (of organization)", "Publication date"]])
+
+    df = df.copy()
+    df["Model"] = df["Model"].astype(str).str.strip()
+    keys_stripped = df["Model"].apply(_strip_date_suffix)
+
+    for src_col, dst_col in (
+        ("Organization", "Organization"),
+        ("Country (of organization)", "Country (of organization)"),
+        ("Publication date", "date"),
+    ):
+        if dst_col not in df.columns:
+            df[dst_col] = pd.NA
+        exact_vals = df["Model"].map(exact[src_col])
+        stripped_vals = keys_stripped.map(stripped[src_col])
+        backfill = exact_vals.combine_first(stripped_vals)
+        df[dst_col] = df[dst_col].combine_first(backfill)
+
+    matched = df["Organization"].notna().sum()
+    logger.info(f"  Backfilled Organization for {matched}/{len(df)} models from all_ai_models.csv")
+    return df
+
+
 def fetch_eci_data() -> pd.DataFrame:
     """Fetch ECI scores from Epoch AI."""
     logger.info("Fetching data from Epoch AI...")
     try:
-        # epoch.ai blocks the default urllib User-Agent with 403, so fetch
-        # via requests with a browser-like UA before handing to pandas.
-        headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-            )
-        }
-        response = requests.get(ECI_SCORES_URL, headers=headers, timeout=30)
-        response.raise_for_status()
-        df = pd.read_csv(io.StringIO(response.text))
+        df = _fetch_epoch_csv(ECI_SCORES_URL)
+
+        # Upstream currently ships Organization, Country, and date as
+        # all-NaN. Recover them from all_ai_models.csv before the date
+        # parse and string coercion below.
+        df = _backfill_from_all_ai_models(df)
+
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
 
-        # Upstream sometimes ships columns as all-NaN, which pandas infers
-        # as float64 and breaks `.str` accessor use. Fill expected-string
-        # columns with "Unknown" so downstream `.str.contains` calls work
-        # and JSON serialization never sees pd.NA.
+        # Any row the backfill couldn't resolve (or any other expected-
+        # string column that's still NaN) gets "Unknown" so downstream
+        # `.str.contains` calls work and JSON never sees pd.NA.
         for col in ("Model", "Display name", "Organization",
                     "Country (of organization)", "Model accessibility"):
             if col in df.columns:
                 df[col] = df[col].fillna("Unknown").astype(str)
-        
+
         # Derive eci_std from confidence intervals (assuming 90% CI)
         # For 90% CI, z = 1.645, so std = (ci_high - ci_low) / (2 * 1.645)
         if "eci_ci_low" in df.columns and "eci_ci_high" in df.columns:
