@@ -11,13 +11,223 @@
       },
       "models": [
         {
+          "model": "LLaMA-65B",
+          "display_name": "LLaMA-65B",
+          "eci": 110.51770381029368,
+          "eci_std": 5.830141279915929,
+          "date": "2023-02-24T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-4 (Mar 2023)",
+          "display_name": "GPT-4 (Mar 2023)",
+          "eci": 126.16871695900504,
+          "eci_std": 4.376241538852823,
+          "date": "2023-03-15T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "DeepSeek Coder 33B",
+          "display_name": "DeepSeek Coder 33B",
+          "eci": 96.54416431730408,
+          "eci_std": 7.439127593431404,
+          "date": "2024-01-25T00:00:00",
+          "organization": "DeepSeek,Peking University",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "Gemini 1.5 Pro (Sept 2024)",
+          "display_name": "Gemini 1.5 Pro (Sept 2024)",
+          "eci": 132.80855728132738,
+          "eci_std": 2.018868383129259,
+          "date": "2024-02-15T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude 3.5 Sonnet (October 2024)",
+          "display_name": "Claude 3.5 Sonnet (October 2024)",
+          "eci": 134.33044387835574,
+          "eci_std": 3.135525775389112,
+          "date": "2024-06-20T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "o1-mini",
+          "display_name": "o1-mini",
+          "eci": 136.62222971093723,
+          "eci_std": 1.978628760820549,
+          "date": "2024-09-12T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "o1",
+          "display_name": "o1",
+          "eci": 142.88743482021584,
+          "eci_std": 1.0903303883487583,
+          "date": "2024-12-05T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "o3",
+          "display_name": "o3",
+          "eci": 147.15518728213084,
+          "eci_std": 1.1519789395081514,
+          "date": "2024-12-20T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "DeepSeek-V3",
+          "display_name": "DeepSeek-V3",
+          "eci": 133.1404848741002,
+          "eci_std": 2.6979772296247337,
+          "date": "2024-12-24T00:00:00",
+          "organization": "DeepSeek",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "DeepSeek-R1",
+          "display_name": "DeepSeek-R1",
+          "eci": 139.79737613729642,
+          "eci_std": 1.4181746489728055,
+          "date": "2025-01-20T00:00:00",
+          "organization": "DeepSeek",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "DeepSeek-R1 (May 2025)",
+          "display_name": "DeepSeek-R1 (May 2025)",
+          "eci": 142.08428730439883,
+          "eci_std": 1.1952930196053564,
+          "date": "2025-05-28T00:00:00",
+          "organization": "DeepSeek",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "o3-pro",
+          "display_name": "o3-pro",
+          "eci": 148.15800385369647,
+          "eci_std": 1.5476923576853368,
+          "date": "2025-06-10T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-5",
+          "display_name": "GPT-5",
+          "eci": 150.0,
+          "eci_std": null,
+          "date": "2025-08-07T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "DeepSeek-V3.2-Exp",
+          "display_name": "DeepSeek-V3.2-Exp",
+          "eci": 145.1196623869907,
+          "eci_std": 1.5864958662484334,
+          "date": "2025-09-29T00:00:00",
+          "organization": "DeepSeek",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "GPT-5 Pro",
+          "display_name": "GPT-5 Pro",
+          "eci": 150.23567963293243,
+          "eci_std": 1.0265609720004212,
+          "date": "2025-10-07T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Kimi K2 Thinking",
+          "display_name": "Kimi K2 Thinking",
+          "eci": 145.5037729115908,
+          "eci_std": 1.3207257115003876,
+          "date": "2025-11-06T00:00:00",
+          "organization": "Moonshot",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "Gemini 3 Pro",
+          "display_name": "Gemini 3 Pro",
+          "eci": 153.37507453900983,
+          "eci_std": 1.2825401230295819,
+          "date": "2025-11-18T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "DeepSeek-V3.2",
+          "display_name": "DeepSeek-V3.2",
+          "eci": 146.4886876637475,
+          "eci_std": 0.8544744125758372,
+          "date": "2025-12-01T00:00:00",
+          "organization": "DeepSeek",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "GPT-5.2 Pro",
+          "display_name": "GPT-5.2 Pro",
+          "eci": 154.17759225015558,
+          "eci_std": 2.07646871737314,
+          "date": "2025-12-11T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
           "model": "Kimi K2.5",
           "display_name": "Kimi K2.5",
           "eci": 148.19317391917437,
           "eci_std": 0.8748883866605903,
-          "date": null,
-          "organization": "Unknown",
+          "date": "2026-02-02T00:00:00",
+          "organization": "Moonshot",
           "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "GPT-5.3 Codex",
+          "display_name": "GPT-5.3 Codex",
+          "eci": 155.9902561398087,
+          "eci_std": 2.1742908726103525,
+          "date": "2026-02-05T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 3.1 Pro",
+          "display_name": "Gemini 3.1 Pro",
+          "eci": 156.7151923209314,
+          "eci_std": 1.9513997187620031,
+          "date": "2026-02-19T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
           "is_china": false
         },
         {
@@ -25,41 +235,2595 @@
           "display_name": "GPT-5.4 Pro",
           "eci": 157.94353188772644,
           "eci_std": 2.1114771851811875,
-          "date": null,
-          "organization": "Unknown",
+          "date": "2026-03-05T00:00:00",
+          "organization": "OpenAI",
           "is_open": false,
           "is_china": false
         }
       ],
-      "trend_models": [],
-      "gaps": [],
+      "trend_models": [
+        {
+          "model": "LLaMA-65B",
+          "display_name": "LLaMA-65B",
+          "eci": 110.51770381029368,
+          "eci_std": 5.830141279915929,
+          "date": "2023-02-24T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "LLaMA-7B",
+          "display_name": "LLaMA-7B",
+          "eci": 95.45531870634332,
+          "eci_std": 6.6613837549924,
+          "date": "2023-02-24T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "LLaMA-33B",
+          "display_name": "LLaMA-33B",
+          "eci": 107.55404708673802,
+          "eci_std": 5.4440356714414895,
+          "date": "2023-02-27T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "LLaMA-13B",
+          "display_name": "LLaMA-13B",
+          "eci": 99.93934325330837,
+          "eci_std": 6.6905320740362475,
+          "date": "2023-02-27T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-4 (Mar 2023)",
+          "display_name": "GPT-4 (Mar 2023)",
+          "eci": 126.16871695900504,
+          "eci_std": 4.376241538852823,
+          "date": "2023-03-15T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Falcon-40B",
+          "display_name": "Falcon-40B",
+          "eci": 104.2834454538014,
+          "eci_std": 6.010494269154082,
+          "date": "2023-03-15T00:00:00",
+          "organization": "Technology Innovation Institute",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-4 (Jun 2023)",
+          "display_name": "GPT-4 (Jun 2023)",
+          "eci": 122.07084199779749,
+          "eci_std": 3.1662264875860533,
+          "date": "2023-03-15T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Cerebras-GPT-13B",
+          "display_name": "Cerebras-GPT-13B",
+          "eci": 77.78332990561177,
+          "eci_std": 9.74831294186748,
+          "date": "2023-04-06T00:00:00",
+          "organization": "Cerebras Systems",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Dolly 2.0-12b",
+          "display_name": "Dolly 2.0-12b",
+          "eci": 86.0825277190556,
+          "eci_std": 9.227424799626519,
+          "date": "2023-04-12T00:00:00",
+          "organization": "Databricks",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Falcon-7B",
+          "display_name": "Falcon-7B",
+          "eci": 93.65468221822172,
+          "eci_std": 6.992231696498958,
+          "date": "2023-04-24T00:00:00",
+          "organization": "Technology Innovation Institute",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "MPT-7B",
+          "display_name": "MPT-7B",
+          "eci": 93.05863708981929,
+          "eci_std": 7.745485758353081,
+          "date": "2023-05-05T00:00:00",
+          "organization": "MosaicML",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Baichuan1-7B",
+          "display_name": "Baichuan1-7B",
+          "eci": 90.2261508367615,
+          "eci_std": 8.113878298605488,
+          "date": "2023-06-01T00:00:00",
+          "organization": "Baichuan",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "GPT-3.5 Turbo (Jan 2024)",
+          "display_name": "GPT-3.5 Turbo (Jan 2024)",
+          "eci": 114.4510771231012,
+          "eci_std": 4.788972680354515,
+          "date": "2023-06-13T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-3.5 Turbo (Nov 2023)",
+          "display_name": "GPT-3.5 Turbo (Nov 2023)",
+          "eci": 118.9117162072632,
+          "eci_std": 4.497003239851212,
+          "date": "2023-06-13T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-3.5 Turbo (Jun 2023)",
+          "display_name": "GPT-3.5 Turbo (Jun 2023)",
+          "eci": 113.5352372523353,
+          "eci_std": 4.926222429377951,
+          "date": "2023-06-13T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "MPT-30B",
+          "display_name": "MPT-30B",
+          "eci": 100.4277451501984,
+          "eci_std": 6.626633647949205,
+          "date": "2023-06-22T00:00:00",
+          "organization": "MosaicML",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude 2",
+          "display_name": "Claude 2",
+          "eci": 119.68566091576712,
+          "eci_std": 4.101487375550456,
+          "date": "2023-07-11T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Llama 2-70B",
+          "display_name": "Llama 2-70B",
+          "eci": 114.46473231828304,
+          "eci_std": 5.140545749855106,
+          "date": "2023-07-18T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Llama 2-13B",
+          "display_name": "Llama 2-13B",
+          "eci": 106.12767318707684,
+          "eci_std": 6.430610250232614,
+          "date": "2023-07-18T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Llama 2-34B",
+          "display_name": "Llama 2-34B",
+          "eci": 105.17985402223196,
+          "eci_std": 6.312508915614548,
+          "date": "2023-07-18T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Llama 2-7B",
+          "display_name": "Llama 2-7B",
+          "eci": 98.131888191403,
+          "eci_std": 6.6525038694906184,
+          "date": "2023-07-18T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Stable Beluga 2",
+          "display_name": "Stable Beluga 2",
+          "eci": 117.07861283450954,
+          "eci_std": 4.651082230265068,
+          "date": "2023-07-20T00:00:00",
+          "organization": "Stability AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude Instant",
+          "display_name": "Claude Instant",
+          "eci": 121.3188362416804,
+          "eci_std": 3.9151770571267224,
+          "date": "2023-08-09T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Baichuan2-13B",
+          "display_name": "Baichuan2-13B",
+          "eci": 103.00990628529723,
+          "eci_std": 7.021632906000994,
+          "date": "2023-09-06T00:00:00",
+          "organization": "Baichuan",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Falcon-180B",
+          "display_name": "Falcon-180B",
+          "eci": 112.55514479073348,
+          "eci_std": 6.959972166184518,
+          "date": "2023-09-06T00:00:00",
+          "organization": "Technology Innovation Institute",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "XGen-7B",
+          "display_name": "XGen-7B",
+          "eci": 91.19441994102598,
+          "eci_std": 6.731038733401618,
+          "date": "2023-09-07T00:00:00",
+          "organization": "Salesforce",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Phi-1.5",
+          "display_name": "Phi-1.5",
+          "eci": 89.70503541778389,
+          "eci_std": 14.154770424967017,
+          "date": "2023-09-11T00:00:00",
+          "organization": "Microsoft",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Baichuan 2-7B",
+          "display_name": "Baichuan 2-7B",
+          "eci": 96.07086684480576,
+          "eci_std": 7.852985032363491,
+          "date": "2023-09-20T00:00:00",
+          "organization": "Baichuan",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Qwen-7B",
+          "display_name": "Qwen-7B",
+          "eci": 106.9944882970192,
+          "eci_std": 6.109811077723856,
+          "date": "2023-09-28T00:00:00",
+          "organization": "Alibaba",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Qwen-14B",
+          "display_name": "Qwen-14B",
+          "eci": 113.0425580610626,
+          "eci_std": 5.2885994535259115,
+          "date": "2023-09-28T00:00:00",
+          "organization": "Alibaba",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Yi-34B",
+          "display_name": "Yi-34B",
+          "eci": 117.8653502823191,
+          "eci_std": 4.371941528317994,
+          "date": "2023-11-02T00:00:00",
+          "organization": "01.AI",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Yi 6B",
+          "display_name": "Yi 6B",
+          "eci": 104.66112990700314,
+          "eci_std": 6.166040808490376,
+          "date": "2023-11-02T00:00:00",
+          "organization": "01.AI",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Claude 2.1",
+          "display_name": "Claude 2.1",
+          "eci": 118.44644368202307,
+          "eci_std": 4.738595006814403,
+          "date": "2023-11-21T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 1.0 Pro",
+          "display_name": "Gemini 1.0 Pro",
+          "eci": 117.15630767619464,
+          "eci_std": 4.217766701273713,
+          "date": "2023-12-06T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Mixtral 8x7B",
+          "display_name": "Mixtral 8x7B",
+          "eci": 118.67904309829972,
+          "eci_std": 3.8938184320697986,
+          "date": "2023-12-11T00:00:00",
+          "organization": "Mistral AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Phi-2",
+          "display_name": "Phi-2",
+          "eci": 107.80378761497064,
+          "eci_std": 10.385608225807124,
+          "date": "2023-12-12T00:00:00",
+          "organization": "Microsoft",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "DeepSeek Coder 33B",
+          "display_name": "DeepSeek Coder 33B",
+          "eci": 96.54416431730408,
+          "eci_std": 7.439127593431404,
+          "date": "2024-01-25T00:00:00",
+          "organization": "DeepSeek,Peking University",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "DeepSeek Coder 6.7B",
+          "display_name": "DeepSeek Coder 6.7B",
+          "eci": 89.71498457107545,
+          "eci_std": 10.577830311833479,
+          "date": "2024-01-25T00:00:00",
+          "organization": "DeepSeek,Peking University",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "DeepSeek Coder 1.3B",
+          "display_name": "DeepSeek Coder 1.3B",
+          "eci": 62.55838502465344,
+          "eci_std": 18.48767070057189,
+          "date": "2024-01-25T00:00:00",
+          "organization": "DeepSeek,Peking University",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "Gemini 1.5 Pro (Feb 2024)",
+          "display_name": "Gemini 1.5 Pro (Feb 2024)",
+          "eci": 128.3761519633294,
+          "eci_std": 3.5553120412243993,
+          "date": "2024-02-15T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 1.5 Pro (Sept 2024)",
+          "display_name": "Gemini 1.5 Pro (Sept 2024)",
+          "eci": 132.80855728132738,
+          "eci_std": 2.018868383129259,
+          "date": "2024-02-15T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 1.5 Pro (May 2024)",
+          "display_name": "Gemini 1.5 Pro (May 2024)",
+          "eci": 127.3143614467378,
+          "eci_std": 3.1390720645265153,
+          "date": "2024-02-15T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemma 7B",
+          "display_name": "Gemma 7B",
+          "eci": 111.91031267044436,
+          "eci_std": 5.174140231674923,
+          "date": "2024-02-21T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemma 2B",
+          "display_name": "Gemma 2B",
+          "eci": 93.85290188554028,
+          "eci_std": 7.927298405062853,
+          "date": "2024-02-21T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Mistral Large",
+          "display_name": "Mistral Large",
+          "eci": 121.17578311963518,
+          "eci_std": 4.093219378033112,
+          "date": "2024-02-26T00:00:00",
+          "organization": "Mistral AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Nemotron-4 15B",
+          "display_name": "Nemotron-4 15B",
+          "eci": 107.46926334663706,
+          "eci_std": 5.956215392846346,
+          "date": "2024-02-27T00:00:00",
+          "organization": "NVIDIA",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "StarCoder 2 7B",
+          "display_name": "StarCoder 2 7B",
+          "eci": 93.74468621716198,
+          "eci_std": 9.219427317195098,
+          "date": "2024-02-29T00:00:00",
+          "organization": "Hugging Face,ServiceNow,NVIDIA,BigCode",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "StarCoder 2 15B",
+          "display_name": "StarCoder 2 15B",
+          "eci": 105.07014362485717,
+          "eci_std": 7.08917254331011,
+          "date": "2024-02-29T00:00:00",
+          "organization": "Hugging Face,ServiceNow,NVIDIA,BigCode",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "StarCoder 2 3B",
+          "display_name": "StarCoder 2 3B",
+          "eci": 88.80207370474886,
+          "eci_std": 10.179174804147344,
+          "date": "2024-02-29T00:00:00",
+          "organization": "Hugging Face,ServiceNow,NVIDIA,BigCode",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude 3 Opus",
+          "display_name": "Claude 3 Opus",
+          "eci": 127.0160164940564,
+          "eci_std": 2.9533124637881065,
+          "date": "2024-03-04T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude 3 Sonnet",
+          "display_name": "Claude 3 Sonnet",
+          "eci": 120.07911742095249,
+          "eci_std": 4.2205901980850795,
+          "date": "2024-03-04T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude 3 Haiku",
+          "display_name": "Claude 3 Haiku",
+          "eci": 117.82634783357308,
+          "eci_std": 4.052375638244774,
+          "date": "2024-03-04T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-4 Turbo (Apr 2024)",
+          "display_name": "GPT-4 Turbo (Apr 2024)",
+          "eci": 127.6647972382475,
+          "eci_std": 2.6850994064448384,
+          "date": "2024-04-09T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Mixtral 8x22B",
+          "display_name": "Mixtral 8x22B",
+          "eci": 121.32712747938352,
+          "eci_std": 3.8834757823894237,
+          "date": "2024-04-17T00:00:00",
+          "organization": "Mistral AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Llama 3-8B",
+          "display_name": "Llama 3-8B",
+          "eci": 116.95402127417614,
+          "eci_std": 5.059037239156681,
+          "date": "2024-04-18T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Llama 3-70B",
+          "display_name": "Llama 3-70B",
+          "eci": 119.48564262408183,
+          "eci_std": 7.843410149618263,
+          "date": "2024-04-18T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "phi-3-medium 14B",
+          "display_name": "phi-3-medium 14B",
+          "eci": 121.63327525146236,
+          "eci_std": 3.902364332944257,
+          "date": "2024-04-23T00:00:00",
+          "organization": "Microsoft",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "phi-3-small 7.4B",
+          "display_name": "phi-3-small 7.4B",
+          "eci": 122.8380465722522,
+          "eci_std": 4.28544322234786,
+          "date": "2024-04-23T00:00:00",
+          "organization": "Microsoft",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "phi-3-mini 3.8B",
+          "display_name": "phi-3-mini 3.8B",
+          "eci": 117.76366331763955,
+          "eci_std": 5.889457273760632,
+          "date": "2024-04-23T00:00:00",
+          "organization": "Microsoft",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Falcon 2 11B",
+          "display_name": "Falcon 2 11B",
+          "eci": 109.64464213071828,
+          "eci_std": 6.396321681174559,
+          "date": "2024-05-09T00:00:00",
+          "organization": "Technology Innovation Institute",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 1.5 Flash (Sep 2024)",
+          "display_name": "Gemini 1.5 Flash (Sep 2024)",
+          "eci": 130.4371110012194,
+          "eci_std": 3.040648371960546,
+          "date": "2024-05-10T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 1.5 Flash (May 2024)",
+          "display_name": "Gemini 1.5 Flash (May 2024)",
+          "eci": 122.70382017930552,
+          "eci_std": 3.726635454179176,
+          "date": "2024-05-10T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Qwen2-72B",
+          "display_name": "Qwen2-72B",
+          "eci": 125.7621934208397,
+          "eci_std": 3.1419184639826634,
+          "date": "2024-06-07T00:00:00",
+          "organization": "Alibaba",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Claude 3.5 Sonnet",
+          "display_name": "Claude 3.5 Sonnet",
+          "eci": 130.0,
+          "eci_std": null,
+          "date": "2024-06-20T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude 3.5 Sonnet (October 2024)",
+          "display_name": "Claude 3.5 Sonnet (October 2024)",
+          "eci": 134.33044387835574,
+          "eci_std": 3.135525775389112,
+          "date": "2024-06-20T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemma 2 27B",
+          "display_name": "Gemma 2 27B",
+          "eci": 122.57903489610078,
+          "eci_std": 3.2824266734483163,
+          "date": "2024-06-24T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemma 2 9B",
+          "display_name": "Gemma 2 9B",
+          "eci": 119.82756811820607,
+          "eci_std": 3.7873170287286473,
+          "date": "2024-06-24T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-4o mini",
+          "display_name": "GPT-4o mini",
+          "eci": 127.08812529088948,
+          "eci_std": 2.7803636267577456,
+          "date": "2024-07-18T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Mistral NeMo",
+          "display_name": "Mistral NeMo",
+          "eci": 118.5374108856435,
+          "eci_std": 4.46126251419137,
+          "date": "2024-07-18T00:00:00",
+          "organization": "Mistral AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Llama 3.1-8B",
+          "display_name": "Llama 3.1-8B",
+          "eci": 115.95547058171856,
+          "eci_std": 6.006919746996576,
+          "date": "2024-07-23T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Llama 3.1-405B",
+          "display_name": "Llama 3.1-405B",
+          "eci": 127.94408573039593,
+          "eci_std": 4.215945780769154,
+          "date": "2024-07-23T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Llama 3.1-70B",
+          "display_name": "Llama 3.1-70B",
+          "eci": 125.51410031657488,
+          "eci_std": 2.9464596896475874,
+          "date": "2024-07-23T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Mistral Large 2 (Jul 2024)",
+          "display_name": "Mistral Large 2 (Jul 2024)",
+          "eci": 127.62383844702424,
+          "eci_std": 2.3656361965236634,
+          "date": "2024-07-24T00:00:00",
+          "organization": "Mistral AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Mistral Large 2 (Nov 2024)",
+          "display_name": "Mistral Large 2 (Nov 2024)",
+          "eci": 128.83626615962672,
+          "eci_std": 2.971544451615489,
+          "date": "2024-07-24T00:00:00",
+          "organization": "Mistral AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-4o (Aug 2024)",
+          "display_name": "GPT-4o (Aug 2024)",
+          "eci": 129.2754281949178,
+          "eci_std": 2.8321554354463077,
+          "date": "2024-08-06T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Grok-2 (Dec 2024)",
+          "display_name": "Grok-2 (Dec 2024)",
+          "eci": 130.82106251404426,
+          "eci_std": 2.593018648488298,
+          "date": "2024-08-13T00:00:00",
+          "organization": "xAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "o1-preview",
+          "display_name": "o1-preview",
+          "eci": 135.92506359326816,
+          "eci_std": 2.171921125945655,
+          "date": "2024-09-12T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "o1-mini",
+          "display_name": "o1-mini",
+          "eci": 136.62222971093723,
+          "eci_std": 1.978628760820549,
+          "date": "2024-09-12T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Qwen2.5-Coder (7B)",
+          "display_name": "Qwen2.5-Coder (7B)",
+          "eci": 113.25963673837278,
+          "eci_std": 8.358016839477811,
+          "date": "2024-09-18T00:00:00",
+          "organization": "Alibaba",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Qwen2.5-Coder (1.5B)",
+          "display_name": "Qwen2.5-Coder (1.5B)",
+          "eci": 103.28678042861412,
+          "eci_std": 9.761606871019657,
+          "date": "2024-09-18T00:00:00",
+          "organization": "Alibaba",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Qwen2.5-72B",
+          "display_name": "Qwen2.5-72B",
+          "eci": 129.4534628467613,
+          "eci_std": 3.022933858800089,
+          "date": "2024-09-19T00:00:00",
+          "organization": "Alibaba",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Llama 3.2 90B",
+          "display_name": "Llama 3.2 90B",
+          "eci": 125.73857218035133,
+          "eci_std": 2.8071093084280023,
+          "date": "2024-09-24T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude 3.5 Haiku",
+          "display_name": "Claude 3.5 Haiku",
+          "eci": 127.52589047777197,
+          "eci_std": 3.2761052771514363,
+          "date": "2024-10-22T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-4o (Nov 2024)",
+          "display_name": "GPT-4o (Nov 2024)",
+          "eci": 129.32871904150923,
+          "eci_std": 2.527899053150795,
+          "date": "2024-11-20T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "INTELLECT-1",
+          "display_name": "INTELLECT-1",
+          "eci": 100.89330893669626,
+          "eci_std": 7.163867560008074,
+          "date": "2024-11-29T00:00:00",
+          "organization": "Prime Intellect,Hugging Face,Arcee AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "o1",
+          "display_name": "o1",
+          "eci": 142.88743482021584,
+          "eci_std": 1.0903303883487583,
+          "date": "2024-12-05T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Llama 3.3 70B",
+          "display_name": "Llama 3.3 70B",
+          "eci": 127.54016479665808,
+          "eci_std": 2.992901843746705,
+          "date": "2024-12-06T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 2.0 Pro",
+          "display_name": "Gemini 2.0 Pro",
+          "eci": 135.70648301266812,
+          "eci_std": 2.274659033659808,
+          "date": "2024-12-11T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 2.0 Flash (Dec 2024)",
+          "display_name": "Gemini 2.0 Flash (Dec 2024)",
+          "eci": 135.30988591086722,
+          "eci_std": 3.686733466418129,
+          "date": "2024-12-11T00:00:00",
+          "organization": "Google DeepMind,Google",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 2.0 Flash (Feb 2025)",
+          "display_name": "Gemini 2.0 Flash (Feb 2025)",
+          "eci": 135.8457079392604,
+          "eci_std": 2.0427602739428514,
+          "date": "2024-12-11T00:00:00",
+          "organization": "Google DeepMind,Google",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Phi-4",
+          "display_name": "Phi-4",
+          "eci": 131.1575285607777,
+          "eci_std": 2.2457533222885675,
+          "date": "2024-12-12T00:00:00",
+          "organization": "Microsoft Research",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 2.0 Flash Thinking (Jan 2025)",
+          "display_name": "Gemini 2.0 Flash Thinking (Jan 2025)",
+          "eci": 136.346865093296,
+          "eci_std": 3.106853701241234,
+          "date": "2024-12-19T00:00:00",
+          "organization": "Google DeepMind,Google",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "o3",
+          "display_name": "o3",
+          "eci": 147.15518728213084,
+          "eci_std": 1.1519789395081514,
+          "date": "2024-12-20T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "DeepSeek-V3",
+          "display_name": "DeepSeek-V3",
+          "eci": 133.1404848741002,
+          "eci_std": 2.6979772296247337,
+          "date": "2024-12-24T00:00:00",
+          "organization": "DeepSeek",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "DeepSeek-R1",
+          "display_name": "DeepSeek-R1",
+          "eci": 139.79737613729642,
+          "eci_std": 1.4181746489728055,
+          "date": "2025-01-20T00:00:00",
+          "organization": "DeepSeek",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "Qwen2.5-Max",
+          "display_name": "Qwen2.5-Max",
+          "eci": 133.45659822830942,
+          "eci_std": 2.4091049298808622,
+          "date": "2025-01-28T00:00:00",
+          "organization": "Alibaba",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "o3-mini",
+          "display_name": "o3-mini",
+          "eci": 141.54675113764245,
+          "eci_std": 1.7034283162781225,
+          "date": "2025-01-31T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Grok 3",
+          "display_name": "Grok 3",
+          "eci": 139.1504252727465,
+          "eci_std": 1.3998582633884067,
+          "date": "2025-02-17T00:00:00",
+          "organization": "xAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Grok-3 mini",
+          "display_name": "Grok-3 mini",
+          "eci": 141.08811630670158,
+          "eci_std": 1.4589995979571122,
+          "date": "2025-02-19T00:00:00",
+          "organization": "xAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude 3.7 Sonnet",
+          "display_name": "Claude 3.7 Sonnet",
+          "eci": 141.97489515139543,
+          "eci_std": 1.2409472482786101,
+          "date": "2025-02-24T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-4.5",
+          "display_name": "GPT-4.5",
+          "eci": 137.65687013579264,
+          "eci_std": 1.6663517428755135,
+          "date": "2025-02-27T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemma 3 27B",
+          "display_name": "Gemma 3 27B",
+          "eci": 131.1158569203234,
+          "eci_std": 2.7066166685034094,
+          "date": "2025-03-12T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "DeepSeek-V3 (Mar 2025)",
+          "display_name": "DeepSeek-V3 (Mar 2025)",
+          "eci": 137.14758747799513,
+          "eci_std": 2.1105657649995413,
+          "date": "2025-03-24T00:00:00",
+          "organization": "DeepSeek",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "Gemini 2.5 Pro (Mar 2025)",
+          "display_name": "Gemini 2.5 Pro (Mar 2025)",
+          "eci": 145.03673929908416,
+          "eci_std": 1.2127357929486364,
+          "date": "2025-03-25T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-4o (May 2024)",
+          "display_name": "GPT-4o (May 2024)",
+          "eci": 128.87870578453092,
+          "eci_std": 2.5298709880690917,
+          "date": "2025-03-27T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Llama 4 Scout",
+          "display_name": "Llama 4 Scout",
+          "eci": 130.59311726948278,
+          "eci_std": 2.6961103797007855,
+          "date": "2025-04-05T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Llama 4 Maverick",
+          "display_name": "Llama 4 Maverick",
+          "eci": 133.10180932931883,
+          "eci_std": 2.511132771926067,
+          "date": "2025-04-05T00:00:00",
+          "organization": "Meta AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-4.1 nano",
+          "display_name": "GPT-4.1 nano",
+          "eci": 130.89417908770878,
+          "eci_std": 2.4171131514674244,
+          "date": "2025-04-14T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-4.1 mini",
+          "display_name": "GPT-4.1 mini",
+          "eci": 135.81693359491763,
+          "eci_std": 2.0649599954433056,
+          "date": "2025-04-14T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-4.1",
+          "display_name": "GPT-4.1",
+          "eci": 137.5384100872206,
+          "eci_std": 1.4415931031172886,
+          "date": "2025-04-14T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "o4-mini",
+          "display_name": "o4-mini",
+          "eci": 146.8193594255602,
+          "eci_std": 1.1094829712237921,
+          "date": "2025-04-16T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 2.5 Flash (Apr 2025)",
+          "display_name": "Gemini 2.5 Flash (Apr 2025)",
+          "eci": 140.62313742061508,
+          "eci_std": 2.2441679615379955,
+          "date": "2025-04-17T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 2.5 Flash (Sep 2025)",
+          "display_name": "Gemini 2.5 Flash (Sep 2025)",
+          "eci": 143.35855486645076,
+          "eci_std": 2.259351296165653,
+          "date": "2025-04-17T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 2.5 Flash (Jun 2025)",
+          "display_name": "Gemini 2.5 Flash (Jun 2025)",
+          "eci": 140.69063132786988,
+          "eci_std": 2.217507793104331,
+          "date": "2025-04-17T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 2.5 Flash (May 2025)",
+          "display_name": "Gemini 2.5 Flash (May 2025)",
+          "eci": 142.37813173430573,
+          "eci_std": 1.412224926554225,
+          "date": "2025-04-17T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Qwen3-235B-A22B",
+          "display_name": "Qwen3-235B-A22B",
+          "eci": 139.67506579922386,
+          "eci_std": 2.1710746893302293,
+          "date": "2025-04-29T00:00:00",
+          "organization": "Alibaba",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Gemini 2.5 Pro (May 2025)",
+          "display_name": "Gemini 2.5 Pro (May 2025)",
+          "eci": 142.72496081098845,
+          "eci_std": 1.6305816061988703,
+          "date": "2025-05-06T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Mistral Medium 3",
+          "display_name": "Mistral Medium 3",
+          "eci": 135.3817233086393,
+          "eci_std": 1.9421828622970152,
+          "date": "2025-05-07T00:00:00",
+          "organization": "Mistral AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude Opus 4",
+          "display_name": "Claude Opus 4",
+          "eci": 143.3159025546364,
+          "eci_std": 1.2939337085226055,
+          "date": "2025-05-22T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude Sonnet 4",
+          "display_name": "Claude Sonnet 4",
+          "eci": 142.47598979625522,
+          "eci_std": 1.605197920595782,
+          "date": "2025-05-22T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "DeepSeek-R1 (May 2025)",
+          "display_name": "DeepSeek-R1 (May 2025)",
+          "eci": 142.08428730439883,
+          "eci_std": 1.1952930196053564,
+          "date": "2025-05-28T00:00:00",
+          "organization": "DeepSeek",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "Gemini 2.5 Pro (Jun 2025)",
+          "display_name": "Gemini 2.5 Pro (Jun 2025)",
+          "eci": 146.7135372373823,
+          "eci_std": 1.0037486713116897,
+          "date": "2025-06-05T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "o3-pro",
+          "display_name": "o3-pro",
+          "eci": 148.15800385369647,
+          "eci_std": 1.5476923576853368,
+          "date": "2025-06-10T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Magistral Small 1.1",
+          "display_name": "Magistral Small 1.1",
+          "eci": 133.11524356229617,
+          "eci_std": 2.51301948316866,
+          "date": "2025-06-10T00:00:00",
+          "organization": "Mistral AI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Grok 4",
+          "display_name": "Grok 4",
+          "eci": 147.37332981157164,
+          "eci_std": 1.3466979269382506,
+          "date": "2025-07-09T00:00:00",
+          "organization": "xAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Kimi K2 (Sep 2025)",
+          "display_name": "Kimi K2 (Sep 2025)",
+          "eci": 141.0886666714548,
+          "eci_std": 1.6809150945706823,
+          "date": "2025-07-11T00:00:00",
+          "organization": "Moonshot",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "Kimi K2 (Jul 2025)",
+          "display_name": "Kimi K2 (Jul 2025)",
+          "eci": 140.52077095141937,
+          "eci_std": 2.10723599510384,
+          "date": "2025-07-11T00:00:00",
+          "organization": "Moonshot",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "Qwen3-235B-A22B-Thinking (Jul 2025)",
+          "display_name": "Qwen3-235B-A22B-Thinking (Jul 2025)",
+          "eci": 145.56099606186817,
+          "eci_std": 1.5093437640753595,
+          "date": "2025-07-25T00:00:00",
+          "organization": "Alibaba",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "gpt-oss-120b",
+          "display_name": "gpt-oss-120b",
+          "eci": 140.6661452813083,
+          "eci_std": 2.3920731173185708,
+          "date": "2025-08-05T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude Opus 4.1",
+          "display_name": "Claude Opus 4.1",
+          "eci": 144.63205794878996,
+          "eci_std": 1.1311876080134473,
+          "date": "2025-08-05T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-5 mini",
+          "display_name": "GPT-5 mini",
+          "eci": 145.52475216755067,
+          "eci_std": 1.1849806029926078,
+          "date": "2025-08-07T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-5",
+          "display_name": "GPT-5",
+          "eci": 150.0,
+          "eci_std": null,
+          "date": "2025-08-07T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-5 nano",
+          "display_name": "GPT-5 nano",
+          "eci": 140.50682118354982,
+          "eci_std": 2.2171056783822887,
+          "date": "2025-08-07T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "DeepSeek-V3.1",
+          "display_name": "DeepSeek-V3.1",
+          "eci": 138.8704164719096,
+          "eci_std": 2.6447899263358763,
+          "date": "2025-08-21T00:00:00",
+          "organization": "DeepSeek",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "Qwen3-Max",
+          "display_name": "Qwen3-Max",
+          "eci": 144.48951987850327,
+          "eci_std": 3.8721090341613054,
+          "date": "2025-09-05T00:00:00",
+          "organization": "Alibaba",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Grok 4 Fast",
+          "display_name": "Grok 4 Fast",
+          "eci": 144.82860789758791,
+          "eci_std": 1.618030497355636,
+          "date": "2025-09-19T00:00:00",
+          "organization": "xAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "DeepSeek-V3.2-Exp",
+          "display_name": "DeepSeek-V3.2-Exp",
+          "eci": 145.1196623869907,
+          "eci_std": 1.5864958662484334,
+          "date": "2025-09-29T00:00:00",
+          "organization": "DeepSeek",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "Claude Sonnet 4.5",
+          "display_name": "Claude Sonnet 4.5",
+          "eci": 147.08831709645358,
+          "eci_std": 1.0210532136576365,
+          "date": "2025-09-29T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GLM-4.6",
+          "display_name": "GLM-4.6",
+          "eci": 141.51385525636934,
+          "eci_std": 3.77029223058156,
+          "date": "2025-09-30T00:00:00",
+          "organization": "Z.ai (Zhipu AI),Tsinghua University",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "GPT-5 Pro",
+          "display_name": "GPT-5 Pro",
+          "eci": 150.23567963293243,
+          "eci_std": 1.0265609720004212,
+          "date": "2025-10-07T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude Haiku 4.5",
+          "display_name": "Claude Haiku 4.5",
+          "eci": 143.03284655367588,
+          "eci_std": 1.720746754992812,
+          "date": "2025-10-15T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Kimi K2 Thinking",
+          "display_name": "Kimi K2 Thinking",
+          "eci": 145.5037729115908,
+          "eci_std": 1.3207257115003876,
+          "date": "2025-11-06T00:00:00",
+          "organization": "Moonshot",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "GPT-5.1",
+          "display_name": "GPT-5.1",
+          "eci": 149.68607523720135,
+          "eci_std": 0.6592031111910962,
+          "date": "2025-11-13T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 3 Pro",
+          "display_name": "Gemini 3 Pro",
+          "eci": 153.37507453900983,
+          "eci_std": 1.2825401230295819,
+          "date": "2025-11-18T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude Opus 4.5",
+          "display_name": "Claude Opus 4.5",
+          "eci": 149.88378852383656,
+          "eci_std": 1.5653141276630904,
+          "date": "2025-11-24T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "DeepSeek-V3.2",
+          "display_name": "DeepSeek-V3.2",
+          "eci": 146.4886876637475,
+          "eci_std": 0.8544744125758372,
+          "date": "2025-12-01T00:00:00",
+          "organization": "DeepSeek",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "GPT-5.2",
+          "display_name": "GPT-5.2",
+          "eci": 153.7187344646692,
+          "eci_std": 1.2378348363094487,
+          "date": "2025-12-11T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-5.2 Pro",
+          "display_name": "GPT-5.2 Pro",
+          "eci": 154.17759225015558,
+          "eci_std": 2.07646871737314,
+          "date": "2025-12-11T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 3 Flash",
+          "display_name": "Gemini 3 Flash",
+          "eci": 150.93687046443816,
+          "eci_std": 2.568166824055041,
+          "date": "2025-12-17T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GLM-4.7",
+          "display_name": "GLM-4.7",
+          "eci": 144.50629138871892,
+          "eci_std": 1.2380999821787957,
+          "date": "2025-12-22T00:00:00",
+          "organization": "Z.ai (Zhipu AI)",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Kimi K2.5",
+          "display_name": "Kimi K2.5",
+          "eci": 148.19317391917437,
+          "eci_std": 0.8748883866605903,
+          "date": "2026-02-02T00:00:00",
+          "organization": "Moonshot",
+          "is_open": true,
+          "is_china": true
+        },
+        {
+          "model": "GPT-5.3 Codex",
+          "display_name": "GPT-5.3 Codex",
+          "eci": 155.9902561398087,
+          "eci_std": 2.1742908726103525,
+          "date": "2026-02-05T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Claude Opus 4.6",
+          "display_name": "Claude Opus 4.6",
+          "eci": 155.03424458637127,
+          "eci_std": 1.278503949841189,
+          "date": "2026-02-05T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "MiniMax-M2.5",
+          "display_name": "MiniMax-M2.5",
+          "eci": 147.46762425095983,
+          "eci_std": 1.5432837805953754,
+          "date": "2026-02-12T00:00:00",
+          "organization": "MiniMax",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GLM-5",
+          "display_name": "GLM-5",
+          "eci": 146.51307307457338,
+          "eci_std": 1.1919393775339877,
+          "date": "2026-02-17T00:00:00",
+          "organization": "Z.ai (Zhipu AI)",
+          "is_open": false,
+          "is_china": true
+        },
+        {
+          "model": "Claude Sonnet 4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "eci": 152.9315506996564,
+          "eci_std": 1.7880151621412166,
+          "date": "2026-02-17T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "Gemini 3.1 Pro",
+          "display_name": "Gemini 3.1 Pro",
+          "eci": 156.7151923209314,
+          "eci_std": 1.9513997187620031,
+          "date": "2026-02-19T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-5.4 Pro",
+          "display_name": "GPT-5.4 Pro",
+          "eci": 157.94353188772644,
+          "eci_std": 2.1114771851811875,
+          "date": "2026-03-05T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "GPT-5.4",
+          "display_name": "GPT-5.4",
+          "eci": 155.92558449193325,
+          "eci_std": 1.7366769065814498,
+          "date": "2026-03-05T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        }
+      ],
+      "gaps": [
+        {
+          "closed_model": "LLaMA-65B",
+          "closed_date": "2023-02-24T00:00:00",
+          "open_model": "DeepSeek-V3",
+          "open_date": "2024-12-24T00:00:00",
+          "gap_months": 22.0,
+          "matched": true,
+          "match_type": "exact",
+          "closed_eci": 110.51770381029368,
+          "open_eci": 133.1404848741002
+        },
+        {
+          "closed_model": "GPT-4 (Mar 2023)",
+          "closed_date": "2023-03-15T00:00:00",
+          "open_model": "DeepSeek-V3",
+          "open_date": "2024-12-24T00:00:00",
+          "gap_months": 21.4,
+          "matched": true,
+          "match_type": "exact",
+          "closed_eci": 126.16871695900504,
+          "open_eci": 133.1404848741002
+        },
+        {
+          "closed_model": "Gemini 1.5 Pro (Sept 2024)",
+          "closed_date": "2024-02-15T00:00:00",
+          "open_model": "DeepSeek-V3",
+          "open_date": "2024-12-24T00:00:00",
+          "gap_months": 10.3,
+          "matched": true,
+          "match_type": "exact",
+          "closed_eci": 132.80855728132738,
+          "open_eci": 133.1404848741002
+        },
+        {
+          "closed_model": "Claude 3.5 Sonnet (October 2024)",
+          "closed_date": "2024-06-20T00:00:00",
+          "open_model": "DeepSeek-R1",
+          "open_date": "2025-01-20T00:00:00",
+          "gap_months": 7.0,
+          "matched": true,
+          "match_type": "exact",
+          "closed_eci": 134.33044387835574,
+          "open_eci": 139.79737613729642
+        },
+        {
+          "closed_model": "o1-mini",
+          "closed_date": "2024-09-12T00:00:00",
+          "open_model": "DeepSeek-R1",
+          "open_date": "2025-01-20T00:00:00",
+          "gap_months": 4.3,
+          "matched": true,
+          "match_type": "exact",
+          "closed_eci": 136.62222971093723,
+          "open_eci": 139.79737613729642
+        },
+        {
+          "closed_model": "o1",
+          "closed_date": "2024-12-05T00:00:00",
+          "open_model": "DeepSeek-R1 (May 2025)",
+          "open_date": "2025-05-28T00:00:00",
+          "gap_months": 5.7,
+          "matched": true,
+          "match_type": "exact",
+          "closed_eci": 142.88743482021584,
+          "open_eci": 142.08428730439883
+        },
+        {
+          "closed_model": "o3",
+          "closed_date": "2024-12-20T00:00:00",
+          "open_model": "DeepSeek-V3.2",
+          "open_date": "2025-12-01T00:00:00",
+          "gap_months": 11.4,
+          "matched": true,
+          "match_type": "exact",
+          "closed_eci": 147.15518728213084,
+          "open_eci": 146.4886876637475
+        },
+        {
+          "closed_model": "o3-pro",
+          "closed_date": "2025-06-10T00:00:00",
+          "open_model": "Kimi K2.5",
+          "open_date": "2026-02-02T00:00:00",
+          "gap_months": 7.8,
+          "matched": true,
+          "match_type": "exact",
+          "closed_eci": 148.15800385369647,
+          "open_eci": 148.19317391917437
+        },
+        {
+          "closed_model": "GPT-5",
+          "closed_date": "2025-08-07T00:00:00",
+          "open_model": null,
+          "open_date": null,
+          "gap_months": 8.2,
+          "matched": false,
+          "closed_eci": 150.0,
+          "open_eci": null
+        },
+        {
+          "closed_model": "GPT-5 Pro",
+          "closed_date": "2025-10-07T00:00:00",
+          "open_model": null,
+          "open_date": null,
+          "gap_months": 6.2,
+          "matched": false,
+          "closed_eci": 150.23567963293243,
+          "open_eci": null
+        },
+        {
+          "closed_model": "Gemini 3 Pro",
+          "closed_date": "2025-11-18T00:00:00",
+          "open_model": null,
+          "open_date": null,
+          "gap_months": 4.8,
+          "matched": false,
+          "closed_eci": 153.37507453900983,
+          "open_eci": null
+        },
+        {
+          "closed_model": "GPT-5.2 Pro",
+          "closed_date": "2025-12-11T00:00:00",
+          "open_model": null,
+          "open_date": null,
+          "gap_months": 4.0,
+          "matched": false,
+          "closed_eci": 154.17759225015558,
+          "open_eci": null
+        },
+        {
+          "closed_model": "GPT-5.3 Codex",
+          "closed_date": "2026-02-05T00:00:00",
+          "open_model": null,
+          "open_date": null,
+          "gap_months": 2.2,
+          "matched": false,
+          "closed_eci": 155.9902561398087,
+          "open_eci": null
+        },
+        {
+          "closed_model": "Gemini 3.1 Pro",
+          "closed_date": "2026-02-19T00:00:00",
+          "open_model": null,
+          "open_date": null,
+          "gap_months": 1.7,
+          "matched": false,
+          "closed_eci": 156.7151923209314,
+          "open_eci": null
+        },
+        {
+          "closed_model": "GPT-5.4 Pro",
+          "closed_date": "2026-03-05T00:00:00",
+          "open_model": null,
+          "open_date": null,
+          "gap_months": 1.3,
+          "matched": false,
+          "closed_eci": 157.94353188772644,
+          "open_eci": null
+        }
+      ],
       "statistics": {
-        "avg_horizontal_gap_months": NaN,
-        "std_horizontal_gap": NaN,
-        "ci_90_low": NaN,
-        "ci_90_high": NaN,
+        "avg_horizontal_gap_months": 13.4,
+        "std_horizontal_gap": 7.3,
+        "ci_90_low": 12.2,
+        "ci_90_high": 14.6,
         "current_vertical_gap": 9.8,
-        "total_matched": 0,
-        "total_unmatched": 0,
+        "total_matched": 8,
+        "total_unmatched": 7,
         "current_gap_estimate": {
-          "estimated_current_gap": 0,
-          "min_current_gap": 0,
+          "estimated_current_gap": 13.2,
+          "min_current_gap": 8.2,
           "confidence": "high",
-          "unmatched_ages": [],
-          "method": "no_unmatched"
+          "unmatched_ages": [
+            8.2,
+            6.2,
+            4.8,
+            4.0,
+            2.2,
+            1.7,
+            1.3
+          ],
+          "method": "survival_analysis_mle",
+          "prior_from_first_match": false,
+          "prior_params": {
+            "mu": 2.265,
+            "sigma": 0.589,
+            "prior_mean_months": 11.5
+          }
         }
       },
       "trends": {
-        "overall": null,
+        "overall": {
+          "name": "Overall",
+          "absolute_growth_per_year": 18.71,
+          "percentage_growth_annualized": 16.5,
+          "multiples_per_year": 1.16,
+          "doubling_time_years": 4.54,
+          "start_point": {
+            "date": "2023-02-24T00:00:00",
+            "eci": 97.82926884343033
+          },
+          "end_point": {
+            "date": "2026-03-05T00:00:00",
+            "eci": 154.43799277744984
+          }
+        },
+        "early": {
+          "name": "Pre-Aug 2024",
+          "absolute_growth_per_year": 16.17,
+          "percentage_growth_annualized": 15.7,
+          "multiples_per_year": 1.16,
+          "doubling_time_years": 4.76,
+          "start_point": {
+            "date": "2023-02-24T00:00:00",
+            "eci": 99.45075263378021
+          },
+          "end_point": {
+            "date": "2024-08-13T00:00:00",
+            "eci": 123.17932708769877
+          }
+        },
+        "recent": {
+          "name": "Post-Aug 2024",
+          "absolute_growth_per_year": 18.38,
+          "percentage_growth_annualized": 14.4,
+          "multiples_per_year": 1.14,
+          "doubling_time_years": 5.16,
+          "start_point": {
+            "date": "2024-09-12T00:00:00",
+            "eci": 127.42370400464279
+          },
+          "end_point": {
+            "date": "2026-03-05T00:00:00",
+            "eci": 154.54786276691448
+          }
+        },
         "metadata": {
-          "has_split": false
+          "has_split": true,
+          "split_date": "2024-04-01T00:00:00",
+          "split_label": "Apr 2024",
+          "early_key": "pre_apr_2024",
+          "recent_key": "post_apr_2024"
+        },
+        "pre_apr_2024": {
+          "name": "Pre-Apr 2024",
+          "absolute_growth_per_year": 6.12,
+          "percentage_growth_annualized": 5.2,
+          "multiples_per_year": 1.05,
+          "doubling_time_years": 13.79,
+          "start_point": {
+            "date": "2023-02-24T00:00:00",
+            "eci": 103.43993415198383
+          },
+          "end_point": {
+            "date": "2024-03-04T00:00:00",
+            "eci": 109.70232023003337
+          }
+        },
+        "post_apr_2024": {
+          "name": "Post-Apr 2024",
+          "absolute_growth_per_year": 17.7,
+          "percentage_growth_annualized": 14.0,
+          "multiples_per_year": 1.14,
+          "doubling_time_years": 5.29,
+          "start_point": {
+            "date": "2024-04-09T00:00:00",
+            "eci": 120.48535681785143
+          },
+          "end_point": {
+            "date": "2026-03-05T00:00:00",
+            "eci": 154.16431098640896
+          }
         }
       },
-      "historical_gaps": [],
+      "historical_gaps": [
+        {
+          "date": "2024-02-24T00:00:00",
+          "gap_months": 11.0,
+          "matched": false,
+          "reference_model": "Gemini 1.5 Pro (Sept 2024)",
+          "open_frontier_model": "DeepSeek Coder 33B",
+          "reference_eci": 132.8,
+          "open_frontier_eci": 96.5
+        },
+        {
+          "date": "2024-03-24T00:00:00",
+          "gap_months": 11.0,
+          "matched": false,
+          "reference_model": "Gemini 1.5 Pro (Sept 2024)",
+          "open_frontier_model": "DeepSeek Coder 33B",
+          "reference_eci": 132.8,
+          "open_frontier_eci": 96.5
+        },
+        {
+          "date": "2024-04-24T00:00:00",
+          "gap_months": 11.0,
+          "matched": false,
+          "reference_model": "Gemini 1.5 Pro (Sept 2024)",
+          "open_frontier_model": "DeepSeek Coder 33B",
+          "reference_eci": 132.8,
+          "open_frontier_eci": 96.5
+        },
+        {
+          "date": "2024-05-24T00:00:00",
+          "gap_months": 11.0,
+          "matched": false,
+          "reference_model": "Gemini 1.5 Pro (Sept 2024)",
+          "open_frontier_model": "DeepSeek Coder 33B",
+          "reference_eci": 132.8,
+          "open_frontier_eci": 96.5
+        },
+        {
+          "date": "2024-06-24T00:00:00",
+          "gap_months": 11.0,
+          "matched": false,
+          "reference_model": "Claude 3.5 Sonnet (October 2024)",
+          "open_frontier_model": "DeepSeek Coder 33B",
+          "reference_eci": 134.3,
+          "open_frontier_eci": 96.5
+        },
+        {
+          "date": "2024-07-24T00:00:00",
+          "gap_months": 11.0,
+          "matched": false,
+          "reference_model": "Claude 3.5 Sonnet (October 2024)",
+          "open_frontier_model": "DeepSeek Coder 33B",
+          "reference_eci": 134.3,
+          "open_frontier_eci": 96.5
+        },
+        {
+          "date": "2024-08-24T00:00:00",
+          "gap_months": 11.0,
+          "matched": false,
+          "reference_model": "Claude 3.5 Sonnet (October 2024)",
+          "open_frontier_model": "DeepSeek Coder 33B",
+          "reference_eci": 134.3,
+          "open_frontier_eci": 96.5
+        },
+        {
+          "date": "2024-09-24T00:00:00",
+          "gap_months": 11.0,
+          "matched": false,
+          "reference_model": "o1-mini",
+          "open_frontier_model": "DeepSeek Coder 33B",
+          "reference_eci": 136.6,
+          "open_frontier_eci": 96.5
+        },
+        {
+          "date": "2024-10-24T00:00:00",
+          "gap_months": 11.0,
+          "matched": false,
+          "reference_model": "o1-mini",
+          "open_frontier_model": "DeepSeek Coder 33B",
+          "reference_eci": 136.6,
+          "open_frontier_eci": 96.5
+        },
+        {
+          "date": "2024-11-24T00:00:00",
+          "gap_months": 11.0,
+          "matched": false,
+          "reference_model": "o1-mini",
+          "open_frontier_model": "DeepSeek Coder 33B",
+          "reference_eci": 136.6,
+          "open_frontier_eci": 96.5
+        },
+        {
+          "date": "2024-12-24T00:00:00",
+          "gap_months": 10.3,
+          "matched": false,
+          "reference_model": "o3",
+          "open_frontier_model": "DeepSeek-V3",
+          "reference_eci": 147.2,
+          "open_frontier_eci": 133.1
+        },
+        {
+          "date": "2025-01-24T00:00:00",
+          "gap_months": 1.5,
+          "matched": false,
+          "reference_model": "o3",
+          "open_frontier_model": "DeepSeek-R1",
+          "reference_eci": 147.2,
+          "open_frontier_eci": 139.8
+        },
+        {
+          "date": "2025-02-24T00:00:00",
+          "gap_months": 1.5,
+          "matched": false,
+          "reference_model": "o3",
+          "open_frontier_model": "DeepSeek-R1",
+          "reference_eci": 147.2,
+          "open_frontier_eci": 139.8
+        },
+        {
+          "date": "2025-03-24T00:00:00",
+          "gap_months": 1.5,
+          "matched": false,
+          "reference_model": "o3",
+          "open_frontier_model": "DeepSeek-R1",
+          "reference_eci": 147.2,
+          "open_frontier_eci": 139.8
+        },
+        {
+          "date": "2025-04-24T00:00:00",
+          "gap_months": 1.5,
+          "matched": false,
+          "reference_model": "o3",
+          "open_frontier_model": "DeepSeek-R1",
+          "reference_eci": 147.2,
+          "open_frontier_eci": 139.8
+        },
+        {
+          "date": "2025-05-24T00:00:00",
+          "gap_months": 1.5,
+          "matched": false,
+          "reference_model": "o3",
+          "open_frontier_model": "DeepSeek-R1",
+          "reference_eci": 147.2,
+          "open_frontier_eci": 139.8
+        },
+        {
+          "date": "2025-06-24T00:00:00",
+          "gap_months": 5.7,
+          "matched": false,
+          "reference_model": "o3-pro",
+          "open_frontier_model": "DeepSeek-R1 (May 2025)",
+          "reference_eci": 148.2,
+          "open_frontier_eci": 142.1
+        },
+        {
+          "date": "2025-07-24T00:00:00",
+          "gap_months": 5.7,
+          "matched": false,
+          "reference_model": "o3-pro",
+          "open_frontier_model": "DeepSeek-R1 (May 2025)",
+          "reference_eci": 148.2,
+          "open_frontier_eci": 142.1
+        },
+        {
+          "date": "2025-08-24T00:00:00",
+          "gap_months": 5.7,
+          "matched": false,
+          "reference_model": "GPT-5",
+          "open_frontier_model": "DeepSeek-R1 (May 2025)",
+          "reference_eci": 150.0,
+          "open_frontier_eci": 142.1
+        },
+        {
+          "date": "2025-09-24T00:00:00",
+          "gap_months": 5.7,
+          "matched": false,
+          "reference_model": "GPT-5",
+          "open_frontier_model": "DeepSeek-R1 (May 2025)",
+          "reference_eci": 150.0,
+          "open_frontier_eci": 142.1
+        },
+        {
+          "date": "2025-10-24T00:00:00",
+          "gap_months": 9.3,
+          "matched": false,
+          "reference_model": "GPT-5 Pro",
+          "open_frontier_model": "DeepSeek-V3.2-Exp",
+          "reference_eci": 150.2,
+          "open_frontier_eci": 145.1
+        },
+        {
+          "date": "2025-11-24T00:00:00",
+          "gap_months": 10.5,
+          "matched": false,
+          "reference_model": "Gemini 3 Pro",
+          "open_frontier_model": "Kimi K2 Thinking",
+          "reference_eci": 153.4,
+          "open_frontier_eci": 145.5
+        },
+        {
+          "date": "2025-12-24T00:00:00",
+          "gap_months": 11.4,
+          "matched": false,
+          "reference_model": "GPT-5.2 Pro",
+          "open_frontier_model": "DeepSeek-V3.2",
+          "reference_eci": 154.2,
+          "open_frontier_eci": 146.5
+        },
+        {
+          "date": "2026-01-24T00:00:00",
+          "gap_months": 11.4,
+          "matched": false,
+          "reference_model": "GPT-5.2 Pro",
+          "open_frontier_model": "DeepSeek-V3.2",
+          "reference_eci": 154.2,
+          "open_frontier_eci": 146.5
+        },
+        {
+          "date": "2026-02-24T00:00:00",
+          "gap_months": 7.8,
+          "matched": false,
+          "reference_model": "Gemini 3.1 Pro",
+          "open_frontier_model": "Kimi K2.5",
+          "reference_eci": 156.7,
+          "open_frontier_eci": 148.2
+        },
+        {
+          "date": "2026-03-24T00:00:00",
+          "gap_months": 7.8,
+          "matched": false,
+          "reference_model": "GPT-5.4 Pro",
+          "open_frontier_model": "Kimi K2.5",
+          "reference_eci": 157.9,
+          "open_frontier_eci": 148.2
+        }
+      ],
       "china_framing": {
-        "gaps": [],
-        "statistics": {},
-        "historical_gaps": []
+        "gaps": [
+          {
+            "closed_model": "LLaMA-65B",
+            "closed_date": "2023-02-24T00:00:00",
+            "open_model": "Qwen-14B",
+            "open_date": "2023-09-28T00:00:00",
+            "gap_months": 7.1,
+            "matched": true,
+            "match_type": "exact",
+            "closed_eci": 110.51770381029368,
+            "open_eci": 113.0425580610626
+          },
+          {
+            "closed_model": "GPT-4 (Mar 2023)",
+            "closed_date": "2023-03-15T00:00:00",
+            "open_model": "Qwen2-72B",
+            "open_date": "2024-06-07T00:00:00",
+            "gap_months": 14.8,
+            "matched": true,
+            "match_type": "exact",
+            "closed_eci": 126.16871695900504,
+            "open_eci": 125.7621934208397
+          },
+          {
+            "closed_model": "Gemini 1.5 Pro (Sept 2024)",
+            "closed_date": "2024-02-15T00:00:00",
+            "open_model": "DeepSeek-V3",
+            "open_date": "2024-12-24T00:00:00",
+            "gap_months": 10.3,
+            "matched": true,
+            "match_type": "exact",
+            "closed_eci": 132.80855728132738,
+            "open_eci": 133.1404848741002
+          },
+          {
+            "closed_model": "Claude 3.5 Sonnet (October 2024)",
+            "closed_date": "2024-06-20T00:00:00",
+            "open_model": "DeepSeek-R1",
+            "open_date": "2025-01-20T00:00:00",
+            "gap_months": 7.0,
+            "matched": true,
+            "match_type": "exact",
+            "closed_eci": 134.33044387835574,
+            "open_eci": 139.79737613729642
+          },
+          {
+            "closed_model": "o1-mini",
+            "closed_date": "2024-09-12T00:00:00",
+            "open_model": "DeepSeek-R1",
+            "open_date": "2025-01-20T00:00:00",
+            "gap_months": 4.3,
+            "matched": true,
+            "match_type": "exact",
+            "closed_eci": 136.62222971093723,
+            "open_eci": 139.79737613729642
+          },
+          {
+            "closed_model": "o1",
+            "closed_date": "2024-12-05T00:00:00",
+            "open_model": "DeepSeek-R1 (May 2025)",
+            "open_date": "2025-05-28T00:00:00",
+            "gap_months": 5.7,
+            "matched": true,
+            "match_type": "exact",
+            "closed_eci": 142.88743482021584,
+            "open_eci": 142.08428730439883
+          },
+          {
+            "closed_model": "o3",
+            "closed_date": "2024-12-20T00:00:00",
+            "open_model": "DeepSeek-V3.2",
+            "open_date": "2025-12-01T00:00:00",
+            "gap_months": 11.4,
+            "matched": true,
+            "match_type": "exact",
+            "closed_eci": 147.15518728213084,
+            "open_eci": 146.4886876637475
+          },
+          {
+            "closed_model": "o3-pro",
+            "closed_date": "2025-06-10T00:00:00",
+            "open_model": "Kimi K2.5",
+            "open_date": "2026-02-02T00:00:00",
+            "gap_months": 7.8,
+            "matched": true,
+            "match_type": "exact",
+            "closed_eci": 148.15800385369647,
+            "open_eci": 148.19317391917437
+          },
+          {
+            "closed_model": "GPT-5",
+            "closed_date": "2025-08-07T00:00:00",
+            "open_model": null,
+            "open_date": null,
+            "gap_months": 8.2,
+            "matched": false,
+            "closed_eci": 150.0,
+            "open_eci": null
+          },
+          {
+            "closed_model": "GPT-5 Pro",
+            "closed_date": "2025-10-07T00:00:00",
+            "open_model": null,
+            "open_date": null,
+            "gap_months": 6.2,
+            "matched": false,
+            "closed_eci": 150.23567963293243,
+            "open_eci": null
+          },
+          {
+            "closed_model": "Gemini 3 Pro",
+            "closed_date": "2025-11-18T00:00:00",
+            "open_model": null,
+            "open_date": null,
+            "gap_months": 4.8,
+            "matched": false,
+            "closed_eci": 153.37507453900983,
+            "open_eci": null
+          },
+          {
+            "closed_model": "GPT-5.2 Pro",
+            "closed_date": "2025-12-11T00:00:00",
+            "open_model": null,
+            "open_date": null,
+            "gap_months": 4.0,
+            "matched": false,
+            "closed_eci": 154.17759225015558,
+            "open_eci": null
+          },
+          {
+            "closed_model": "GPT-5.3 Codex",
+            "closed_date": "2026-02-05T00:00:00",
+            "open_model": null,
+            "open_date": null,
+            "gap_months": 2.2,
+            "matched": false,
+            "closed_eci": 155.9902561398087,
+            "open_eci": null
+          },
+          {
+            "closed_model": "Gemini 3.1 Pro",
+            "closed_date": "2026-02-19T00:00:00",
+            "open_model": null,
+            "open_date": null,
+            "gap_months": 1.7,
+            "matched": false,
+            "closed_eci": 156.7151923209314,
+            "open_eci": null
+          },
+          {
+            "closed_model": "GPT-5.4 Pro",
+            "closed_date": "2026-03-05T00:00:00",
+            "open_model": null,
+            "open_date": null,
+            "gap_months": 1.3,
+            "matched": false,
+            "closed_eci": 157.94353188772644,
+            "open_eci": null
+          }
+        ],
+        "statistics": {
+          "avg_horizontal_gap_months": 8.6,
+          "std_horizontal_gap": 4.1,
+          "ci_90_low": 8.0,
+          "ci_90_high": 9.3,
+          "current_vertical_gap": 9.8,
+          "total_matched": 8,
+          "total_unmatched": 7,
+          "current_gap_estimate": {
+            "estimated_current_gap": 9.9,
+            "min_current_gap": 8.2,
+            "confidence": "high",
+            "unmatched_ages": [
+              8.2,
+              6.2,
+              4.8,
+              4.0,
+              2.2,
+              1.7,
+              1.3
+            ],
+            "method": "survival_analysis_mle",
+            "prior_from_first_match": false,
+            "prior_params": {
+              "mu": 2.077,
+              "sigma": 0.397,
+              "prior_mean_months": 8.6
+            }
+          }
+        },
+        "historical_gaps": [
+          {
+            "date": "2023-08-24T00:00:00",
+            "gap_months": 3.2,
+            "matched": false,
+            "reference_model": "GPT-4 (Mar 2023)",
+            "open_frontier_model": "Baichuan1-7B",
+            "reference_eci": 126.2,
+            "open_frontier_eci": 90.2
+          },
+          {
+            "date": "2023-09-24T00:00:00",
+            "gap_months": 6.4,
+            "matched": false,
+            "reference_model": "GPT-4 (Mar 2023)",
+            "open_frontier_model": "Baichuan2-13B",
+            "reference_eci": 126.2,
+            "open_frontier_eci": 103.0
+          },
+          {
+            "date": "2023-10-24T00:00:00",
+            "gap_months": 6.5,
+            "matched": false,
+            "reference_model": "GPT-4 (Mar 2023)",
+            "open_frontier_model": "Qwen-14B",
+            "reference_eci": 126.2,
+            "open_frontier_eci": 113.0
+          },
+          {
+            "date": "2023-11-24T00:00:00",
+            "gap_months": 7.6,
+            "matched": false,
+            "reference_model": "GPT-4 (Mar 2023)",
+            "open_frontier_model": "Yi-34B",
+            "reference_eci": 126.2,
+            "open_frontier_eci": 117.9
+          },
+          {
+            "date": "2023-12-24T00:00:00",
+            "gap_months": 7.6,
+            "matched": false,
+            "reference_model": "GPT-4 (Mar 2023)",
+            "open_frontier_model": "Yi-34B",
+            "reference_eci": 126.2,
+            "open_frontier_eci": 117.9
+          },
+          {
+            "date": "2024-01-24T00:00:00",
+            "gap_months": 7.6,
+            "matched": false,
+            "reference_model": "GPT-4 (Mar 2023)",
+            "open_frontier_model": "Yi-34B",
+            "reference_eci": 126.2,
+            "open_frontier_eci": 117.9
+          },
+          {
+            "date": "2024-02-24T00:00:00",
+            "gap_months": 7.6,
+            "matched": false,
+            "reference_model": "Gemini 1.5 Pro (Sept 2024)",
+            "open_frontier_model": "Yi-34B",
+            "reference_eci": 132.8,
+            "open_frontier_eci": 117.9
+          },
+          {
+            "date": "2024-03-24T00:00:00",
+            "gap_months": 7.6,
+            "matched": false,
+            "reference_model": "Gemini 1.5 Pro (Sept 2024)",
+            "open_frontier_model": "Yi-34B",
+            "reference_eci": 132.8,
+            "open_frontier_eci": 117.9
+          },
+          {
+            "date": "2024-04-24T00:00:00",
+            "gap_months": 7.6,
+            "matched": false,
+            "reference_model": "Gemini 1.5 Pro (Sept 2024)",
+            "open_frontier_model": "Yi-34B",
+            "reference_eci": 132.8,
+            "open_frontier_eci": 117.9
+          },
+          {
+            "date": "2024-05-24T00:00:00",
+            "gap_months": 7.6,
+            "matched": false,
+            "reference_model": "Gemini 1.5 Pro (Sept 2024)",
+            "open_frontier_model": "Yi-34B",
+            "reference_eci": 132.8,
+            "open_frontier_eci": 117.9
+          },
+          {
+            "date": "2024-06-24T00:00:00",
+            "gap_months": 14.8,
+            "matched": false,
+            "reference_model": "Claude 3.5 Sonnet (October 2024)",
+            "open_frontier_model": "Qwen2-72B",
+            "reference_eci": 134.3,
+            "open_frontier_eci": 125.8
+          },
+          {
+            "date": "2024-07-24T00:00:00",
+            "gap_months": 14.8,
+            "matched": false,
+            "reference_model": "Claude 3.5 Sonnet (October 2024)",
+            "open_frontier_model": "Qwen2-72B",
+            "reference_eci": 134.3,
+            "open_frontier_eci": 125.8
+          },
+          {
+            "date": "2024-08-24T00:00:00",
+            "gap_months": 14.8,
+            "matched": false,
+            "reference_model": "Claude 3.5 Sonnet (October 2024)",
+            "open_frontier_model": "Qwen2-72B",
+            "reference_eci": 134.3,
+            "open_frontier_eci": 125.8
+          },
+          {
+            "date": "2024-09-24T00:00:00",
+            "gap_months": 7.1,
+            "matched": false,
+            "reference_model": "o1-mini",
+            "open_frontier_model": "Qwen2.5-72B",
+            "reference_eci": 136.6,
+            "open_frontier_eci": 129.5
+          },
+          {
+            "date": "2024-10-24T00:00:00",
+            "gap_months": 7.1,
+            "matched": false,
+            "reference_model": "o1-mini",
+            "open_frontier_model": "Qwen2.5-72B",
+            "reference_eci": 136.6,
+            "open_frontier_eci": 129.5
+          },
+          {
+            "date": "2024-11-24T00:00:00",
+            "gap_months": 7.1,
+            "matched": false,
+            "reference_model": "o1-mini",
+            "open_frontier_model": "Qwen2.5-72B",
+            "reference_eci": 136.6,
+            "open_frontier_eci": 129.5
+          },
+          {
+            "date": "2024-12-24T00:00:00",
+            "gap_months": 10.3,
+            "matched": false,
+            "reference_model": "o3",
+            "open_frontier_model": "DeepSeek-V3",
+            "reference_eci": 147.2,
+            "open_frontier_eci": 133.1
+          },
+          {
+            "date": "2025-01-24T00:00:00",
+            "gap_months": 1.5,
+            "matched": false,
+            "reference_model": "o3",
+            "open_frontier_model": "DeepSeek-R1",
+            "reference_eci": 147.2,
+            "open_frontier_eci": 139.8
+          },
+          {
+            "date": "2025-02-24T00:00:00",
+            "gap_months": 1.5,
+            "matched": false,
+            "reference_model": "o3",
+            "open_frontier_model": "DeepSeek-R1",
+            "reference_eci": 147.2,
+            "open_frontier_eci": 139.8
+          },
+          {
+            "date": "2025-03-24T00:00:00",
+            "gap_months": 1.5,
+            "matched": false,
+            "reference_model": "o3",
+            "open_frontier_model": "DeepSeek-R1",
+            "reference_eci": 147.2,
+            "open_frontier_eci": 139.8
+          },
+          {
+            "date": "2025-04-24T00:00:00",
+            "gap_months": 1.5,
+            "matched": false,
+            "reference_model": "o3",
+            "open_frontier_model": "DeepSeek-R1",
+            "reference_eci": 147.2,
+            "open_frontier_eci": 139.8
+          },
+          {
+            "date": "2025-05-24T00:00:00",
+            "gap_months": 1.5,
+            "matched": false,
+            "reference_model": "o3",
+            "open_frontier_model": "DeepSeek-R1",
+            "reference_eci": 147.2,
+            "open_frontier_eci": 139.8
+          },
+          {
+            "date": "2025-06-24T00:00:00",
+            "gap_months": 5.7,
+            "matched": false,
+            "reference_model": "o3-pro",
+            "open_frontier_model": "DeepSeek-R1 (May 2025)",
+            "reference_eci": 148.2,
+            "open_frontier_eci": 142.1
+          },
+          {
+            "date": "2025-07-24T00:00:00",
+            "gap_months": 5.7,
+            "matched": false,
+            "reference_model": "o3-pro",
+            "open_frontier_model": "DeepSeek-R1 (May 2025)",
+            "reference_eci": 148.2,
+            "open_frontier_eci": 142.1
+          },
+          {
+            "date": "2025-08-24T00:00:00",
+            "gap_months": 7.1,
+            "matched": false,
+            "reference_model": "GPT-5",
+            "open_frontier_model": "Qwen3-235B-A22B-Thinking (Jul 2025)",
+            "reference_eci": 150.0,
+            "open_frontier_eci": 145.6
+          },
+          {
+            "date": "2025-09-24T00:00:00",
+            "gap_months": 7.1,
+            "matched": false,
+            "reference_model": "GPT-5",
+            "open_frontier_model": "Qwen3-235B-A22B-Thinking (Jul 2025)",
+            "reference_eci": 150.0,
+            "open_frontier_eci": 145.6
+          },
+          {
+            "date": "2025-10-24T00:00:00",
+            "gap_months": 7.1,
+            "matched": false,
+            "reference_model": "GPT-5 Pro",
+            "open_frontier_model": "Qwen3-235B-A22B-Thinking (Jul 2025)",
+            "reference_eci": 150.2,
+            "open_frontier_eci": 145.6
+          },
+          {
+            "date": "2025-11-24T00:00:00",
+            "gap_months": 7.1,
+            "matched": false,
+            "reference_model": "Gemini 3 Pro",
+            "open_frontier_model": "Qwen3-235B-A22B-Thinking (Jul 2025)",
+            "reference_eci": 153.4,
+            "open_frontier_eci": 145.6
+          },
+          {
+            "date": "2025-12-24T00:00:00",
+            "gap_months": 11.4,
+            "matched": false,
+            "reference_model": "GPT-5.2 Pro",
+            "open_frontier_model": "DeepSeek-V3.2",
+            "reference_eci": 154.2,
+            "open_frontier_eci": 146.5
+          },
+          {
+            "date": "2026-01-24T00:00:00",
+            "gap_months": 11.4,
+            "matched": false,
+            "reference_model": "GPT-5.2 Pro",
+            "open_frontier_model": "DeepSeek-V3.2",
+            "reference_eci": 154.2,
+            "open_frontier_eci": 146.5
+          },
+          {
+            "date": "2026-02-24T00:00:00",
+            "gap_months": 7.8,
+            "matched": false,
+            "reference_model": "Gemini 3.1 Pro",
+            "open_frontier_model": "Kimi K2.5",
+            "reference_eci": 156.7,
+            "open_frontier_eci": 148.2
+          },
+          {
+            "date": "2026-03-24T00:00:00",
+            "gap_months": 7.8,
+            "matched": false,
+            "reference_model": "GPT-5.4 Pro",
+            "open_frontier_model": "Kimi K2.5",
+            "reference_eci": 157.9,
+            "open_frontier_eci": 148.2
+          }
+        ]
       }
     },
     "metr_time_horizon": {
@@ -11937,5 +14701,5 @@
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-04-13T16:04:18.266913"
+  "last_updated": "2026-04-13T16:16:10.863945"
 }
