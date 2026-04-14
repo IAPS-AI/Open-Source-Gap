@@ -1957,7 +1957,7 @@
           "closed_date": "2025-12-11T00:00:00",
           "open_model": null,
           "open_date": null,
-          "gap_months": 4.0,
+          "gap_months": 4.1,
           "matched": false,
           "closed_eci": 154.17759225015558,
           "open_eci": null
@@ -1977,7 +1977,7 @@
           "closed_date": "2026-02-19T00:00:00",
           "open_model": null,
           "open_date": null,
-          "gap_months": 1.7,
+          "gap_months": 1.8,
           "matched": false,
           "closed_eci": 156.7151923209314,
           "open_eci": null
@@ -2009,9 +2009,9 @@
             8.2,
             6.2,
             4.8,
-            4.0,
+            4.1,
             2.2,
-            1.7,
+            1.8,
             1.3
           ],
           "method": "survival_analysis_mle",
@@ -2468,7 +2468,7 @@
             "closed_date": "2025-12-11T00:00:00",
             "open_model": null,
             "open_date": null,
-            "gap_months": 4.0,
+            "gap_months": 4.1,
             "matched": false,
             "closed_eci": 154.17759225015558,
             "open_eci": null
@@ -2488,7 +2488,7 @@
             "closed_date": "2026-02-19T00:00:00",
             "open_model": null,
             "open_date": null,
-            "gap_months": 1.7,
+            "gap_months": 1.8,
             "matched": false,
             "closed_eci": 156.7151923209314,
             "open_eci": null
@@ -2520,9 +2520,9 @@
               8.2,
               6.2,
               4.8,
-              4.0,
+              4.1,
               2.2,
-              1.7,
+              1.8,
               1.3
             ],
             "method": "survival_analysis_mle",
@@ -4038,7 +4038,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.0,
+          "gap_months": 4.1,
           "matched": false
         },
         {
@@ -4070,7 +4070,7 @@
             8.2,
             4.8,
             4.6,
-            4.0,
+            4.1,
             2.2
           ],
           "method": "oldest_unmatched"
@@ -4328,6 +4328,15 @@
           "reference_score": 718.8,
           "open_frontier_model": "kimi_k2_thinking",
           "open_frontier_score": 57.6
+        },
+        {
+          "date": "2026-04-14T00:00:00",
+          "gap_months": 8.4,
+          "matched": false,
+          "reference_model": "claude_opus_4_6_inspect",
+          "reference_score": 718.8,
+          "open_frontier_model": "kimi_k2_thinking",
+          "open_frontier_score": 57.6
         }
       ],
       "china_framing": {
@@ -4510,7 +4519,7 @@
             "open_model": null,
             "open_date": null,
             "open_score": null,
-            "gap_months": 4.0,
+            "gap_months": 4.1,
             "matched": false
           },
           {
@@ -4542,7 +4551,7 @@
               8.2,
               4.8,
               4.6,
-              4.0,
+              4.1,
               2.2
             ],
             "method": "oldest_unmatched"
@@ -4740,6 +4749,15 @@
           },
           {
             "date": "2026-03-14T00:00:00",
+            "gap_months": 8.4,
+            "matched": false,
+            "reference_model": "claude_opus_4_6_inspect",
+            "reference_score": 718.8,
+            "open_frontier_model": "kimi_k2_thinking",
+            "open_frontier_score": 57.6
+          },
+          {
+            "date": "2026-04-14T00:00:00",
             "gap_months": 8.4,
             "matched": false,
             "reference_model": "claude_opus_4_6_inspect",
@@ -6826,7 +6844,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 1.7,
+          "gap_months": 1.8,
           "matched": false
         },
         {
@@ -6854,7 +6872,7 @@
           "confidence": "high",
           "unmatched_ages": [
             4.8,
-            1.7,
+            1.8,
             1.3
           ],
           "method": "survival_analysis_mle",
@@ -7199,6 +7217,15 @@
           "reference_score": 94.6,
           "open_frontier_model": "glm-5",
           "open_frontier_score": 87.8
+        },
+        {
+          "date": "2026-04-14T00:00:00",
+          "gap_months": 4.6,
+          "matched": false,
+          "reference_model": "gpt-5.4-pro-2026-03-05_xhigh",
+          "reference_score": 94.6,
+          "open_frontier_model": "muse-spark",
+          "open_frontier_score": 89.8
         }
       ]
     },
@@ -10860,7 +10887,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.0,
+          "gap_months": 4.1,
           "matched": false
         },
         {
@@ -10903,11 +10930,11 @@
         "total_matched": 11,
         "total_unmatched": 4,
         "current_gap_estimate": {
-          "estimated_current_gap": 7.4,
-          "min_current_gap": 4.0,
+          "estimated_current_gap": 7.5,
+          "min_current_gap": 4.1,
           "confidence": "high",
           "unmatched_ages": [
-            4.0,
+            4.1,
             2.2,
             1.3,
             1.3
@@ -11689,7 +11716,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 1.7,
+          "gap_months": 1.8,
           "matched": false
         }
       ],
@@ -11707,7 +11734,7 @@
           "confidence": "high",
           "unmatched_ages": [
             4.8,
-            1.7
+            1.8
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -12288,7 +12315,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 9.1,
+          "gap_months": 9.2,
           "matched": false
         },
         {
@@ -12308,7 +12335,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.0,
+          "gap_months": 4.1,
           "matched": false
         },
         {
@@ -12318,7 +12345,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 1.7,
+          "gap_months": 1.8,
           "matched": false
         },
         {
@@ -12346,10 +12373,10 @@
           "confidence": "low",
           "unmatched_ages": [
             11.9,
-            9.1,
+            9.2,
             8.2,
-            4.0,
-            1.7,
+            4.1,
+            1.8,
             1.3
           ],
           "method": "insufficient_data_heuristic"
@@ -14324,7 +14351,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.0,
+          "gap_months": 4.1,
           "matched": false
         },
         {
@@ -14334,7 +14361,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.0,
+          "gap_months": 4.1,
           "matched": false
         }
       ],
@@ -14347,12 +14374,12 @@
         "total_matched": 19,
         "total_unmatched": 2,
         "current_gap_estimate": {
-          "estimated_current_gap": 8.4,
-          "min_current_gap": 4.0,
+          "estimated_current_gap": 8.6,
+          "min_current_gap": 4.1,
           "confidence": "high",
           "unmatched_ages": [
-            4.0,
-            4.0
+            4.1,
+            4.1
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -14696,10 +14723,19 @@
           "reference_score": 96.1,
           "open_frontier_model": "fireworks/kimi-k2p5",
           "open_frontier_score": 92.2
+        },
+        {
+          "date": "2026-04-14T00:00:00",
+          "gap_months": 5.7,
+          "matched": false,
+          "reference_model": "gpt-5.2-2025-12-11_high",
+          "reference_score": 96.1,
+          "open_frontier_model": "fireworks/kimi-k2p5",
+          "open_frontier_score": 92.2
         }
       ]
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-04-13T16:16:10.863945"
+  "last_updated": "2026-04-14T01:51:47.620262"
 }
