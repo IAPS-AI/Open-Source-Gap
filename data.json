@@ -1957,7 +1957,7 @@
           "closed_date": "2025-12-11T00:00:00",
           "open_model": null,
           "open_date": null,
-          "gap_months": 4.3,
+          "gap_months": 4.4,
           "matched": false,
           "closed_eci": 154.25545193925797,
           "open_eci": null
@@ -1977,7 +1977,7 @@
           "closed_date": "2026-02-19T00:00:00",
           "open_model": null,
           "open_date": null,
-          "gap_months": 2.0,
+          "gap_months": 2.1,
           "matched": false,
           "closed_eci": 156.91758944471138,
           "open_eci": null
@@ -2009,9 +2009,9 @@
             8.5,
             6.5,
             5.1,
-            4.3,
+            4.4,
             2.5,
-            2.0,
+            2.1,
             1.6
           ],
           "method": "survival_analysis_mle",
@@ -2468,7 +2468,7 @@
             "closed_date": "2025-12-11T00:00:00",
             "open_model": null,
             "open_date": null,
-            "gap_months": 4.3,
+            "gap_months": 4.4,
             "matched": false,
             "closed_eci": 154.25545193925797,
             "open_eci": null
@@ -2488,7 +2488,7 @@
             "closed_date": "2026-02-19T00:00:00",
             "open_model": null,
             "open_date": null,
-            "gap_months": 2.0,
+            "gap_months": 2.1,
             "matched": false,
             "closed_eci": 156.91758944471138,
             "open_eci": null
@@ -2520,9 +2520,9 @@
               8.5,
               6.5,
               5.1,
-              4.3,
+              4.4,
               2.5,
-              2.0,
+              2.1,
               1.6
             ],
             "method": "survival_analysis_mle",
@@ -4054,7 +4054,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.3,
+          "gap_months": 4.4,
           "matched": false
         },
         {
@@ -4086,7 +4086,7 @@
             8.5,
             5.1,
             4.9,
-            4.3,
+            4.4,
             2.5
           ],
           "method": "oldest_unmatched"
@@ -4535,7 +4535,7 @@
             "open_model": null,
             "open_date": null,
             "open_score": null,
-            "gap_months": 4.3,
+            "gap_months": 4.4,
             "matched": false
           },
           {
@@ -4567,7 +4567,7 @@
               8.5,
               5.1,
               4.9,
-              4.3,
+              4.4,
               2.5
             ],
             "method": "oldest_unmatched"
@@ -6890,7 +6890,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.0,
+          "gap_months": 2.1,
           "matched": false
         },
         {
@@ -6918,7 +6918,7 @@
           "confidence": "high",
           "unmatched_ages": [
             5.1,
-            2.0,
+            2.1,
             1.6
           ],
           "method": "survival_analysis_mle",
@@ -11003,7 +11003,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.3,
+          "gap_months": 4.4,
           "matched": false
         },
         {
@@ -11046,11 +11046,11 @@
         "total_matched": 11,
         "total_unmatched": 4,
         "current_gap_estimate": {
-          "estimated_current_gap": 7.5,
-          "min_current_gap": 4.3,
+          "estimated_current_gap": 7.6,
+          "min_current_gap": 4.4,
           "confidence": "high",
           "unmatched_ages": [
-            4.3,
+            4.4,
             2.5,
             1.6,
             1.6
@@ -11871,7 +11871,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.0,
+          "gap_months": 2.1,
           "matched": false
         }
       ],
@@ -11889,7 +11889,7 @@
           "confidence": "high",
           "unmatched_ages": [
             5.1,
-            2.0
+            2.1
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -12509,7 +12509,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 9.4,
+          "gap_months": 9.5,
           "matched": false
         },
         {
@@ -12529,7 +12529,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.3,
+          "gap_months": 4.4,
           "matched": false
         },
         {
@@ -12539,7 +12539,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 2.0,
+          "gap_months": 2.1,
           "matched": false
         },
         {
@@ -12567,10 +12567,10 @@
           "confidence": "low",
           "unmatched_ages": [
             12.2,
-            9.4,
+            9.5,
             8.5,
-            4.3,
-            2.0,
+            4.4,
+            2.1,
             1.6
           ],
           "method": "insufficient_data_heuristic"
@@ -14585,7 +14585,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.3,
+          "gap_months": 4.4,
           "matched": false
         },
         {
@@ -14595,7 +14595,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.3,
+          "gap_months": 4.4,
           "matched": false
         },
         {
@@ -14618,12 +14618,12 @@
         "total_matched": 19,
         "total_unmatched": 3,
         "current_gap_estimate": {
-          "estimated_current_gap": 8.7,
-          "min_current_gap": 4.3,
+          "estimated_current_gap": 8.8,
+          "min_current_gap": 4.4,
           "confidence": "high",
           "unmatched_ages": [
-            4.3,
-            4.3,
+            4.4,
+            4.4,
             0.2
           ],
           "method": "survival_analysis_mle",
@@ -14982,5 +14982,5 @@
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-04-22T01:51:50.839388"
+  "last_updated": "2026-04-23T01:56:03.304460"
 }
