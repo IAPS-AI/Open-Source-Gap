@@ -1927,7 +1927,7 @@
           "closed_date": "2025-08-07T00:00:00",
           "open_model": null,
           "open_date": null,
-          "gap_months": 8.6,
+          "gap_months": 8.7,
           "matched": false,
           "closed_eci": 150.0,
           "open_eci": null
@@ -1937,7 +1937,7 @@
           "closed_date": "2025-10-07T00:00:00",
           "open_model": null,
           "open_date": null,
-          "gap_months": 6.6,
+          "gap_months": 6.7,
           "matched": false,
           "closed_eci": 150.2363911239049,
           "open_eci": null
@@ -1987,7 +1987,7 @@
           "closed_date": "2026-03-05T00:00:00",
           "open_model": null,
           "open_date": null,
-          "gap_months": 1.7,
+          "gap_months": 1.8,
           "matched": false,
           "closed_eci": 158.28755570450608,
           "open_eci": null
@@ -2002,17 +2002,17 @@
         "total_matched": 8,
         "total_unmatched": 7,
         "current_gap_estimate": {
-          "estimated_current_gap": 13.4,
-          "min_current_gap": 8.6,
+          "estimated_current_gap": 13.5,
+          "min_current_gap": 8.7,
           "confidence": "high",
           "unmatched_ages": [
-            8.6,
-            6.6,
+            8.7,
+            6.7,
             5.3,
             4.5,
             2.7,
             2.2,
-            1.7
+            1.8
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -2447,7 +2447,7 @@
             "closed_date": "2025-08-07T00:00:00",
             "open_model": null,
             "open_date": null,
-            "gap_months": 8.6,
+            "gap_months": 8.7,
             "matched": false,
             "closed_eci": 150.0,
             "open_eci": null
@@ -2457,7 +2457,7 @@
             "closed_date": "2025-10-07T00:00:00",
             "open_model": null,
             "open_date": null,
-            "gap_months": 6.6,
+            "gap_months": 6.7,
             "matched": false,
             "closed_eci": 150.2363911239049,
             "open_eci": null
@@ -2507,7 +2507,7 @@
             "closed_date": "2026-03-05T00:00:00",
             "open_model": null,
             "open_date": null,
-            "gap_months": 1.7,
+            "gap_months": 1.8,
             "matched": false,
             "closed_eci": 158.28755570450608,
             "open_eci": null
@@ -2522,17 +2522,17 @@
           "total_matched": 8,
           "total_unmatched": 7,
           "current_gap_estimate": {
-            "estimated_current_gap": 10.0,
-            "min_current_gap": 8.6,
+            "estimated_current_gap": 10.1,
+            "min_current_gap": 8.7,
             "confidence": "high",
             "unmatched_ages": [
-              8.6,
-              6.6,
+              8.7,
+              6.7,
               5.3,
               4.5,
               2.7,
               2.2,
-              1.7
+              1.8
             ],
             "method": "survival_analysis_mle",
             "prior_from_first_match": false,
@@ -4022,7 +4022,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 14.0,
+          "gap_months": 14.1,
           "matched": false
         },
         {
@@ -4042,7 +4042,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 8.6,
+          "gap_months": 8.7,
           "matched": false
         },
         {
@@ -4095,13 +4095,13 @@
         "total_matched": 11,
         "total_unmatched": 7,
         "current_gap_estimate": {
-          "estimated_current_gap": 14.0,
-          "min_current_gap": 14.0,
+          "estimated_current_gap": 14.1,
+          "min_current_gap": 14.1,
           "confidence": "high",
           "unmatched_ages": [
-            14.0,
+            14.1,
             12.4,
-            8.6,
+            8.7,
             5.3,
             5.1,
             4.5,
@@ -4503,7 +4503,7 @@
             "open_model": null,
             "open_date": null,
             "open_score": null,
-            "gap_months": 14.0,
+            "gap_months": 14.1,
             "matched": false
           },
           {
@@ -4523,7 +4523,7 @@
             "open_model": null,
             "open_date": null,
             "open_score": null,
-            "gap_months": 8.6,
+            "gap_months": 8.7,
             "matched": false
           },
           {
@@ -4576,13 +4576,13 @@
           "total_matched": 11,
           "total_unmatched": 7,
           "current_gap_estimate": {
-            "estimated_current_gap": 14.0,
-            "min_current_gap": 14.0,
+            "estimated_current_gap": 14.1,
+            "min_current_gap": 14.1,
             "confidence": "high",
             "unmatched_ages": [
-              14.0,
+              14.1,
               12.4,
-              8.6,
+              8.7,
               5.3,
               5.1,
               4.5,
@@ -6316,20 +6316,20 @@
           "is_china": false
         },
         {
-          "model": "claude-opus-4-1-20250805",
-          "display_name": "claude-opus-4-1-20250805",
-          "score": 73.23,
-          "score_std": 3.15,
+          "model": "claude-opus-4-1-20250805_16K",
+          "display_name": "claude-opus-4-1-20250805_16K",
+          "score": 77.27,
+          "score_std": 2.99,
           "date": "2025-08-05T00:00:00",
           "organization": "Anthropic",
           "is_open": false,
           "is_china": false
         },
         {
-          "model": "claude-opus-4-1-20250805_16K",
-          "display_name": "claude-opus-4-1-20250805_16K",
-          "score": 77.27,
-          "score_std": 2.99,
+          "model": "claude-opus-4-1-20250805",
+          "display_name": "claude-opus-4-1-20250805",
+          "score": 73.23,
+          "score_std": 3.15,
           "date": "2025-08-05T00:00:00",
           "organization": "Anthropic",
           "is_open": false,
@@ -6516,16 +6516,6 @@
           "is_china": false
         },
         {
-          "model": "claude-opus-4-5-20251101",
-          "display_name": "claude-opus-4-5-20251101",
-          "score": 80.68,
-          "score_std": 2.39,
-          "date": "2025-11-24T00:00:00",
-          "organization": "Anthropic",
-          "is_open": false,
-          "is_china": false
-        },
-        {
           "model": "claude-opus-4-5-20251101_16K",
           "display_name": "claude-opus-4-5-20251101_16K",
           "score": 85.48,
@@ -6546,6 +6536,16 @@
           "is_china": false
         },
         {
+          "model": "claude-opus-4-5-20251101",
+          "display_name": "claude-opus-4-5-20251101",
+          "score": 80.68,
+          "score_std": 2.39,
+          "date": "2025-11-24T00:00:00",
+          "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
           "model": "deepseek-reasoner",
           "display_name": "deepseek-reasoner",
           "score": 83.42,
@@ -6556,20 +6556,10 @@
           "is_china": true
         },
         {
-          "model": "gpt-5.2-2025-12-11_low",
-          "display_name": "gpt-5.2-2025-12-11_low",
-          "score": 82.7,
-          "score_std": 2.27,
-          "date": "2025-12-11T00:00:00",
-          "organization": "OpenAI",
-          "is_open": false,
-          "is_china": false
-        },
-        {
-          "model": "gpt-5.2-2025-12-11_medium",
-          "display_name": "gpt-5.2-2025-12-11_medium",
-          "score": 87.88,
-          "score_std": 1.91,
+          "model": "gpt-5.2-2025-12-11_xhigh",
+          "display_name": "gpt-5.2-2025-12-11_xhigh",
+          "score": 91.4,
+          "score_std": 1.8,
           "date": "2025-12-11T00:00:00",
           "organization": "OpenAI",
           "is_open": false,
@@ -6586,10 +6576,20 @@
           "is_china": false
         },
         {
-          "model": "gpt-5.2-2025-12-11_xhigh",
-          "display_name": "gpt-5.2-2025-12-11_xhigh",
-          "score": 91.4,
-          "score_std": 1.8,
+          "model": "gpt-5.2-2025-12-11_medium",
+          "display_name": "gpt-5.2-2025-12-11_medium",
+          "score": 87.88,
+          "score_std": 1.91,
+          "date": "2025-12-11T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "gpt-5.2-2025-12-11_low",
+          "display_name": "gpt-5.2-2025-12-11_low",
+          "score": 82.7,
+          "score_std": 2.27,
           "date": "2025-12-11T00:00:00",
           "organization": "OpenAI",
           "is_open": false,
@@ -6626,20 +6626,20 @@
           "is_china": true
         },
         {
-          "model": "claude-opus-4-6_32K",
-          "display_name": "claude-opus-4-6_32K",
-          "score": 90.53,
-          "score_std": 1.69,
+          "model": "claude-opus-4-6_64K",
+          "display_name": "claude-opus-4-6_64K",
+          "score": 88.76,
+          "score_std": 1.94,
           "date": "2026-02-05T00:00:00",
           "organization": "Anthropic",
           "is_open": false,
           "is_china": false
         },
         {
-          "model": "claude-opus-4-6_64K",
-          "display_name": "claude-opus-4-6_64K",
-          "score": 88.76,
-          "score_std": 1.94,
+          "model": "claude-opus-4-6_32K",
+          "display_name": "claude-opus-4-6_32K",
+          "score": 90.53,
+          "score_std": 1.69,
           "date": "2026-02-05T00:00:00",
           "organization": "Anthropic",
           "is_open": false,
@@ -6732,6 +6732,16 @@
           "score_std": 1.85,
           "date": "2026-04-16T00:00:00",
           "organization": "Anthropic",
+          "is_open": false,
+          "is_china": false
+        },
+        {
+          "model": "gpt-5.5-pro-pre-release_xhigh",
+          "display_name": "gpt-5.5-pro-pre-release_xhigh",
+          "score": 93.92,
+          "score_std": 1.58,
+          "date": "2026-04-23T00:00:00",
+          "organization": "OpenAI",
           "is_open": false,
           "is_china": false
         },
@@ -6928,7 +6938,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 1.7,
+          "gap_months": 1.8,
           "matched": false
         }
       ],
@@ -6947,7 +6957,7 @@
           "unmatched_ages": [
             5.3,
             2.2,
-            1.7
+            1.8
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -6962,16 +6972,16 @@
         "overall": {
           "name": "Overall",
           "absolute_growth_per_year": 27.26,
-          "percentage_growth_annualized": 67.4,
+          "percentage_growth_annualized": 67.1,
           "multiples_per_year": 1.67,
           "doubling_time_years": 1.35,
           "start_point": {
             "date": "2023-03-14T00:00:00",
-            "eci": 9.13189635980234
+            "eci": 9.131513914668176
           },
           "end_point": {
             "date": "2026-04-23T00:00:00",
-            "eci": 93.90360621671425
+            "eci": 93.9040298126929
           }
         },
         "early": {
@@ -6991,17 +7001,17 @@
         },
         "recent": {
           "name": "Post-Oct 2024",
-          "absolute_growth_per_year": 30.28,
-          "percentage_growth_annualized": 61.1,
-          "multiples_per_year": 1.61,
-          "doubling_time_years": 1.45,
+          "absolute_growth_per_year": 30.17,
+          "percentage_growth_annualized": 60.5,
+          "multiples_per_year": 1.6,
+          "doubling_time_years": 1.47,
           "start_point": {
             "date": "2024-10-03T00:00:00",
-            "eci": 49.59683434732142
+            "eci": 49.655037695134524
           },
           "end_point": {
             "date": "2026-04-23T00:00:00",
-            "eci": 96.60931041119329
+            "eci": 96.48662009492546
           }
         },
         "metadata": {
@@ -11111,7 +11121,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 1.7,
+          "gap_months": 1.8,
           "matched": false
         },
         {
@@ -11121,7 +11131,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 1.7,
+          "gap_months": 1.8,
           "matched": false
         },
         {
@@ -11131,7 +11141,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 0.1,
+          "gap_months": 0.2,
           "matched": false
         },
         {
@@ -11141,7 +11151,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 0.1,
+          "gap_months": 0.2,
           "matched": false
         }
       ],
@@ -11160,10 +11170,10 @@
           "unmatched_ages": [
             4.5,
             2.7,
-            1.7,
-            1.7,
-            0.1,
-            0.1
+            1.8,
+            1.8,
+            0.2,
+            0.2
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -11638,20 +11648,20 @@
           "is_china": true
         },
         {
-          "model": "claude-sonnet-4-5-20250929",
-          "display_name": "claude-sonnet-4-5-20250929",
-          "score": 13.0,
-          "score_std": 1.06,
+          "model": "claude-sonnet-4-5-20250929_59K",
+          "display_name": "claude-sonnet-4-5-20250929_59K",
+          "score": 23.6,
+          "score_std": 1.34,
           "date": "2025-09-29T00:00:00",
           "organization": "Anthropic",
           "is_open": false,
           "is_china": false
         },
         {
-          "model": "claude-sonnet-4-5-20250929_59K",
-          "display_name": "claude-sonnet-4-5-20250929_59K",
-          "score": 23.6,
-          "score_std": 1.34,
+          "model": "claude-sonnet-4-5-20250929",
+          "display_name": "claude-sonnet-4-5-20250929",
+          "score": 13.0,
+          "score_std": 1.06,
           "date": "2025-09-29T00:00:00",
           "organization": "Anthropic",
           "is_open": false,
@@ -11718,20 +11728,20 @@
           "is_china": true
         },
         {
-          "model": "gpt-5.2-2025-12-11_xhigh",
-          "display_name": "gpt-5.2-2025-12-11_xhigh",
-          "score": 38.9,
-          "score_std": 1.54,
+          "model": "gpt-5.2-2025-12-11_low",
+          "display_name": "gpt-5.2-2025-12-11_low",
+          "score": 34.7,
+          "score_std": 1.51,
           "date": "2025-12-11T00:00:00",
           "organization": "OpenAI",
           "is_open": false,
           "is_china": false
         },
         {
-          "model": "gpt-5.2-2025-12-11_low",
-          "display_name": "gpt-5.2-2025-12-11_low",
-          "score": 34.7,
-          "score_std": 1.51,
+          "model": "gpt-5.2-2025-12-11_xhigh",
+          "display_name": "gpt-5.2-2025-12-11_xhigh",
+          "score": 38.9,
+          "score_std": 1.54,
           "date": "2025-12-11T00:00:00",
           "organization": "OpenAI",
           "is_open": false,
@@ -11908,6 +11918,16 @@
           "is_china": false
         },
         {
+          "model": "gpt-5.5-pro-pre-release_xhigh",
+          "display_name": "gpt-5.5-pro-pre-release_xhigh",
+          "score": 64.5,
+          "score_std": 1.51,
+          "date": "2026-04-23T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
           "model": "gpt-5.5-pre-release_xhigh",
           "display_name": "gpt-5.5-pre-release_xhigh",
           "score": 63.1,
@@ -12023,17 +12043,17 @@
       "trends": {
         "overall": {
           "name": "Overall",
-          "absolute_growth_per_year": 16.23,
-          "percentage_growth_annualized": 80.6,
-          "multiples_per_year": 1.81,
-          "doubling_time_years": 1.17,
+          "absolute_growth_per_year": 18.03,
+          "percentage_growth_annualized": 87.8,
+          "multiples_per_year": 1.88,
+          "doubling_time_years": 1.1,
           "start_point": {
             "date": "2024-10-22T00:00:00",
-            "eci": 21.14962909228052
+            "eci": 19.71182735820912
           },
           "end_point": {
             "date": "2026-04-23T00:00:00",
-            "eci": 45.50037253555638
+            "eci": 46.76958436415589
           }
         },
         "early": {
@@ -12053,17 +12073,17 @@
         },
         "recent": {
           "name": "Post-Jul 2025",
-          "absolute_growth_per_year": 20.4,
-          "percentage_growth_annualized": 88.6,
-          "multiples_per_year": 1.89,
-          "doubling_time_years": 1.09,
+          "absolute_growth_per_year": 23.8,
+          "percentage_growth_annualized": 104.3,
+          "multiples_per_year": 2.04,
+          "doubling_time_years": 0.97,
           "start_point": {
             "date": "2025-07-25T00:00:00",
-            "eci": 30.867538143735146
+            "eci": 30.037789922687807
           },
           "end_point": {
             "date": "2026-04-23T00:00:00",
-            "eci": 46.05938619572407
+            "eci": 47.76206070261105
           }
         },
         "metadata": {
@@ -12649,7 +12669,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 8.6,
+          "gap_months": 8.7,
           "matched": false
         },
         {
@@ -12679,7 +12699,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 1.7,
+          "gap_months": 1.8,
           "matched": false
         }
       ],
@@ -12698,10 +12718,10 @@
           "unmatched_ages": [
             12.4,
             9.6,
-            8.6,
+            8.7,
             4.5,
             2.2,
-            1.7
+            1.8
           ],
           "method": "insufficient_data_heuristic"
         }
@@ -12835,6 +12855,15 @@
         },
         {
           "date": "2026-03-28T00:00:00",
+          "gap_months": 6.7,
+          "matched": false,
+          "reference_model": "gpt-5.4-pro-2026-03-05_xhigh",
+          "reference_score": 58.6,
+          "open_frontier_model": "kimi-k2-thinking-turbo",
+          "open_frontier_score": 20.0
+        },
+        {
+          "date": "2026-04-28T00:00:00",
           "gap_months": 6.7,
           "matched": false,
           "reference_model": "gpt-5.4-pro-2026-03-05_xhigh",
@@ -13186,6 +13215,16 @@
           "is_china": false
         },
         {
+          "model": "gpt-5.5-pro-pre-release_xhigh",
+          "display_name": "gpt-5.5-pro-pre-release_xhigh",
+          "score": 100.0,
+          "score_std": 0.0,
+          "date": "2026-04-23T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
           "model": "gpt-5.5-pre-release_xhigh",
           "display_name": "gpt-5.5-pre-release_xhigh",
           "score": 100.0,
@@ -13358,16 +13397,6 @@
           "is_china": false
         },
         {
-          "model": "Hermes-2-Theta-Llama-3-70B",
-          "display_name": "Hermes-2-Theta-Llama-3-70B",
-          "score": 2.5,
-          "score_std": 1.23,
-          "date": "2024-06-20T00:00:00",
-          "organization": "Nous Research,Arcee AI",
-          "is_open": true,
-          "is_china": false
-        },
-        {
           "model": "claude-3-5-sonnet-20240620",
           "display_name": "claude-3-5-sonnet-20240620",
           "score": 6.53,
@@ -13378,12 +13407,12 @@
           "is_china": false
         },
         {
-          "model": "gemma-2-9b-it",
-          "display_name": "gemma-2-9b-it",
-          "score": 0.56,
-          "score_std": 0.39,
-          "date": "2024-06-24T00:00:00",
-          "organization": "Google DeepMind",
+          "model": "Hermes-2-Theta-Llama-3-70B",
+          "display_name": "Hermes-2-Theta-Llama-3-70B",
+          "score": 2.5,
+          "score_std": 1.23,
+          "date": "2024-06-20T00:00:00",
+          "organization": "Nous Research,Arcee AI",
           "is_open": true,
           "is_china": false
         },
@@ -13392,6 +13421,16 @@
           "display_name": "gemma-2-27b-it",
           "score": 1.39,
           "score_std": 0.91,
+          "date": "2024-06-24T00:00:00",
+          "organization": "Google DeepMind",
+          "is_open": true,
+          "is_china": false
+        },
+        {
+          "model": "gemma-2-9b-it",
+          "display_name": "gemma-2-9b-it",
+          "score": 0.56,
+          "score_std": 0.39,
           "date": "2024-06-24T00:00:00",
           "organization": "Google DeepMind",
           "is_open": true,
@@ -13548,20 +13587,20 @@
           "is_china": false
         },
         {
-          "model": "claude-3-5-haiku-20241022",
-          "display_name": "claude-3-5-haiku-20241022",
-          "score": 4.31,
-          "score_std": 1.62,
+          "model": "claude-3-5-sonnet-20241022",
+          "display_name": "claude-3-5-sonnet-20241022",
+          "score": 8.47,
+          "score_std": 2.64,
           "date": "2024-10-22T00:00:00",
           "organization": "Anthropic",
           "is_open": false,
           "is_china": false
         },
         {
-          "model": "claude-3-5-sonnet-20241022",
-          "display_name": "claude-3-5-sonnet-20241022",
-          "score": 8.47,
-          "score_std": 2.64,
+          "model": "claude-3-5-haiku-20241022",
+          "display_name": "claude-3-5-haiku-20241022",
+          "score": 4.31,
+          "score_std": 1.62,
           "date": "2024-10-22T00:00:00",
           "organization": "Anthropic",
           "is_open": false,
@@ -13748,10 +13787,10 @@
           "is_china": false
         },
         {
-          "model": "claude-3-7-sonnet-20250219_32K",
-          "display_name": "claude-3-7-sonnet-20250219_32K",
-          "score": 53.33,
-          "score_std": 7.52,
+          "model": "claude-3-7-sonnet-20250219_64K",
+          "display_name": "claude-3-7-sonnet-20250219_64K",
+          "score": 57.78,
+          "score_std": 7.45,
           "date": "2025-02-24T00:00:00",
           "organization": "Anthropic",
           "is_open": false,
@@ -13778,10 +13817,10 @@
           "is_china": false
         },
         {
-          "model": "claude-3-7-sonnet-20250219_64K",
-          "display_name": "claude-3-7-sonnet-20250219_64K",
-          "score": 57.78,
-          "score_std": 7.45,
+          "model": "claude-3-7-sonnet-20250219_32K",
+          "display_name": "claude-3-7-sonnet-20250219_32K",
+          "score": 53.33,
+          "score_std": 7.52,
           "date": "2025-02-24T00:00:00",
           "organization": "Anthropic",
           "is_open": false,
@@ -13968,10 +14007,10 @@
           "is_china": false
         },
         {
-          "model": "claude-sonnet-4-20250514_32K",
-          "display_name": "claude-sonnet-4-20250514_32K",
-          "score": 71.11,
-          "score_std": 6.83,
+          "model": "claude-sonnet-4-20250514_59K",
+          "display_name": "claude-sonnet-4-20250514_59K",
+          "score": 68.89,
+          "score_std": 6.98,
           "date": "2025-05-22T00:00:00",
           "organization": "Anthropic",
           "is_open": false,
@@ -14018,10 +14057,10 @@
           "is_china": false
         },
         {
-          "model": "claude-sonnet-4-20250514_59K",
-          "display_name": "claude-sonnet-4-20250514_59K",
-          "score": 68.89,
-          "score_std": 6.98,
+          "model": "claude-sonnet-4-20250514_32K",
+          "display_name": "claude-sonnet-4-20250514_32K",
+          "score": 71.11,
+          "score_std": 6.83,
           "date": "2025-05-22T00:00:00",
           "organization": "Anthropic",
           "is_open": false,
@@ -14508,6 +14547,16 @@
           "is_china": false
         },
         {
+          "model": "gpt-5.5-pro-pre-release_xhigh",
+          "display_name": "gpt-5.5-pro-pre-release_xhigh",
+          "score": 100.0,
+          "score_std": 0.0,
+          "date": "2026-04-23T00:00:00",
+          "organization": "OpenAI",
+          "is_open": false,
+          "is_china": false
+        },
+        {
           "model": "gpt-5.5-pre-release_xhigh",
           "display_name": "gpt-5.5-pre-release_xhigh",
           "score": 100.0,
@@ -14759,13 +14808,23 @@
           "matched": false
         },
         {
+          "closed_model": "gpt-5.5-pro-pre-release_xhigh",
+          "closed_date": "2026-04-23T00:00:00",
+          "closed_score": 100.0,
+          "open_model": null,
+          "open_date": null,
+          "open_score": null,
+          "gap_months": 0.2,
+          "matched": false
+        },
+        {
           "closed_model": "gpt-5.5-pre-release_xhigh",
           "closed_date": "2026-04-23T00:00:00",
           "closed_score": 100.0,
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 0.1,
+          "gap_months": 0.2,
           "matched": false
         }
       ],
@@ -14776,16 +14835,17 @@
         "ci_90_high": 5.2,
         "current_vertical_gap": 7.8,
         "total_matched": 19,
-        "total_unmatched": 4,
+        "total_unmatched": 5,
         "current_gap_estimate": {
-          "estimated_current_gap": 8.8,
+          "estimated_current_gap": 8.7,
           "min_current_gap": 4.5,
           "confidence": "high",
           "unmatched_ages": [
             4.5,
             4.5,
             0.4,
-            0.1
+            0.2,
+            0.2
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -14799,17 +14859,17 @@
       "trends": {
         "overall": {
           "name": "Overall",
-          "absolute_growth_per_year": 44.71,
-          "percentage_growth_annualized": 561.3,
-          "multiples_per_year": 6.61,
+          "absolute_growth_per_year": 44.79,
+          "percentage_growth_annualized": 552.1,
+          "multiples_per_year": 6.52,
           "doubling_time_years": 0.37,
           "start_point": {
             "date": "2023-03-14T00:00:00",
-            "eci": -43.35108359500009
+            "eci": -43.48447221916285
           },
           "end_point": {
             "date": "2026-04-23T00:00:00",
-            "eci": 95.70990233424527
+            "eci": 95.8334166581335
           }
         },
         "early": {
@@ -14829,17 +14889,17 @@
         },
         "recent": {
           "name": "Post-Oct 2024",
-          "absolute_growth_per_year": 57.17,
-          "percentage_growth_annualized": 367.2,
-          "multiples_per_year": 4.67,
-          "doubling_time_years": 0.45,
+          "absolute_growth_per_year": 56.91,
+          "percentage_growth_annualized": 357.0,
+          "multiples_per_year": 4.57,
+          "doubling_time_years": 0.46,
           "start_point": {
             "date": "2024-10-03T00:00:00",
-            "eci": 16.7801873942808
+            "eci": 16.919078681443352
           },
           "end_point": {
             "date": "2026-04-23T00:00:00",
-            "eci": 105.52241505244456
+            "eci": 105.25720923302288
           }
         },
         "metadata": {
@@ -15143,5 +15203,5 @@
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-04-27T02:02:12.625142"
+  "last_updated": "2026-04-28T02:08:36.628763"
 }
