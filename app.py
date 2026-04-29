@@ -5,6 +5,8 @@ An interactive visualization of the performance gap between open and closed-sour
 AI models on the Epoch AI ECI (Effective Compute Index).
 """
 
+import csv
+import io
 import logging
 import math
 from datetime import datetime, timedelta
@@ -27,7 +29,10 @@ DAYS_PER_MONTH = 365.25 / 12  # 30.4375 - accurate average days per month
 app = Flask(__name__)
 
 # Data source
-ECI_SCORES_URL = "https://epoch.ai/data/eci_scores.csv"
+# benchmarked_models.csv: one row per (Model, variant) with Organization,
+# Version release date, Model accessibility, and ECI inline. We aggregate
+# below to one row per Model (best variant by ECI).
+BENCHMARKED_MODELS_URL = "https://epoch.ai/data/benchmarked_models.csv"
 
 # Cache duration (5 minutes)
 CACHE_DURATION = timedelta(minutes=5)
@@ -110,9 +115,26 @@ def fetch_eci_data() -> pd.DataFrame:
             logger.info("Serving data from cache")
             return _cache["data"].copy()
 
-    logger.info("Fetching data from Epoch AI...")
+    logger.info("Fetching data from Epoch AI (benchmarked_models.csv)...")
     try:
-        df = pd.read_csv(ECI_SCORES_URL)
+        # Parse via stdlib csv: pandas mistokenizes quoted multi-line
+        # Description fields in benchmarked_models.csv.
+        resp = requests.get(BENCHMARKED_MODELS_URL, timeout=30)
+        resp.raise_for_status()
+        df = pd.DataFrame(list(csv.DictReader(io.StringIO(resp.text))))
+
+        # benchmarked_models.csv ships one row per (Model, variant). Keep
+        # the best variant per Model and rename Version release date → date.
+        # csv.DictReader returns strings; coerce numeric columns.
+        for col in ("eci", "eci_ci_low", "eci_ci_high"):
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+        if "Version release date" in df.columns and "date" not in df.columns:
+            df = df.rename(columns={"Version release date": "date"})
+        df = df.dropna(subset=["eci"])
+        df = df.sort_values("eci", ascending=False, kind="mergesort")
+        df = df.drop_duplicates(subset=["Model"], keep="first").reset_index(drop=True)
+
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
         
         # Derive eci_std from confidence intervals (assuming 90% CI)

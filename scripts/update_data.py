@@ -1,4 +1,5 @@
 
+import csv
 import io
 import json
 import logging
@@ -19,10 +20,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Constants
-ECI_SCORES_URL = "https://epoch.ai/data/eci_scores.csv"
-# Authoritative model metadata (Organization, Country, Publication date).
-# Used as a fallback lookup because eci_scores.csv currently ships these
-# columns as all-NaN upstream.
+# benchmarked_models.csv ships one row per (Model, variant) — e.g. GPT-5.5
+# with reasoning_effort=low/medium/high/xhigh — and includes Organization,
+# Version release date, Model accessibility, and ECI inline. We aggregate
+# to one row per Model (best variant by ECI). This replaces eci_scores.csv,
+# which currently ships Organization/date/accessibility as all-NaN.
+BENCHMARKED_MODELS_URL = "https://epoch.ai/data/benchmarked_models.csv"
+# Fallback metadata source for the rare row missing Organization or date.
 ALL_AI_MODELS_URL = "https://epoch.ai/data/all_ai_models.csv"
 # epoch.ai blocks the default urllib User-Agent with 403.
 EPOCH_UA = (
@@ -88,10 +92,16 @@ def get_rank(
     return ranks.reindex(df.index)
 
 def _fetch_epoch_csv(url: str, timeout: int = 30) -> pd.DataFrame:
-    """GET a CSV from epoch.ai with a browser UA (server 403s on urllib)."""
+    """GET a CSV from epoch.ai with a browser UA (server 403s on urllib).
+
+    Parses via stdlib csv.DictReader, which correctly handles the quoted
+    multi-line Description fields in benchmarked_models.csv that both
+    pandas parser engines mistokenize.
+    """
     response = requests.get(url, headers={"User-Agent": EPOCH_UA}, timeout=timeout)
     response.raise_for_status()
-    return pd.read_csv(io.StringIO(response.text))
+    rows = list(csv.DictReader(io.StringIO(response.text)))
+    return pd.DataFrame(rows)
 
 
 def _strip_date_suffix(name: str) -> str:
@@ -99,13 +109,39 @@ def _strip_date_suffix(name: str) -> str:
     return re.sub(r"\s*\([^)]*\d{4}\)\s*$", "", str(name)).strip()
 
 
+def _aggregate_benchmarked_models(df: pd.DataFrame) -> pd.DataFrame:
+    """Collapse benchmarked_models.csv to one row per Model.
+
+    The CSV ships one row per (Model, variant) — e.g. GPT-5.5 with
+    reasoning_effort low/medium/high/xhigh, plus pre-release duplicates.
+    We keep the row with the highest ECI per Model (the best variant on
+    the leaderboard) and rename Version release date → date so downstream
+    code that expects an eci_scores.csv-shaped frame keeps working.
+    """
+    df = df.copy()
+    # csv.DictReader returns everything as strings; coerce the numeric
+    # columns we use downstream.
+    for col in ("eci", "eci_ci_low", "eci_ci_high"):
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+    if "Version release date" in df.columns and "date" not in df.columns:
+        df = df.rename(columns={"Version release date": "date"})
+
+    # Drop rows without an ECI score (variants pending evaluation).
+    df = df.dropna(subset=["eci"])
+
+    # For each Model, keep the variant with the highest ECI.
+    df = df.sort_values("eci", ascending=False, kind="mergesort")
+    df = df.drop_duplicates(subset=["Model"], keep="first").reset_index(drop=True)
+    return df
+
+
 def _backfill_from_all_ai_models(df: pd.DataFrame) -> pd.DataFrame:
     """Fill Organization, Country, and date from all_ai_models.csv.
 
-    eci_scores.csv currently ships Organization, Country (of organization),
-    date, and model_versions as all-NaN. Until upstream fixes it, pull the
-    first three from epoch.ai's authoritative model metadata CSV, joining
-    on Model name with a date-suffix-stripped fallback (recovers ~97%).
+    Used as a defensive fallback for the rare model in benchmarked_models.csv
+    that's missing Organization or Version release date. Joins on Model name
+    with a date-suffix-stripped fallback.
     """
     try:
         models = _fetch_epoch_csv(ALL_AI_MODELS_URL, timeout=60)
@@ -150,13 +186,17 @@ def _backfill_from_all_ai_models(df: pd.DataFrame) -> pd.DataFrame:
 
 def fetch_eci_data() -> pd.DataFrame:
     """Fetch ECI scores from Epoch AI."""
-    logger.info("Fetching data from Epoch AI...")
+    logger.info("Fetching data from Epoch AI (benchmarked_models.csv)...")
     try:
-        df = _fetch_epoch_csv(ECI_SCORES_URL)
+        df = _fetch_epoch_csv(BENCHMARKED_MODELS_URL)
 
-        # Upstream currently ships Organization, Country, and date as
-        # all-NaN. Recover them from all_ai_models.csv before the date
-        # parse and string coercion below.
+        # benchmarked_models.csv has one row per (Model, variant). Keep the
+        # best variant per Model and rename Version release date → date.
+        df = _aggregate_benchmarked_models(df)
+
+        # Defensive fallback: fill any still-missing Organization / date
+        # from all_ai_models.csv (rare; benchmarked_models.csv is usually
+        # complete on its own).
         df = _backfill_from_all_ai_models(df)
 
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
