@@ -158,19 +158,10 @@ def process_data() -> dict[str, Any]:
     """Process ECI data and calculate gaps."""
     df = fetch_eci_data()
 
-    # Classify models as open or closed
+    # Classify models as open or closed: any "Open weights (...)" variant
+    # is open; everything else (API access, Hosted access, Unreleased,
+    # missing) is closed.
     df["Open"] = df["Model accessibility"].str.contains("Open", na=False)
-
-    # Override for models with "Unknown" accessibility that are known to be open weights
-    unknown_open_mask = (
-        (df["Model accessibility"] == "Unknown") &
-        (
-            df["Model"].str.contains("Kimi K2", case=False, na=False) |
-            df["Organization"].str.contains("DeepSeek", case=False, na=False) |
-            df["Organization"].str.contains("Moonshot", case=False, na=False)
-        )
-    )
-    df.loc[unknown_open_mask, "Open"] = True
 
     # Get rankings for each group
     df_open = df[df["Open"]].copy()
