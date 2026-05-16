@@ -129,6 +129,9 @@ async function init() {
         // Set up toggle button handlers
         setupToggleHandlers();
 
+        // Wire PNG download for gap-over-time chart
+        setupHistoricalChartDownload();
+
         // Render chart and update UI
         if (data) {
             renderAll();
@@ -1368,182 +1371,662 @@ function renderChart(data) {
  * Render the historical gap chart
  * Dynamic based on gap metric selection (average vs current)
  */
+/* ============================================================
+ * Gap-over-time chart — inline SVG (McNair-style)
+ * ============================================================ */
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function svgEl(name, attrs, kids) {
+    const e = document.createElementNS(SVG_NS, name);
+    if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (kids) for (const c of kids) e.appendChild(c);
+    return e;
+}
+
+function parseUTCDate(d) {
+    if (d instanceof Date) return d;
+    const s = String(d);
+    if (s.length === 10) return new Date(s + 'T00:00:00Z');
+    // API serializes ISO timestamps without a 'Z'; force UTC so dates don't
+    // shift by viewer's local-time offset.
+    if (!/[Zz]|[+-]\d{2}:?\d{2}$/.test(s)) return new Date(s + 'Z');
+    return new Date(s);
+}
+
+function fmtMonthShort(d) {
+    return d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+}
+
+function fmtYear(d) { return d.getUTCFullYear(); }
+
+function fmtDayLong(d) {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+}
+
+function shortenModelName(name) {
+    if (!name) return '';
+    return String(name).replace(/\s*\(.*?\)\s*$/, '').trim();
+}
+
+function escapeHTML(s) {
+    return String(s).replace(/[&<>"']/g, ch => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+    ));
+}
+
+function getLaggardAccent(framing) {
+    return framing === 'china'
+        ? { dot: '#e53935', area: 'rgba(229, 57, 53, 0.18)' }   // red (China laggard)
+        : { dot: '#5c6bc0', area: 'rgba(92, 107, 192, 0.18)' }; // indigo (open laggard)
+}
+
+function getHistoricalLabels(framing) {
+    if (framing === 'china') {
+        return {
+            laggard: 'Chinese',
+            leader: 'US',
+            laggardModel: 'Chinese release',
+            leaderModelMatched: 'First US model to reach this score',
+            yAxisTitle: 'Months China lagged the US frontier at each Chinese release',
+            xAxisTitle: 'Chinese frontier release date',
+            behindHeader: 'months behind US frontier',
+        };
+    }
+    return {
+        laggard: 'Open',
+        leader: 'Closed',
+        laggardModel: 'Open release',
+        leaderModelMatched: 'First closed model to reach this score',
+        yAxisTitle: 'Months open-source lagged the closed frontier at each open release',
+        xAxisTitle: 'Open-source frontier release date',
+        behindHeader: 'months behind closed frontier',
+    };
+}
+
+/**
+ * Build the laggard/leader frontier event arrays from per-model records.
+ * A "frontier" release is one that raises the running max score within its
+ * side. Returns dates as Date objects keyed `_d`, preserves model/score.
+ */
+function buildFrontierEvents(models, framing, parityStart) {
+    const isLaggard = framing === 'china'
+        ? (m) => m.is_china === true
+        : (m) => m.is_open === true;
+    const isLeader = framing === 'china'
+        ? (m) => m.is_china !== true
+        : (m) => m.is_open !== true;
+    const scoreField = getScoreField();
+
+    const byDate = (a, b) => parseUTCDate(a.date) - parseUTCDate(b.date);
+    const laggard = [];
+    const leader = [];
+    let maxLag = -Infinity;
+    let maxLed = -Infinity;
+    for (const m of [...models].sort(byDate)) {
+        const s = m[scoreField];
+        if (s == null) continue;
+        const d = parseUTCDate(m.date);
+        if (parityStart && d < parityStart) {
+            // still update running max so post-parity frontier baseline is correct
+            if (isLaggard(m) && s > maxLag) maxLag = s;
+            if (isLeader(m) && s > maxLed) maxLed = s;
+            continue;
+        }
+        if (isLaggard(m) && s > maxLag) {
+            maxLag = s;
+            laggard.push({ model: m.model, display: m.display_name || m.model, date: m.date, _d: d, score: s });
+        } else if (isLeader(m) && s > maxLed) {
+            maxLed = s;
+            leader.push({ model: m.model, display: m.display_name || m.model, date: m.date, _d: d, score: s });
+        }
+    }
+    return { laggard, leader };
+}
+
 function renderHistoricalChart(data) {
-    const historicalGaps = data.historical_gaps || [];
-    const labels = getFramingLabels();
+    const root = document.getElementById('historical-chart');
+    const tooltipEl = document.getElementById('historical-tooltip');
+    const container = document.getElementById('historical-chart-container');
+    if (!root) return;
+    root.innerHTML = '';
+    if (tooltipEl) tooltipEl.hidden = true;
+
+    const historicalGaps = (data.historical_gaps || []).slice()
+        .filter(g => g && g.date != null && g.gap_months != null);
 
     if (historicalGaps.length === 0) {
-        document.getElementById('historical-chart').innerHTML =
-            '<p style="text-align: center; color: #6b7280; padding: 2rem;">No historical data available.</p>';
+        root.innerHTML =
+            '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">No historical data available.</p>';
         return;
     }
 
-    const stats = data.statistics;
-    const traces = [];
-    const annotations = [];
+    const framing = appState.framing;
+    const labels = getHistoricalLabels(framing);
+    const accent = getLaggardAccent(framing);
+
+    // expose accent via CSS variables on the wrapper so all elements pick it up
+    if (container) {
+        container.style.setProperty('--c-cn', accent.dot);
+        container.style.setProperty('--c-cn-soft', accent.area);
+    }
+
+    const stats = data.statistics || {};
     const isCurrentGapMode = appState.gapMetric === 'current';
+    const currentEstimate = isCurrentGapMode ? (stats.current_gap_estimate || null) : null;
 
-    // Add 90% CI band FIRST (so it renders behind other elements)
-    const startDate = historicalGaps[0]?.date;
-    const endDate = historicalGaps[historicalGaps.length - 1]?.date;
+    // ---- derive frontier events ----
+    const benchmark = appState.data?.benchmarks?.[appState.currentBenchmark];
+    const allModels = benchmark?.models || [];
+    let { laggard: laggardFrontierRaw, leader: leaderFrontier } =
+        buildFrontierEvents(allModels, framing, null);
 
-    if (stats.ci_90_low !== undefined && stats.ci_90_high !== undefined && startDate && endDate) {
-        traces.push({
-            x: [startDate, endDate, endDate, startDate],
-            y: [stats.ci_90_low, stats.ci_90_low, stats.ci_90_high, stats.ci_90_high],
-            fill: 'toself',
-            fillcolor: 'rgba(92, 107, 192, 0.2)',
-            line: { color: 'rgba(92, 107, 192, 0.5)', width: 1, dash: 'dot' },
-            type: 'scatter',
-            name: `90% CI (${stats.ci_90_low} - ${stats.ci_90_high} mo)`,
-            hoverinfo: 'skip',
-            showlegend: true,
-        });
+    // Match the same way the main chart does (Python's
+    // calculate_historical_gaps): the matched closed model is the FIRST
+    // closed (by date) whose score >= laggard.score - threshold. The gap
+    // is the months between the matched closed release and the laggard
+    // release. Releases with no matched closed, or where the matched
+    // closed is later than the laggard, are dropped.
+    const DAYS_PER_MONTH = 365.25 / 12;
+    const matchThreshold = Number(data.metadata?.threshold) || 0;
+    function firstLeaderToReach(score) {
+        for (const ld of leaderFrontier) {
+            if (ld.score >= score - matchThreshold) return ld;
+        }
+        return null;
     }
-
-    // Add ±1 std dev band around the gap line
-    if (stats.std_horizontal_gap !== undefined) {
-        const stdDev = stats.std_horizontal_gap;
-        const upperBound = historicalGaps.map(g => Math.max(0, g.gap_months + stdDev));
-        const lowerBound = historicalGaps.map(g => Math.max(0, g.gap_months - stdDev));
-        const dates = historicalGaps.map(g => g.date);
-
-        // Create filled area for ±1 std dev
-        traces.push({
-            x: [...dates, ...dates.slice().reverse()],
-            y: [...upperBound, ...lowerBound.slice().reverse()],
-            fill: 'toself',
-            fillcolor: 'rgba(92, 107, 192, 0.15)',
-            line: { color: 'transparent' },
-            type: 'scatter',
-            name: `±1 Std Dev (${stdDev.toFixed(1)} mo)`,
-            hoverinfo: 'skip',
-            showlegend: true,
-        });
+    const laggardFrontier = [];
+    for (const ev of laggardFrontierRaw) {
+        const ld = firstLeaderToReach(ev.score);
+        if (!ld) continue;
+        const gapMonths = (ev._d - ld._d) / (1000 * 60 * 60 * 24) / DAYS_PER_MONTH;
+        if (gapMonths < 0) continue;
+        ev.gap = gapMonths;
+        ev.matchedLeader = ld;
+        laggardFrontier.push(ev);
     }
-
-    // Main gap line
-    traces.push({
-        x: historicalGaps.map(g => g.date),
-        y: historicalGaps.map(g => g.gap_months),
-        mode: 'lines+markers',
-        type: 'scatter',
-        name: 'Gap at Frontier',
-        line: { color: COLORS.open, width: 2 },
-        marker: { color: COLORS.open, size: 6 },
-        hovertemplate: historicalGaps.map(g =>
-            `<b>%{x|%b %Y}</b><br>Gap: ${g.gap_months} mo ± ${(stats.std_horizontal_gap || 0).toFixed(1)}<br>` +
-            `${labels.openModel} frontier: ${g.open_frontier_model || 'N/A'}<br>` +
-            `${labels.closedModel} frontier: ${g.reference_model || 'N/A'}<extra></extra>`
-        ),
+    laggardFrontier.forEach((ev, i) => {
+        ev.prevGap = i > 0 ? laggardFrontier[i - 1].gap : null;
     });
 
-    // In "current gap" mode, add estimated current gap point and explanation
-    if (isCurrentGapMode && stats.current_gap_estimate) {
-        const estimate = stats.current_gap_estimate;
-        const lastGap = historicalGaps[historicalGaps.length - 1];
-        const today = new Date().toISOString();
+    if (laggardFrontier.length === 0) {
+        root.innerHTML =
+            '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">Not enough laggard-frontier releases to render chart.</p>';
+        return;
+    }
 
-        // Add estimated current gap as a separate point
-        traces.push({
-            x: [today],
-            y: [estimate.estimated_current_gap],
-            mode: 'markers',
-            type: 'scatter',
-            name: 'Estimated Current Gap',
-            marker: {
-                color: COLORS.closed,
-                size: 12,
-                symbol: 'star',
-                line: { width: 2, color: 'white' }
-            },
-            hovertemplate: `<b>Estimated Current Gap</b><br>` +
-                `${estimate.estimated_current_gap} months<br>` +
-                `Min bound: ${estimate.min_current_gap} mo<extra></extra>`,
+    // ---- geometry ----
+    const W = 1200;
+    const H = 680;
+    // Bottom margin reserves room for: tick (8) + gap (6) + rotated leader
+    // labels (up to ~65px diagonal extent) + breathing room (10) + x-axis
+    // title (~14) + safety (10). Total ≈ 175.
+    const M = { top: 76, right: 110, bottom: 175, left: 84 };
+    const innerW = W - M.left - M.right;
+    const innerH = H - M.top - M.bottom;
+
+    // X range: first → last laggard release (or today in current mode).
+    // We give the chart a small horizontal pad on each side so the first/last
+    // dots don't sit flush against the plot edges.
+    const firstLaggardDate = laggardFrontier[0]._d;
+    const lastLaggardDate = laggardFrontier[laggardFrontier.length - 1]._d;
+    const today = new Date();
+    const rawMin = firstLaggardDate;
+    const rawMax = isCurrentGapMode && currentEstimate ? today : lastLaggardDate;
+    if (rawMax <= rawMin) {
+        root.innerHTML =
+            '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">Not enough data to render chart.</p>';
+        return;
+    }
+    const pad = (rawMax - rawMin) * 0.03;
+    const xMin = new Date(rawMin.getTime() - pad);
+    const xMax = new Date(rawMax.getTime() + pad);
+
+    // Y range
+    const yValues = laggardFrontier.map(p => p.gap);
+    if (currentEstimate) yValues.push(currentEstimate.estimated_current_gap, currentEstimate.min_current_gap);
+    const yMaxRaw = Math.max(...yValues, 1);
+    const yMax = Math.ceil(yMaxRaw / 3) * 3 + 1;
+    const yMin = 0;
+
+    const x = (d) => M.left + (innerW * (d - xMin)) / (xMax - xMin);
+    const y = (v) => M.top + innerH - (innerH * (v - yMin)) / (yMax - yMin);
+
+    // ---- SVG root ----
+    const svg = svgEl('svg', {
+        class: 'gap-chart',
+        viewBox: `0 0 ${W} ${H}`,
+        preserveAspectRatio: 'xMidYMid meet',
+        role: 'img',
+        'aria-label': `Gap in months between ${labels.leader} and ${labels.laggard} frontier models over time`,
+    });
+
+    // y tick labels (no gridlines)
+    for (let v = 0; v <= yMax; v += 3) {
+        const t = svgEl('text', { class: 'axis-label', x: M.left - 8, y: y(v) + 3.5, 'text-anchor': 'end' });
+        t.appendChild(document.createTextNode(v));
+        svg.appendChild(t);
+    }
+
+    // x tick labels (quarterly, no gridlines)
+    const xTicks = [];
+    let cursor = new Date(Date.UTC(xMin.getUTCFullYear(), Math.floor(xMin.getUTCMonth() / 3) * 3, 1));
+    while (cursor <= xMax) {
+        if (cursor >= xMin) xTicks.push(new Date(cursor));
+        cursor = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 3, 1));
+    }
+    for (const d of xTicks) {
+        const xp = x(d);
+        const isJan = d.getUTCMonth() === 0;
+        const t = svgEl('text', {
+            class: 'axis-label',
+            x: xp,
+            y: M.top + innerH + 16,
+            'text-anchor': 'middle',
+            'font-weight': isJan ? '600' : '400',
         });
+        t.appendChild(document.createTextNode(isJan ? fmtYear(d) : fmtMonthShort(d)));
+        svg.appendChild(t);
+    }
 
-        // Add shaded region showing uncertainty (min bound to estimate)
-        if (lastGap) {
-            traces.push({
-                x: [lastGap.date, today, today, lastGap.date],
-                y: [lastGap.gap_months, estimate.min_current_gap, estimate.estimated_current_gap, lastGap.gap_months],
-                fill: 'toself',
-                fillcolor: 'rgba(229, 57, 53, 0.15)',
-                line: { color: 'transparent' },
-                type: 'scatter',
-                name: 'Uncertainty Range',
-                hoverinfo: 'skip',
-                showlegend: true,
-            });
+    // axis titles
+    const yTitleX = 24;
+    const yTitleY = M.top + innerH / 2;
+    const yTitle = svgEl('text', {
+        class: 'axis-title',
+        x: yTitleX,
+        y: yTitleY,
+        'text-anchor': 'middle',
+        transform: `rotate(-90 ${yTitleX} ${yTitleY})`,
+    });
+    yTitle.appendChild(document.createTextNode(labels.yAxisTitle));
+    svg.appendChild(yTitle);
+
+    const xTitle = svgEl('text', {
+        class: 'axis-title',
+        x: M.left + innerW / 2,
+        y: H - 22,
+        'text-anchor': 'middle',
+    });
+    xTitle.appendChild(document.createTextNode(labels.xAxisTitle));
+    svg.appendChild(xTitle);
+
+    // ---- gap area + line (step function) ----
+    // The gap is constant between consecutive laggard releases (since the
+    // matched leader doesn't change until the next laggard release advances
+    // the frontier), so the line is a step function: horizontal at the
+    // previous gap until the next release, then a vertical step to the new
+    // gap. Each dot still anchors a vertex. The final segment extends flat
+    // to xMax (today, or last release + pad in average mode).
+    const stepXY = [];
+    for (let i = 0; i < laggardFrontier.length; i++) {
+        const ev = laggardFrontier[i];
+        if (i === 0) {
+            stepXY.push([x(ev._d), y(ev.gap)]);
+        } else {
+            const prev = laggardFrontier[i - 1];
+            stepXY.push([x(ev._d), y(prev.gap)]);
+            stepXY.push([x(ev._d), y(ev.gap)]);
         }
-
-        // Annotation for the estimate
-        annotations.push({
-            x: today,
-            y: estimate.estimated_current_gap,
-            text: `Est: ${estimate.estimated_current_gap} mo`,
-            showarrow: true,
-            arrowhead: 2,
-            ax: -50,
-            ay: -25,
-            bgcolor: 'rgba(255, 255, 255, 0.9)',
-            bordercolor: COLORS.closed,
-            borderwidth: 1,
-            font: { size: 11, color: COLORS.closed },
-        });
+    }
+    const lastEv = laggardFrontier[laggardFrontier.length - 1];
+    if (xMax > lastEv._d) {
+        stepXY.push([x(xMax), y(lastEv.gap)]);
+    }
+    const linePts = stepXY.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+    if (laggardFrontier.length >= 1) {
+        const leftX = x(laggardFrontier[0]._d);
+        const rightX = stepXY[stepXY.length - 1][0];
+        const areaPts =
+            `${leftX.toFixed(1)},${y(0).toFixed(1)} ` +
+            linePts +
+            ` ${rightX.toFixed(1)},${y(0).toFixed(1)}`;
+        svg.appendChild(svgEl('polygon', { class: 'gap-area', points: areaPts }));
+        svg.appendChild(svgEl('polyline', { class: 'gap-line', points: linePts }));
     }
 
-    // Add average gap reference line in average mode
-    if (!isCurrentGapMode && stats.avg_horizontal_gap_months && startDate && endDate) {
-        traces.push({
-            x: [startDate, endDate],
-            y: [stats.avg_horizontal_gap_months, stats.avg_horizontal_gap_months],
-            mode: 'lines',
-            type: 'scatter',
-            name: `Overall Average (${stats.avg_horizontal_gap_months} mo)`,
-            line: { color: COLORS.annotation, width: 2, dash: 'dash' },
-            hoverinfo: 'skip',
-        });
+    // ---- current-gap projection (only in current mode) ----
+    if (currentEstimate && laggardFrontier.length) {
+        const last = laggardFrontier[laggardFrontier.length - 1];
+        const minBound = currentEstimate.min_current_gap;
+        const est = currentEstimate.estimated_current_gap;
+        // Soft wedge: from last release at minBound up to today at est, back along baseline to last
+        const wedgePts =
+            `${x(last._d).toFixed(1)},${y(last.gap).toFixed(1)} ` +
+            `${x(today).toFixed(1)},${y(est).toFixed(1)} ` +
+            `${x(today).toFixed(1)},${y(minBound).toFixed(1)} ` +
+            `${x(last._d).toFixed(1)},${y(last.gap).toFixed(1)}`;
+        svg.appendChild(svgEl('polygon', {
+            class: 'gap-area is-projection',
+            points: wedgePts,
+        }));
+        // Dashed projection line to the estimate
+        svg.appendChild(svgEl('polyline', {
+            class: 'gap-line is-projection',
+            points: `${x(last._d).toFixed(1)},${y(last.gap).toFixed(1)} ${x(today).toFixed(1)},${y(est).toFixed(1)}`,
+        }));
+        // Star marker at today (rendered after dots so it stays on top)
     }
 
-    const layout = {
-        title: '',
-        margin: { l: 60, r: 40, t: 20, b: 60 },
-        height: 400,
-        xaxis: {
-            title: 'Date',
-            titlefont: { size: 12, color: COLORS.annotation },
-            tickfont: { size: 11, color: COLORS.annotation },
-            gridcolor: COLORS.gridline,
-        },
-        yaxis: {
-            title: isCurrentGapMode ? 'Gap (Months) - with Current Estimate' : 'Gap (Months)',
-            titlefont: { size: 12, color: COLORS.annotation },
-            tickfont: { size: 11, color: COLORS.annotation },
-            gridcolor: COLORS.gridline,
-            rangemode: 'tozero',
-        },
-        annotations: annotations,
-        hovermode: 'x unified',
-        paper_bgcolor: 'transparent',
-        plot_bgcolor: 'transparent',
-        legend: {
-            orientation: 'h',
-            yanchor: 'bottom',
-            y: 1.02,
-            xanchor: 'right',
-            x: 1,
-        },
-    };
+    // ---- leader frontier rotated bottom ticks ----
+    const LEADER_SKIP = new Set([]); // could be wired up via UI later
+    const tickTopY = M.top + innerH;
+    const ROT_DEG = 40;
+    const ROT_COS = Math.cos((ROT_DEG * Math.PI) / 180);
+    const TICK_TOP = tickTopY + 28;
+    const TICK_BOTTOM = tickTopY + 36;
+    const LEADER_LABEL_Y = tickTopY + 42;
+    let leaderRightX = -Infinity;
+    for (const ev of leaderFrontier) {
+        const xp = x(ev._d);
+        if (xp < M.left || xp > W - M.right) continue;
+        const labelText = shortenModelName(ev.display);
+        if (LEADER_SKIP.has(labelText)) continue;
+        const estW = labelText.length * 6.6 * ROT_COS + 8;
+        // Skip if the rotated label would clip past the chart's right edge.
+        if (xp + estW > W - 6) continue;
+        if (xp < leaderRightX + 6) continue;
+        leaderRightX = xp + estW;
+        svg.appendChild(svgEl('line', {
+            class: 'us-tick',
+            x1: xp, x2: xp, y1: TICK_TOP, y2: TICK_BOTTOM,
+        }));
+        const labelW = labelText.length * 6.6 + 4;
+        svg.appendChild(svgEl('rect', {
+            class: 'label-us-box',
+            x: xp - 2,
+            y: LEADER_LABEL_Y - 10,
+            width: labelW,
+            height: 14,
+            transform: `rotate(${ROT_DEG} ${xp} ${LEADER_LABEL_Y})`,
+        }));
+        const t = svgEl('text', {
+            class: 'label-us',
+            x: xp,
+            y: LEADER_LABEL_Y,
+            'text-anchor': 'start',
+            transform: `rotate(${ROT_DEG} ${xp} ${LEADER_LABEL_Y})`,
+        });
+        t.appendChild(document.createTextNode(labelText));
+        svg.appendChild(t);
+    }
 
-    const config = {
-        responsive: true,
-        displayModeBar: 'hover',
-        modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
-        displaylogo: false,
-    };
+    // ---- laggard frontier dots + 2-row labels above ----
+    const ROWS = [
+        { y: M.top - 60, rightX: -Infinity }, // upper
+        { y: M.top - 28, rightX: -Infinity }, // lower (preferred)
+    ];
+    const placed = [];
+    for (const p of laggardFrontier) {
+        const xp = x(p._d);
+        if (xp < M.left || xp > W - M.right) continue;
+        const labelText = shortenModelName(p.display);
+        const gapText = p.prevGap != null && Number.isFinite(p.prevGap)
+            ? `${p.prevGap.toFixed(1)} → ${p.gap.toFixed(1)} mo`
+            : `${p.gap.toFixed(1)} mo`;
+        const halfW = Math.max(labelText.length * 3.4, gapText.length * 3.1) + 6;
+        let rowIdx = 1;
+        if (xp - halfW < ROWS[1].rightX + 4) rowIdx = 0;
+        if (rowIdx === 0 && xp - halfW < ROWS[0].rightX + 4) {
+            // both rows occupied — drop this label (still draw the dot)
+            placed.push({ p, xp, labelY: null, labelText, gapText });
+            continue;
+        }
+        ROWS[rowIdx].rightX = xp + halfW;
+        placed.push({ p, xp, labelY: ROWS[rowIdx].y, labelText, gapText });
+    }
+    const upperRowY = ROWS[0].y;
+    for (const { p, xp, labelY, labelText, gapText } of placed) {
+        const yp = y(p.gap);
+        if (labelY != null) {
+            const stubY1 = labelY === upperRowY ? M.top - 4 : labelY + 18;
+            svg.appendChild(svgEl('line', { class: 'label-stub', x1: xp, x2: xp, y1: stubY1, y2: yp - 6 }));
+        }
+        svg.appendChild(svgEl('circle', { class: 'cn-dot', cx: xp, cy: yp, r: 4 }));
+        if (labelY != null) {
+            const nameEl = svgEl('text', { class: 'label-cn', x: xp, y: labelY, 'text-anchor': 'middle' });
+            nameEl.appendChild(document.createTextNode(labelText));
+            svg.appendChild(nameEl);
+            const gapEl = svgEl('text', { class: 'label-cn-gap', x: xp, y: labelY + 14, 'text-anchor': 'middle' });
+            gapEl.appendChild(document.createTextNode(gapText));
+            svg.appendChild(gapEl);
+        }
+    }
 
-    Plotly.newPlot('historical-chart', traces, layout, config);
+    // ---- current-gap star marker (after dots so it sits on top) ----
+    if (currentEstimate) {
+        const est = currentEstimate.estimated_current_gap;
+        const cx = x(today);
+        const cy = y(est);
+        svg.appendChild(svgEl('polygon', {
+            class: 'current-star',
+            points: starPoints(cx, cy, 9, 4.2, 5),
+        }));
+    }
+
+    // ---- hover machinery ----
+    const hoverLine = svgEl('line', {
+        class: 'hover-line',
+        x1: 0, x2: 0, y1: M.top, y2: M.top + innerH,
+    });
+    svg.appendChild(hoverLine);
+    const hoverDot = svgEl('circle', { class: 'hover-dot', cx: 0, cy: 0, r: 4 });
+    svg.appendChild(hoverDot);
+    const hoverArea = svgEl('rect', {
+        class: 'hover-target',
+        x: M.left, y: M.top, width: innerW, height: innerH,
+    });
+    svg.appendChild(hoverArea);
+
+    // Each laggard frontier event already carries the matched leader from
+    // the catch-up computation above.
+    function matchedLeaderFor(lag) {
+        return lag.matchedLeader || null;
+    }
+
+    function nearestLaggard(d) {
+        if (laggardFrontier.length === 0) return null;
+        let best = laggardFrontier[0];
+        let bd = Math.abs(d - best._d);
+        for (const ev of laggardFrontier) {
+            const diff = Math.abs(d - ev._d);
+            if (diff < bd) { best = ev; bd = diff; }
+        }
+        return best;
+    }
+
+    function showTooltipAt(svgX) {
+        if (!tooltipEl) return;
+        const tMs = xMin.getTime() + ((svgX - M.left) / innerW) * (xMax - xMin);
+        const t = new Date(tMs);
+        const lag = nearestLaggard(t);
+        if (!lag) {
+            tooltipEl.hidden = true;
+            hoverLine.classList.remove('is-active');
+            hoverDot.classList.remove('is-active');
+            return;
+        }
+        const xp = x(lag._d);
+        const yp = y(lag.gap);
+        hoverLine.setAttribute('x1', xp);
+        hoverLine.setAttribute('x2', xp);
+        hoverLine.classList.add('is-active');
+        hoverDot.setAttribute('cx', xp);
+        hoverDot.setAttribute('cy', yp);
+        hoverDot.classList.add('is-active');
+        const ld = matchedLeaderFor(lag);
+        tooltipEl.innerHTML = buildTooltipHTML(lag, ld, labels);
+        // Position tooltip in container coords
+        const rect = svg.getBoundingClientRect();
+        const scaleX = rect.width / W;
+        const scaleY = rect.height / H;
+        tooltipEl.style.left = `${xp * scaleX}px`;
+        tooltipEl.style.top = `${yp * scaleY}px`;
+        tooltipEl.hidden = false;
+    }
+
+    function buildTooltipHTML(lag, ld, lbls) {
+        const lagSwatch = framing === 'china' ? 'cn' : 'cn'; // both use --c-cn token
+        const leaderRow = ld ? `
+            <div class="tt-row">
+                <span class="tt-swatch us"></span>
+                <div>
+                    <div class="tt-label">${escapeHTML(lbls.leaderModelMatched)}</div>
+                    <div class="tt-name">${escapeHTML(shortenModelName(ld.display))}</div>
+                    <div class="tt-meta">${escapeHTML(fmtDayLong(ld._d))} · ${escapeHTML(lbls.leader === 'US' ? 'ECI' : 'Score')} ${ld.score.toFixed(1)}</div>
+                </div>
+            </div>` : '';
+        return `
+            <div class="tt-head">${lag.gap.toFixed(1)} ${escapeHTML(lbls.behindHeader)}</div>
+            <div class="tt-date">at ${escapeHTML(shortenModelName(lag.display))}'s release</div>
+            <div class="tt-row">
+                <span class="tt-swatch ${lagSwatch}"></span>
+                <div>
+                    <div class="tt-label">${escapeHTML(lbls.laggardModel)}</div>
+                    <div class="tt-name">${escapeHTML(shortenModelName(lag.display))}</div>
+                    <div class="tt-meta">${escapeHTML(fmtDayLong(lag._d))} · ${escapeHTML(lbls.leader === 'US' ? 'ECI' : 'Score')} ${lag.score.toFixed(1)}</div>
+                </div>
+            </div>
+            ${leaderRow}
+        `;
+    }
+
+    hoverArea.addEventListener('mousemove', (ev) => {
+        const rect = svg.getBoundingClientRect();
+        const sx = ((ev.clientX - rect.left) * W) / rect.width;
+        if (sx < M.left || sx > W - M.right) return;
+        showTooltipAt(sx);
+    });
+    hoverArea.addEventListener('mouseleave', () => {
+        if (tooltipEl) tooltipEl.hidden = true;
+        hoverLine.classList.remove('is-active');
+        hoverDot.classList.remove('is-active');
+    });
+
+    root.appendChild(svg);
+    // Stash a serializable reference for PNG export
+    root.dataset.viewbox = `0 0 ${W} ${H}`;
+}
+
+/**
+ * Build N-pointed star polygon points centered at (cx, cy).
+ */
+function starPoints(cx, cy, outer, inner, points) {
+    const step = Math.PI / points;
+    const parts = [];
+    for (let i = 0; i < points * 2; i++) {
+        const r = i % 2 === 0 ? outer : inner;
+        const a = i * step - Math.PI / 2;
+        parts.push(`${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`);
+    }
+    return parts.join(' ');
+}
+
+/**
+ * Serialize the gap-over-time SVG with computed styles inlined and rasterize
+ * it to a PNG at 2x device pixels for sharing in reports.
+ */
+function setupHistoricalChartDownload() {
+    const btn = document.getElementById('historical-chart-download');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+        const svg = document.querySelector('#historical-chart svg.gap-chart');
+        if (!svg) return;
+        btn.disabled = true;
+        try {
+            await downloadSvgAsPng(svg, gapChartFilename());
+        } catch (e) {
+            console.error('PNG export failed:', e);
+        } finally {
+            btn.disabled = false;
+        }
+    });
+}
+
+function gapChartFilename() {
+    const today = new Date().toISOString().slice(0, 10);
+    const framing = appState.framing === 'china' ? 'china-us' : 'open-closed';
+    return `gap-over-time-${framing}-${today}.png`;
+}
+
+/**
+ * Inline computed styles for elements we draw, then rasterize the SVG.
+ * Inlining is required because the off-DOM Image loader doesn't read
+ * external stylesheets.
+ */
+async function downloadSvgAsPng(svgEl, filename) {
+    const vb = (svgEl.getAttribute('viewBox') || '0 0 1200 680').split(/\s+/).map(Number);
+    const W = vb[2] || 1200;
+    const H = vb[3] || 680;
+    const SCALE = 2;
+    const clone = svgEl.cloneNode(true);
+    clone.setAttribute('xmlns', SVG_NS);
+    clone.setAttribute('width', W);
+    clone.setAttribute('height', H);
+    inlineComputedStyles(svgEl, clone);
+    // Ensure background is paper-colored (transparent rasterizes weird)
+    const bg = document.createElementNS(SVG_NS, 'rect');
+    bg.setAttribute('x', 0); bg.setAttribute('y', 0);
+    bg.setAttribute('width', W); bg.setAttribute('height', H);
+    bg.setAttribute('fill', getComputedStyle(document.body).backgroundColor || '#fff');
+    clone.insertBefore(bg, clone.firstChild);
+    const svgString = new XMLSerializer().serializeToString(clone);
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    try {
+        const img = await loadImage(url);
+        const canvas = document.createElement('canvas');
+        canvas.width = W * SCALE;
+        canvas.height = H * SCALE;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(SCALE, SCALE);
+        ctx.drawImage(img, 0, 0, W, H);
+        const pngBlob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+        const pngUrl = URL.createObjectURL(pngBlob);
+        const a = document.createElement('a');
+        a.href = pngUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(pngUrl), 1000);
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+}
+
+function loadImage(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
+/**
+ * Walk the source SVG and copy resolved SVG presentation properties onto
+ * matching elements in the clone via the style attribute. We only need
+ * properties that affect rendering of paint/stroke/text.
+ */
+const SVG_STYLE_PROPS = [
+    'fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-dasharray',
+    'stroke-opacity', 'opacity', 'font-family', 'font-size', 'font-weight',
+    'letter-spacing', 'text-anchor',
+];
+function inlineComputedStyles(source, target) {
+    const srcEls = source.querySelectorAll('*');
+    const tgtEls = target.querySelectorAll('*');
+    if (srcEls.length !== tgtEls.length) return;
+    for (let i = 0; i < srcEls.length; i++) {
+        const cs = getComputedStyle(srcEls[i]);
+        const parts = [];
+        for (const prop of SVG_STYLE_PROPS) {
+            const v = cs.getPropertyValue(prop);
+            if (v && v !== 'normal' && v !== 'auto') parts.push(`${prop}:${v}`);
+        }
+        if (parts.length) tgtEls[i].setAttribute('style', parts.join(';'));
+    }
 }
 
 /**

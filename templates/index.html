@@ -116,8 +116,17 @@
             <h1>Gap Over Time</h1>
             <p class="subtitle">How the performance gap has evolved historically.</p>
         </div>
-        <div id="historical-chart-container" style="position: relative; min-height: 400px; margin-bottom: 2rem;">
-             <div id="historical-chart" style="width: 100%; height: 400px;"></div>
+        <div class="chart-card" id="historical-chart-card">
+            <div id="historical-chart-container">
+                <div id="historical-chart"></div>
+                <div id="historical-tooltip" class="gap-tooltip" hidden></div>
+            </div>
+            <div class="card-foot">
+                <button type="button" class="chart-download" id="historical-chart-download" aria-label="Download high-resolution PNG">
+                    <span class="chart-download__arrow" aria-hidden="true">↓</span>
+                    <span class="chart-download__label">Download PNG</span>
+                </button>
+            </div>
         </div>
 
         <div class="header">

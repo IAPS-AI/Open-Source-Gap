@@ -11,12 +11,13 @@ import logging
 import math
 from datetime import datetime, timedelta
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
 import requests
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, send_from_directory
 from scipy.stats import linregress, norm
 
 # Configure logging
@@ -465,6 +466,14 @@ def calculate_statistics(df: pd.DataFrame, gaps: list[dict]) -> dict:
 def index():
     """Serve the main visualization page."""
     return render_template("index.html")
+
+
+@app.route("/data.json")
+def data_json():
+    """Serve the prebuilt data.json from the project root so the static
+    frontend (which fetches `data.json` relative to the page, matching the
+    GitHub Pages deployment) works under Flask too."""
+    return send_from_directory(Path(__file__).parent, "data.json")
 
 
 @app.route("/api/data")
