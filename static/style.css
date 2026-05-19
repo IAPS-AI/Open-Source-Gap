@@ -671,18 +671,21 @@ details.explainer-panel[open] .explainer-summary::before {
     width: 100%;
     overflow: visible;
     position: relative;
-    min-height: 400px;
 }
 
 #historical-chart {
     width: 100%;
-    height: auto;
 }
 
 .gap-chart {
     display: block;
     width: 100%;
     height: auto;
+    /* Defensive: enforces the viewBox aspect ratio so browsers that don't
+       derive `height: auto` from viewBox don't collapse the SVG to a
+       150px-tall replaced-element default. Must match the W×H used when
+       constructing the SVG in renderHistoricalChart(). */
+    aspect-ratio: 1200 / 680;
     font-family: var(--font-family);
     font-variant-numeric: tabular-nums;
 }

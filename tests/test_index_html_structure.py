@@ -54,3 +54,22 @@ def test_legacy_inline_styles_removed(client):
     structure and breaks the responsive viewBox sizing."""
     html = client.get("/").get_data(as_text=True)
     assert 'id="historical-chart" style=' not in html
+
+
+def test_root_static_index_matches_chart_structure():
+    """GitHub Pages serves the root index.html (not the Flask template), so
+    chart-structure changes must be mirrored there too. Drifting markup was
+    the cause of an overlap bug where the gap chart bled into the next
+    section in production."""
+    root_html = (Path(__file__).parent.parent / "index.html").read_text(
+        encoding="utf-8"
+    )
+    for anchor in (
+        'id="historical-chart-card"',
+        'id="historical-chart-container"',
+        'id="historical-chart"',
+        'id="historical-tooltip"',
+        'id="historical-chart-download"',
+    ):
+        assert anchor in root_html, f"Missing anchor in root index.html: {anchor}"
+    assert 'id="historical-chart" style=' not in root_html

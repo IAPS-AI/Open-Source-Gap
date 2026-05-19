@@ -1593,9 +1593,15 @@ function renderHistoricalChart(data) {
     const y = (v) => M.top + innerH - (innerH * (v - yMin)) / (yMax - yMin);
 
     // ---- SVG root ----
+    // width/height attributes give the SVG a well-defined intrinsic aspect
+    // ratio. Without them, some browsers compute `height: auto` to a default
+    // (~150px) instead of deriving height from the viewBox, which lets the
+    // chart's bottom content overflow into the next section.
     const svg = svgEl('svg', {
         class: 'gap-chart',
         viewBox: `0 0 ${W} ${H}`,
+        width: W,
+        height: H,
         preserveAspectRatio: 'xMidYMid meet',
         role: 'img',
         'aria-label': `Gap in months between ${labels.leader} and ${labels.laggard} frontier models over time`,
