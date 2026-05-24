@@ -2546,6 +2546,15 @@
           "open_frontier_model": "Kimi K2.6",
           "reference_eci": 159.5,
           "open_frontier_eci": 151.6
+        },
+        {
+          "date": "2026-05-24T00:00:00",
+          "gap_months": 5.0,
+          "matched": false,
+          "reference_model": "GPT-5.5 Pro",
+          "open_frontier_model": "Kimi K2.6",
+          "reference_eci": 159.5,
+          "open_frontier_eci": 151.6
         }
       ],
       "china_framing": {
@@ -3063,6 +3072,15 @@
           },
           {
             "date": "2026-04-24T00:00:00",
+            "gap_months": 5.0,
+            "matched": false,
+            "reference_model": "GPT-5.5 Pro",
+            "open_frontier_model": "Kimi K2.6",
+            "reference_eci": 159.5,
+            "open_frontier_eci": 151.6
+          },
+          {
+            "date": "2026-05-24T00:00:00",
             "gap_months": 5.0,
             "matched": false,
             "reference_model": "GPT-5.5 Pro",
@@ -13396,7 +13414,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 10.4,
+          "gap_months": 10.5,
           "matched": false
         },
         {
@@ -13460,10 +13478,10 @@
         "total_unmatched": 6,
         "current_gap_estimate": {
           "estimated_current_gap": 11.4,
-          "min_current_gap": 10.4,
+          "min_current_gap": 10.5,
           "confidence": "low",
           "unmatched_ages": [
-            10.4,
+            10.5,
             9.5,
             5.4,
             3.1,
@@ -16049,5 +16067,5 @@
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-05-23T02:14:15.817885"
+  "last_updated": "2026-05-24T02:33:02.050053"
 }
