@@ -12,7 +12,7 @@ import math
 from datetime import datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -26,6 +26,9 @@ logger = logging.getLogger(__name__)
 
 # Constants
 DAYS_PER_MONTH = 365.25 / 12  # 30.4375 - accurate average days per month
+ECI_MATCH_THRESHOLD = 1.0  # ECI points - "approximately equal" when no CI is available
+# One-sided 5% critical value: P(Z <= 1.6448) = 0.95. See _open_caught_up.
+Z_ONE_SIDED_05 = float(norm.ppf(0.95))  # 1.6448...
 
 app = Flask(__name__)
 
@@ -374,89 +377,222 @@ def calculate_trends(df: pd.DataFrame) -> dict:
     return trends
 
 
-def calculate_statistics(df: pd.DataFrame, gaps: list[dict]) -> dict:
+def _open_caught_up(
+    open_score: float,
+    open_std: float,
+    sota_score: float,
+    sota_std: float,
+    threshold: float,
+    z: float = Z_ONE_SIDED_05,
+) -> bool:
+    """Has the open model *plausibly caught up* to a historical SOTA model?
+
+    Mirrors Epoch AI's bootstrap criterion (open beats SOTA in >=5% of paired
+    bootstrap samples == SOTA not significantly better than open at the
+    one-sided 5% level). With only point estimate + 90% CI per model, treat
+    each bootstrap ECI as ~Normal(score, std**2) so the paired difference
+    open - sota is Normal(open - sota, s_open^2 + s_sota^2); then
+
+        P(open > sota) >= 0.05  <=>  sota - open <= z * SE,  SE = sqrt(s1^2+s2^2)
+
+    (z = 1.645). Falls back to a point-estimate match within ``threshold`` when
+    uncertainty is unavailable. See scripts/update_data.py for the full
+    derivation and the independence caveat.
     """
-    Calculate summary statistics using the notebook's sampling approach:
-    Sample 100 ECI levels uniformly and calculate gaps at each level.
+    if (
+        pd.notna(open_std)
+        and pd.notna(sota_std)
+        and (open_std > 0 or sota_std > 0)
+    ):
+        se = math.sqrt(open_std ** 2 + sota_std ** 2)
+        return (sota_score - open_score) <= z * se
+    return open_score >= sota_score - threshold
+
+
+def calculate_gap_metrics(
+    df: pd.DataFrame,
+    score_col: str = "eci",
+    threshold: float = ECI_MATCH_THRESHOLD,
+    window_start: Optional[Any] = None,
+    window_end: Optional[Any] = None,
+    z: float = Z_ONE_SIDED_05,
+) -> Optional[dict]:
+    """Day-by-day open-vs-SOTA gap mirroring Epoch AI's methodology.
+
+    Steps one day at a time across the analysis window. For each day the time
+    (horizontal) gap is the months since the most recent historical
+    closed-weight SOTA model the day's best open model has plausibly caught up
+    to (see :func:`_open_caught_up`), with a strict variant requiring a strictly
+    higher open point estimate; the vertical gap is the absolute SOTA ECI minus
+    the best open ECI. Series are averaged across the window with 5th/95th
+    percentile bands. Window defaults to the full overlapping history. This is a
+    copy of the canonical implementation in scripts/update_data.py.
+    """
+    std_col = f"{score_col}_std"
+    d = df.dropna(subset=["date", score_col]).copy()
+    if d.empty or "Open" not in d.columns:
+        return None
+    d = d.sort_values("date", kind="mergesort")
+    has_std = std_col in d.columns
+
+    open_rows = d[d["Open"]]
+    closed_rows = d[~d["Open"]]
+    if open_rows.empty or closed_rows.empty:
+        return None
+
+    sota: list[dict] = []
+    run_max = -np.inf
+    for _, r in closed_rows.iterrows():
+        s = r[score_col]
+        if s > run_max:
+            run_max = s
+            sota.append({
+                "date": r["date"],
+                "score": float(s),
+                "std": float(r[std_col]) if has_std and pd.notna(r.get(std_col)) else np.nan,
+            })
+    if not sota:
+        return None
+
+    first_open = open_rows["date"].min()
+    first_closed = sota[0]["date"]
+    ws = pd.Timestamp(window_start) if window_start is not None else max(first_open, first_closed)
+    we = pd.Timestamp(window_end) if window_end is not None else d["date"].max()
+    if ws > we:
+        return None
+
+    open_sorted = open_rows.sort_values("date", kind="mergesort")
+    daily_time: list[float] = []
+    daily_time_strict: list[float] = []
+    daily_vertical: list[float] = []
+
+    for day in pd.date_range(ws, we):
+        open_avail = open_sorted[open_sorted["date"] <= day]
+        if open_avail.empty:
+            continue
+        best_open = open_avail.loc[open_avail[score_col].idxmax()]
+        best_open_score = float(best_open[score_col])
+        best_open_std = (
+            float(best_open[std_col])
+            if has_std and pd.notna(best_open.get(std_col))
+            else np.nan
+        )
+
+        sota_avail = [s for s in sota if s["date"] <= day]
+        if not sota_avail:
+            continue
+
+        best_closed_score = max(s["score"] for s in sota_avail)
+        absolute_sota = max(best_closed_score, best_open_score)
+        daily_vertical.append(absolute_sota - best_open_score)
+
+        ref_date = None
+        for s in sorted(sota_avail, key=lambda x: x["date"], reverse=True):
+            if _open_caught_up(best_open_score, best_open_std, s["score"], s["std"], threshold, z):
+                ref_date = s["date"]
+                break
+        if ref_date is None:
+            ref_date = sota_avail[0]["date"]
+        daily_time.append((day - ref_date).days / DAYS_PER_MONTH)
+
+        ref_date_strict = None
+        for s in sorted(sota_avail, key=lambda x: x["date"], reverse=True):
+            if best_open_score > s["score"]:
+                ref_date_strict = s["date"]
+                break
+        if ref_date_strict is None:
+            ref_date_strict = sota_avail[0]["date"]
+        daily_time_strict.append((day - ref_date_strict).days / DAYS_PER_MONTH)
+
+    if not daily_time or not daily_vertical:
+        return None
+
+    time_arr = np.array(daily_time)
+    time_strict_arr = np.array(daily_time_strict)
+    vert_arr = np.array(daily_vertical)
+    t_lo, t_hi = np.quantile(time_arr, [0.05, 0.95])
+    v_lo, v_hi = np.quantile(vert_arr, [0.05, 0.95])
+
+    return {
+        "avg_time_gap_months": float(np.mean(time_arr)),
+        "avg_time_gap_months_strict": float(np.mean(time_strict_arr)),
+        "time_gap_std": float(np.std(time_arr, ddof=1)) if len(time_arr) > 1 else 0.0,
+        "time_gap_ci_90_low": float(t_lo),
+        "time_gap_ci_90_high": float(t_hi),
+        "avg_vertical_gap": float(np.mean(vert_arr)),
+        "vertical_gap_ci_90_low": float(v_lo),
+        "vertical_gap_ci_90_high": float(v_hi),
+        "window_start": ws.isoformat(),
+        "window_end": we.isoformat(),
+        "n_days": int(len(time_arr)),
+    }
+
+
+def calculate_statistics(df: pd.DataFrame, gaps: list[dict]) -> dict:
+    """Summary statistics: day-by-day open-vs-SOTA gap mirroring Epoch AI.
+
+    The headline time gap and windowed vertical gap come from
+    :func:`calculate_gap_metrics`; the matched/unmatched counts come from the
+    per-closed-model ``gaps`` list.
     """
     df_open = df[df["Open"]].copy()
     df_closed = df[~df["Open"]].copy()
-    
-    # Get ECI range with valid horizontal gaps (overlapping range)
+
+    matched_gaps = [g for g in gaps if g["matched"]]
+
     if len(df_open) == 0 or len(df_closed) == 0:
         return {
             "avg_horizontal_gap_months": 0,
+            "avg_horizontal_gap_months_strict": 0,
             "std_horizontal_gap": 0,
             "ci_90_low": 0,
             "ci_90_high": 0,
             "current_vertical_gap": 0,
-            "total_matched": 0,
-            "total_unmatched": len(gaps),
+            "avg_vertical_gap": 0,
+            "vertical_gap_ci_90_low": 0,
+            "vertical_gap_ci_90_high": 0,
+            "gap_window": None,
+            "total_matched": len(matched_gaps),
+            "total_unmatched": len(gaps) - len(matched_gaps),
         }
-    
-    start_eci = max(df_open["eci"].min(), df_closed["eci"].min())
-    end_eci = min(df_open["eci"].max(), df_closed["eci"].max())  # Use min to avoid censored observations
-    
-    horizontal_gaps = []
-    
-    # Keep track of which open models might still qualify (optimization from notebook)
-    df_open_possible = df_open.sort_values("date").copy()
-    
-    # Sample 100 ECI levels uniformly across the valid range
-    for cur_eci in np.linspace(start_eci, end_eci, 100):
-        # Find earliest closed model with ECI >= cur_eci
-        closed_candidates = df_closed[df_closed["eci"] >= cur_eci].sort_values("date")
-        if len(closed_candidates) == 0:
-            continue
-        cur_closed_model = closed_candidates.iloc[0]
-        
-        # Find first open model that matches (per notebook logic)
-        cur_open_model = None
-        for _, row in df_open_possible.iterrows():
-            if pd.isna(row["eci"]) or pd.isna(row["date"]):
-                continue
-                
-            if row["eci"] >= cur_eci - 1:
-                cur_open_model = row
-                gap = (cur_open_model["date"] - cur_closed_model["date"]).days / DAYS_PER_MONTH
-                horizontal_gaps.append(gap)
-                break
-            else:
-                pass
-        
-        # If loop finished with no match, use current date
-        if cur_open_model is None:
-            now = datetime.now()
-            # Calculate gap from closed model release to now
-            # Only count if "now" is after release date (should be always true for valid data)
-            gap = (now - cur_closed_model["date"].to_pydatetime().replace(tzinfo=None)).days / DAYS_PER_MONTH
-            horizontal_gaps.append(gap)
-    
-    # Calculate statistics from sampled gaps
-    if horizontal_gaps:
-        avg_gap = np.mean(horizontal_gaps)
-        std_gap = np.std(horizontal_gaps, ddof=1)  # Unbiased estimator
-        n = len(horizontal_gaps)
-        # 90% confidence interval on the mean (z = 1.645 for 90% CI)
-        sem = std_gap / np.sqrt(n)  # Standard error of the mean
-        ci_low = avg_gap - 1.645 * sem
-        ci_high = avg_gap + 1.645 * sem
-    else:
-        avg_gap = std_gap = ci_low = ci_high = 0
 
-    # Calculate current vertical gap (difference in best ECI scores)
+    metrics = calculate_gap_metrics(df, score_col="eci", threshold=ECI_MATCH_THRESHOLD)
+
+    if metrics is not None:
+        avg_gap = metrics["avg_time_gap_months"]
+        avg_gap_strict = metrics["avg_time_gap_months_strict"]
+        std_gap = metrics["time_gap_std"]
+        ci_low = metrics["time_gap_ci_90_low"]
+        ci_high = metrics["time_gap_ci_90_high"]
+        avg_vertical = metrics["avg_vertical_gap"]
+        vertical_ci_low = metrics["vertical_gap_ci_90_low"]
+        vertical_ci_high = metrics["vertical_gap_ci_90_high"]
+        gap_window = {
+            "start": metrics["window_start"],
+            "end": metrics["window_end"],
+            "n_days": metrics["n_days"],
+        }
+    else:
+        avg_gap = avg_gap_strict = std_gap = ci_low = ci_high = 0
+        avg_vertical = vertical_ci_low = vertical_ci_high = 0
+        gap_window = None
+
+    # Current ("vertical") gap snapshot kept alongside the windowed average.
     best_open_eci = df_open["eci"].max() if len(df_open) > 0 else 0
     best_closed_eci = df_closed["eci"].max() if len(df_closed) > 0 else 0
     vertical_gap = best_closed_eci - best_open_eci
 
-    matched_gaps = [g for g in gaps if g["matched"]]
-    
     return {
         "avg_horizontal_gap_months": round(avg_gap, 1),
+        "avg_horizontal_gap_months_strict": round(avg_gap_strict, 1),
         "std_horizontal_gap": round(std_gap, 1),
         "ci_90_low": round(ci_low, 1),
         "ci_90_high": round(ci_high, 1),
         "current_vertical_gap": round(vertical_gap, 1),
+        "avg_vertical_gap": round(avg_vertical, 1),
+        "vertical_gap_ci_90_low": round(vertical_ci_low, 1),
+        "vertical_gap_ci_90_high": round(vertical_ci_high, 1),
+        "gap_window": gap_window,
         "total_matched": len(matched_gaps),
         "total_unmatched": len(gaps) - len(matched_gaps),
     }

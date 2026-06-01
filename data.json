@@ -2197,11 +2197,20 @@
         }
       ],
       "statistics": {
-        "avg_horizontal_gap_months": 4.5,
-        "std_horizontal_gap": 2.5,
-        "ci_90_low": 4.1,
-        "ci_90_high": 4.9,
+        "avg_horizontal_gap_months": 3.5,
+        "avg_horizontal_gap_months_strict": 7.5,
+        "std_horizontal_gap": 3.3,
+        "ci_90_low": 0.3,
+        "ci_90_high": 11.2,
         "current_vertical_gap": 7.7,
+        "avg_vertical_gap": 7.7,
+        "vertical_gap_ci_90_low": 1.9,
+        "vertical_gap_ci_90_high": 16.6,
+        "gap_window": {
+          "start": "2023-03-14T00:00:00",
+          "end": "2026-04-23T00:00:00",
+          "n_days": 1137
+        },
         "total_matched": 11,
         "total_unmatched": 6,
         "current_gap_estimate": {
@@ -2234,7 +2243,7 @@
           "doubling_time_years": 4.48,
           "start_point": {
             "date": "2023-02-24T00:00:00",
-            "eci": 95.87952968747413
+            "eci": 95.87952968748141
           },
           "end_point": {
             "date": "2026-05-19T00:00:00",
@@ -2813,11 +2822,20 @@
           }
         ],
         "statistics": {
-          "avg_horizontal_gap_months": 7.0,
-          "std_horizontal_gap": 4.0,
-          "ci_90_low": 6.4,
-          "ci_90_high": 7.7,
+          "avg_horizontal_gap_months": 4.1,
+          "avg_horizontal_gap_months_strict": 9.0,
+          "std_horizontal_gap": 3.9,
+          "ci_90_low": 0.3,
+          "ci_90_high": 12.6,
           "current_vertical_gap": 7.7,
+          "avg_vertical_gap": 9.9,
+          "vertical_gap_ci_90_low": 3.0,
+          "vertical_gap_ci_90_high": 36.1,
+          "gap_window": {
+            "start": "2023-06-01T00:00:00",
+            "end": "2026-04-23T00:00:00",
+            "n_days": 1058
+          },
           "total_matched": 12,
           "total_unmatched": 6,
           "current_gap_estimate": {
@@ -4436,11 +4454,20 @@
         }
       ],
       "statistics": {
-        "avg_horizontal_gap_months": 7.6,
-        "std_horizontal_gap": 4.9,
-        "ci_90_low": 6.8,
-        "ci_90_high": 8.4,
+        "avg_horizontal_gap_months": 12.7,
+        "avg_horizontal_gap_months_strict": 12.7,
+        "std_horizontal_gap": 7.5,
+        "ci_90_low": 4.1,
+        "ci_90_high": 29.1,
         "current_vertical_gap": 987.2,
+        "avg_vertical_gap": 140.6,
+        "vertical_gap_ci_90_low": 8.9,
+        "vertical_gap_ci_90_high": 661.2,
+        "gap_window": {
+          "start": "2024-06-07T00:00:00",
+          "end": "2026-04-07T00:00:00",
+          "n_days": 670
+        },
         "total_matched": 11,
         "total_unmatched": 8,
         "current_gap_estimate": {
@@ -4937,11 +4964,20 @@
           }
         ],
         "statistics": {
-          "avg_horizontal_gap_months": 7.9,
-          "std_horizontal_gap": 5.0,
-          "ci_90_low": 7.1,
-          "ci_90_high": 8.7,
+          "avg_horizontal_gap_months": 12.9,
+          "avg_horizontal_gap_months_strict": 12.9,
+          "std_horizontal_gap": 7.4,
+          "ci_90_low": 4.1,
+          "ci_90_high": 29.1,
           "current_vertical_gap": 987.2,
+          "avg_vertical_gap": 142.3,
+          "vertical_gap_ci_90_low": 8.9,
+          "vertical_gap_ci_90_high": 661.2,
+          "gap_window": {
+            "start": "2024-06-07T00:00:00",
+            "end": "2026-04-07T00:00:00",
+            "n_days": 670
+          },
           "total_matched": 11,
           "total_unmatched": 8,
           "current_gap_estimate": {
@@ -7422,11 +7458,20 @@
         }
       ],
       "statistics": {
-        "avg_horizontal_gap_months": 4.5,
-        "std_horizontal_gap": 2.1,
-        "ci_90_low": 4.1,
-        "ci_90_high": 4.8,
+        "avg_horizontal_gap_months": 4.9,
+        "avg_horizontal_gap_months_strict": 7.8,
+        "std_horizontal_gap": 2.5,
+        "ci_90_low": 1.3,
+        "ci_90_high": 9.8,
         "current_vertical_gap": 3.8,
+        "avg_vertical_gap": 9.6,
+        "vertical_gap_ci_90_low": 3.1,
+        "vertical_gap_ci_90_high": 16.0,
+        "gap_window": {
+          "start": "2023-07-18T00:00:00",
+          "end": "2026-04-20T00:00:00",
+          "n_days": 1008
+        },
         "total_matched": 14,
         "total_unmatched": 3,
         "current_gap_estimate": {
@@ -7456,7 +7501,7 @@
           "doubling_time_years": 1.4,
           "start_point": {
             "date": "2023-03-14T00:00:00",
-            "eci": 9.972687633591704
+            "eci": 9.972687633584428
           },
           "end_point": {
             "date": "2026-05-19T00:00:00",
@@ -9351,11 +9396,20 @@
         }
       ],
       "statistics": {
-        "avg_horizontal_gap_months": 4.0,
-        "std_horizontal_gap": 2.2,
-        "ci_90_low": 3.6,
-        "ci_90_high": 4.3,
+        "avg_horizontal_gap_months": 5.6,
+        "avg_horizontal_gap_months_strict": 6.1,
+        "std_horizontal_gap": 2.6,
+        "ci_90_low": 1.6,
+        "ci_90_high": 10.5,
         "current_vertical_gap": 1.0,
+        "avg_vertical_gap": 16.0,
+        "vertical_gap_ci_90_low": 1.2,
+        "vertical_gap_ci_90_high": 33.1,
+        "gap_window": {
+          "start": "2023-07-18T00:00:00",
+          "end": "2025-09-24T00:00:00",
+          "n_days": 800
+        },
         "total_matched": 13,
         "total_unmatched": 0,
         "current_gap_estimate": {
@@ -9823,6 +9877,16 @@
           "organization": "Moonshot",
           "is_open": true,
           "is_china": true
+        },
+        {
+          "model": "qwen3.6-max-preview",
+          "display_name": "qwen3.6-max-preview",
+          "score": 76.65,
+          "score_std": 1.92,
+          "date": "2026-04-20T00:00:00",
+          "organization": "Alibaba",
+          "is_open": true,
+          "is_china": true
         }
       ],
       "trend_models": [
@@ -10117,6 +10181,16 @@
           "is_china": true
         },
         {
+          "model": "qwen3.6-max-preview",
+          "display_name": "qwen3.6-max-preview",
+          "score": 76.65,
+          "score_std": 1.92,
+          "date": "2026-04-20T00:00:00",
+          "organization": "Alibaba",
+          "is_open": true,
+          "is_china": true
+        },
+        {
           "model": "gpt-5.5-pre-release_xhigh",
           "display_name": "gpt-5.5-pre-release_xhigh",
           "score": 80.58,
@@ -10227,11 +10301,20 @@
         }
       ],
       "statistics": {
-        "avg_horizontal_gap_months": 4.7,
-        "std_horizontal_gap": 0.3,
-        "ci_90_low": 4.7,
-        "ci_90_high": 4.8,
+        "avg_horizontal_gap_months": 3.4,
+        "avg_horizontal_gap_months_strict": 7.0,
+        "std_horizontal_gap": 0.8,
+        "ci_90_low": 2.2,
+        "ci_90_high": 4.7,
         "current_vertical_gap": 6.8,
+        "avg_vertical_gap": 4.9,
+        "vertical_gap_ci_90_low": 2.9,
+        "vertical_gap_ci_90_high": 6.5,
+        "gap_window": {
+          "start": "2026-01-27T00:00:00",
+          "end": "2026-04-20T00:00:00",
+          "n_days": 84
+        },
         "total_matched": 7,
         "total_unmatched": 2,
         "current_gap_estimate": {
@@ -10254,17 +10337,17 @@
       "trends": {
         "overall": {
           "name": "Overall",
-          "absolute_growth_per_year": 20.74,
-          "percentage_growth_annualized": 43.4,
+          "absolute_growth_per_year": 20.49,
+          "percentage_growth_annualized": 42.6,
           "multiples_per_year": 1.43,
-          "doubling_time_years": 1.92,
+          "doubling_time_years": 1.95,
           "start_point": {
             "date": "2024-11-20T00:00:00",
-            "eci": 49.921796741087746
+            "eci": 50.08899845058477
           },
           "end_point": {
             "date": "2026-04-23T00:00:00",
-            "eci": 79.39575715493993
+            "eci": 79.1970916659775
           }
         },
         "early": {
@@ -10284,17 +10367,17 @@
         },
         "recent": {
           "name": "Post-Aug 2025",
-          "absolute_growth_per_year": 9.33,
-          "percentage_growth_annualized": 13.0,
+          "absolute_growth_per_year": 9.45,
+          "percentage_growth_annualized": 13.2,
           "multiples_per_year": 1.13,
-          "doubling_time_years": 5.69,
+          "doubling_time_years": 5.58,
           "start_point": {
             "date": "2025-08-07T00:00:00",
-            "eci": 69.57863265663764
+            "eci": 69.54882840736173
           },
           "end_point": {
             "date": "2026-04-23T00:00:00",
-            "eci": 76.19547461067123
+            "eci": 76.25226795130948
           }
         },
         "metadata": {
@@ -11802,11 +11885,20 @@
         }
       ],
       "statistics": {
-        "avg_horizontal_gap_months": 6.9,
-        "std_horizontal_gap": 1.8,
-        "ci_90_low": 6.6,
-        "ci_90_high": 7.2,
+        "avg_horizontal_gap_months": 5.9,
+        "avg_horizontal_gap_months_strict": 9.3,
+        "std_horizontal_gap": 1.9,
+        "ci_90_low": 2.6,
+        "ci_90_high": 8.7,
         "current_vertical_gap": 13.4,
+        "avg_vertical_gap": 16.7,
+        "vertical_gap_ci_90_low": 1.7,
+        "vertical_gap_ci_90_high": 23.9,
+        "gap_window": {
+          "start": "2024-11-18T00:00:00",
+          "end": "2026-04-23T00:00:00",
+          "n_days": 522
+        },
         "total_matched": 11,
         "total_unmatched": 6,
         "current_gap_estimate": {
@@ -12751,11 +12843,20 @@
         }
       ],
       "statistics": {
-        "avg_horizontal_gap_months": 1.9,
-        "std_horizontal_gap": 2.5,
-        "ci_90_low": 1.5,
-        "ci_90_high": 2.3,
+        "avg_horizontal_gap_months": 4.7,
+        "avg_horizontal_gap_months_strict": 4.7,
+        "std_horizontal_gap": 1.7,
+        "ci_90_low": 2.0,
+        "ci_90_high": 7.7,
         "current_vertical_gap": 9.8,
+        "avg_vertical_gap": 9.2,
+        "vertical_gap_ci_90_low": 0.0,
+        "vertical_gap_ci_90_high": 28.6,
+        "gap_window": {
+          "start": "2025-05-28T00:00:00",
+          "end": "2026-02-19T00:00:00",
+          "n_days": 268
+        },
         "total_matched": 5,
         "total_unmatched": 2,
         "current_gap_estimate": {
@@ -13579,11 +13680,20 @@
         }
       ],
       "statistics": {
-        "avg_horizontal_gap_months": 10.3,
-        "std_horizontal_gap": 2.6,
-        "ci_90_low": 9.9,
-        "ci_90_high": 10.7,
+        "avg_horizontal_gap_months": 7.0,
+        "avg_horizontal_gap_months_strict": 10.2,
+        "std_horizontal_gap": 1.4,
+        "ci_90_low": 4.4,
+        "ci_90_high": 9.1,
         "current_vertical_gap": 38.0,
+        "avg_vertical_gap": 27.5,
+        "vertical_gap_ci_90_low": 17.0,
+        "vertical_gap_ci_90_high": 38.6,
+        "gap_window": {
+          "start": "2025-07-25T00:00:00",
+          "end": "2026-04-23T00:00:00",
+          "n_days": 273
+        },
         "total_matched": 2,
         "total_unmatched": 6,
         "current_gap_estimate": {
@@ -15815,11 +15925,20 @@
         }
       ],
       "statistics": {
-        "avg_horizontal_gap_months": 4.7,
-        "std_horizontal_gap": 3.0,
-        "ci_90_low": 4.2,
-        "ci_90_high": 5.2,
+        "avg_horizontal_gap_months": 3.2,
+        "avg_horizontal_gap_months_strict": 6.5,
+        "std_horizontal_gap": 2.2,
+        "ci_90_low": 0.3,
+        "ci_90_high": 7.2,
         "current_vertical_gap": 3.9,
+        "avg_vertical_gap": 12.0,
+        "vertical_gap_ci_90_low": 0.0,
+        "vertical_gap_ci_90_high": 37.2,
+        "gap_window": {
+          "start": "2023-07-18T00:00:00",
+          "end": "2026-04-23T00:00:00",
+          "n_days": 1011
+        },
         "total_matched": 21,
         "total_unmatched": 3,
         "current_gap_estimate": {
@@ -16196,5 +16315,5 @@
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-06-01T02:51:40.447676"
+  "last_updated": "2026-06-01T14:22:40.311340"
 }

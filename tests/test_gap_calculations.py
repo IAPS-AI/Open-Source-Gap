@@ -17,12 +17,15 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 from update_data import (
     calculate_horizontal_gaps,
     calculate_statistics,
+    calculate_gap_metrics,
+    _open_caught_up,
     estimate_current_gap,
     calculate_historical_gaps,
     is_china_org,
     is_us_org,
     DAYS_PER_MONTH,
     ECI_MATCH_THRESHOLD,
+    Z_ONE_SIDED_05,
 )
 
 
@@ -556,6 +559,179 @@ class TestDateArithmetic:
         expected_months = expected_days / DAYS_PER_MONTH
         # gap_months is rounded to 1 decimal place
         assert abs(gaps[0]["gap_months"] - round(expected_months, 1)) < 0.01
+
+
+class TestOpenCaughtUp:
+    """Tests for the bootstrap-mirroring significance predicate."""
+
+    def test_z_value_is_one_sided_5pct(self):
+        """Z_ONE_SIDED_05 should be the 95th percentile of the standard normal."""
+        assert abs(Z_ONE_SIDED_05 - 1.6448536) < 1e-5
+
+    def test_caught_up_when_close_within_se(self):
+        """SOTA only slightly ahead, within z*SE -> not significantly better."""
+        # SE = sqrt(2^2 + 2^2) = 2.8284; z*SE = 1.6449 * 2.8284 = 4.6526
+        # sota - open = 3 <= 4.6526 -> caught up
+        assert _open_caught_up(100.0, 2.0, 103.0, 2.0, threshold=1.0) is True
+
+    def test_not_caught_up_when_far_beyond_se(self):
+        """SOTA far ahead relative to SE -> significantly better."""
+        # SE = sqrt(1+1) = 1.4142; z*SE = 2.326; sota - open = 10 > 2.326
+        assert _open_caught_up(100.0, 1.0, 110.0, 1.0, threshold=1.0) is False
+
+    def test_open_above_sota_always_caught_up(self):
+        """Open point estimate above SOTA -> trivially caught up."""
+        assert _open_caught_up(105.0, 1.0, 100.0, 1.0, threshold=1.0) is True
+
+    def test_threshold_fallback_when_no_std(self):
+        """With missing std, fall back to a point-estimate match within threshold."""
+        # 100 >= 100.5 - 1 = 99.5 -> caught up
+        assert _open_caught_up(100.0, np.nan, 100.5, np.nan, threshold=1.0) is True
+        # 98 >= 100 - 1 = 99 -> not caught up
+        assert _open_caught_up(98.0, np.nan, 100.0, np.nan, threshold=1.0) is False
+
+    def test_boundary_around_z_se(self):
+        """The decision flips as sota - open crosses z*SE."""
+        import math
+        se = math.sqrt(2.0 ** 2 + 2.0 ** 2)
+        diff = Z_ONE_SIDED_05 * se
+        # Just inside the boundary -> caught up; just outside -> not.
+        assert _open_caught_up(100.0, 2.0, 100.0 + diff - 0.01, 2.0, threshold=1.0) is True
+        assert _open_caught_up(100.0, 2.0, 100.0 + diff + 0.01, 2.0, threshold=1.0) is False
+
+
+class TestGapMetrics:
+    """Tests for the day-by-day SOTA-frontier gap metrics."""
+
+    def test_single_day_window_threshold_path(self):
+        """A one-day window with no std exercises the threshold path exactly."""
+        df = pd.DataFrame({
+            "Model": ["C1", "C2", "O1"],
+            "eci": [100.0, 120.0, 121.0],
+            "date": pd.to_datetime(["2024-01-01", "2024-07-01", "2025-01-01"]),
+            "Open": [False, False, True],
+        })
+
+        m = calculate_gap_metrics(df, score_col="eci", threshold=1.0)
+
+        assert m is not None
+        # Window collapses to the single day the open model exists (latest date).
+        assert m["n_days"] == 1
+        # Open (121) catches the most recent closed SOTA C2 (120, within
+        # threshold). Gap = Jul 1 2024 -> Jan 1 2025 = 184 days.
+        expected_days = (pd.to_datetime("2025-01-01") - pd.to_datetime("2024-07-01")).days
+        expected_months = expected_days / DAYS_PER_MONTH
+        assert abs(m["avg_time_gap_months"] - expected_months) < 1e-6
+        # Strict: open (121) > C2 (120), so same reference, same gap.
+        assert abs(m["avg_time_gap_months_strict"] - expected_months) < 1e-6
+        # Vertical: absolute SOTA = max(120, 121) = 121, open = 121 -> 0.
+        assert abs(m["avg_vertical_gap"]) < 1e-9
+
+    def test_strict_gap_never_below_lenient(self):
+        """Strict criterion is more demanding, so its gap >= lenient gap."""
+        df = pd.DataFrame({
+            "Model": ["C1", "C2", "C3", "O1", "O2"],
+            "eci": [100.0, 120.0, 140.0, 119.0, 135.0],
+            "eci_std": [2.0, 2.0, 2.0, 2.0, 2.0],
+            "date": pd.to_datetime([
+                "2023-01-01", "2023-09-01", "2024-06-01",
+                "2024-01-01", "2024-12-01",
+            ]),
+            "Open": [False, False, False, True, True],
+        })
+
+        m = calculate_gap_metrics(df, score_col="eci")
+
+        assert m is not None
+        assert m["n_days"] > 1
+        assert m["avg_time_gap_months_strict"] >= m["avg_time_gap_months"] - 1e-9
+
+    def test_lenient_more_permissive_than_strict_specific_day(self):
+        """With uncertainty, open catches a SOTA whose point estimate is higher."""
+        # Open at 119 (+/- std) vs closed SOTA at 120: lenient catches the 120
+        # model (not significantly better), strict does not (119 !> 120).
+        df = pd.DataFrame({
+            "Model": ["C_old", "C_new", "O1"],
+            "eci": [100.0, 120.0, 119.0],
+            "eci_std": [2.0, 2.0, 2.0],
+            "date": pd.to_datetime(["2023-01-01", "2024-01-01", "2024-06-01"]),
+            "Open": [False, False, True],
+        })
+
+        m = calculate_gap_metrics(df, score_col="eci")
+        assert m is not None
+        # n_days == 1 (open exists only on its release day, the latest date).
+        # Lenient -> ref C_new (2024-01-01); strict -> ref C_old (2023-01-01).
+        lenient_days = (pd.to_datetime("2024-06-01") - pd.to_datetime("2024-01-01")).days
+        strict_days = (pd.to_datetime("2024-06-01") - pd.to_datetime("2023-01-01")).days
+        assert abs(m["avg_time_gap_months"] - lenient_days / DAYS_PER_MONTH) < 1e-6
+        assert abs(m["avg_time_gap_months_strict"] - strict_days / DAYS_PER_MONTH) < 1e-6
+
+    def test_window_override(self):
+        """Explicit window bounds the number of days analyzed."""
+        df = pd.DataFrame({
+            "Model": ["C1", "O1"],
+            "eci": [100.0, 105.0],
+            "eci_std": [2.0, 2.0],
+            "date": pd.to_datetime(["2024-01-01", "2024-02-01"]),
+            "Open": [False, True],
+        })
+
+        m = calculate_gap_metrics(
+            df, score_col="eci",
+            window_start="2024-02-01", window_end="2024-02-10",
+        )
+        assert m is not None
+        assert m["n_days"] == 10  # Feb 1..Feb 10 inclusive
+
+    def test_returns_none_without_both_groups(self):
+        """No SOTA (closed) models -> cannot compute a gap."""
+        df = pd.DataFrame({
+            "Model": ["O1", "O2"],
+            "eci": [100.0, 110.0],
+            "date": pd.to_datetime(["2024-01-01", "2024-02-01"]),
+            "Open": [True, True],
+        })
+        assert calculate_gap_metrics(df, score_col="eci") is None
+
+
+class TestStatisticsNewFields:
+    """The replaced calculate_statistics must surface the new methodology."""
+
+    def test_new_keys_present_and_consistent(self):
+        df = pd.DataFrame({
+            "Model": ["C1", "C2", "C3", "O1", "O2"],
+            "eci": [100.0, 120.0, 140.0, 119.0, 135.0],
+            "eci_std": [2.0, 2.0, 2.0, 2.0, 2.0],
+            "date": pd.to_datetime([
+                "2023-01-01", "2023-09-01", "2024-06-01",
+                "2024-01-01", "2024-12-01",
+            ]),
+            "Open": [False, False, False, True, True],
+        })
+        gaps = calculate_horizontal_gaps(df)
+        stats = calculate_statistics(df, gaps)
+
+        for key in (
+            "avg_horizontal_gap_months",
+            "avg_horizontal_gap_months_strict",
+            "std_horizontal_gap",
+            "ci_90_low",
+            "ci_90_high",
+            "current_vertical_gap",
+            "avg_vertical_gap",
+            "vertical_gap_ci_90_low",
+            "vertical_gap_ci_90_high",
+            "gap_window",
+        ):
+            assert key in stats, f"missing {key}"
+
+        # Strict variant is at least as large as the lenient one.
+        assert stats["avg_horizontal_gap_months_strict"] >= stats["avg_horizontal_gap_months"]
+        # CI brackets the mean (quantile-based band).
+        assert stats["ci_90_low"] <= stats["avg_horizontal_gap_months"] <= stats["ci_90_high"]
+        assert stats["vertical_gap_ci_90_low"] <= stats["avg_vertical_gap"] <= stats["vertical_gap_ci_90_high"]
+        assert stats["gap_window"]["n_days"] >= 1
 
 
 if __name__ == "__main__":
