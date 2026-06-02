@@ -61,7 +61,14 @@ class EciBootstrap:
         n = min(len(da), len(db))
         if n == 0:
             return None
-        return float((da[:n] > db[:n]).mean())
+        # Guard against non-finite draws: NaN comparisons silently read as
+        # "not exceeds" and would bias P(a>b) downward. eci-public drops failed
+        # resamples rather than NaN-filling, so this normally never triggers.
+        x, y = da[:n], db[:n]
+        mask = np.isfinite(x) & np.isfinite(y)
+        if not mask.any():
+            return None
+        return float((x[mask] > y[mask]).mean())
 
 
 def _fetch_csv_text(url: str, timeout: int = 120) -> str:

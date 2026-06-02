@@ -1204,8 +1204,10 @@ def process_data() -> dict[str, Any]:
     df_frontier = df_combined[df_combined["group_rank"] <= 1].copy()
 
     # ECI bootstrap draws power the paired "caught up" criterion (ECI only).
-    # build_eci_bootstrap is fail-open: None here -> analytical fallback.
-    bootstrap = build_eci_bootstrap() if build_eci_bootstrap is not None else None
+    # build_eci_bootstrap is fail-open: None here -> analytical fallback. The
+    # cache (keyed by the source CSV hash, gitignored) skips the refit when the
+    # benchmark data is unchanged.
+    bootstrap = build_eci_bootstrap(cache_dir="data") if build_eci_bootstrap is not None else None
     if bootstrap is not None:
         displayed = {row.get("Model") for _, row in df_frontier.iterrows()}
         matched = sum(1 for n in displayed if n and bootstrap.has(n))
@@ -1290,7 +1292,13 @@ def process_data() -> dict[str, Any]:
     # in JS, so the bootstrap criterion drives the timeline too.
     frontier_matches = {"default": build_frontier_match_map(df_frontier, bootstrap)}
     if len(df_china_models) > 0 and len(df_us_models) > 0:
-        frontier_matches["china"] = build_frontier_match_map(df_china_us_frontier, bootstrap)
+        # The China Gap Over Time chart iterates benchmark.models (== df_frontier)
+        # filtered by is_china in JS, so build its match map over the SAME universe
+        # (laggard = is_china, leader = everything else) rather than
+        # df_china_us_frontier -- otherwise server-named leaders can be absent from
+        # the JS frontier and the laggard is silently dropped from the chart.
+        frontier_matches["china"] = build_frontier_match_map(
+            df_frontier, bootstrap, laggard_col="is_china")
 
     return {
         "models": models,

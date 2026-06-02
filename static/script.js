@@ -1564,9 +1564,14 @@ function renderHistoricalChart(data) {
 
     // For ECI, use the server's bootstrap match; otherwise the JS threshold.
     function matchedLeaderFor(ev) {
-        if (serverMatches) {
+        if (serverMatches && Object.prototype.hasOwnProperty.call(serverMatches, ev.model)) {
             const lm = serverMatches[ev.model];
-            return lm ? (leaderFrontier.find(l => l.model === lm) || null) : null;
+            if (lm === null) return null;               // server: no leader caught up
+            const found = leaderFrontier.find(l => l.model === lm);
+            if (found) return found;
+            // Server named a leader not present in this frontier view: degrade
+            // gracefully to the threshold match rather than dropping the laggard.
+            return firstLeaderToReach(ev.score);
         }
         return firstLeaderToReach(ev.score);
     }

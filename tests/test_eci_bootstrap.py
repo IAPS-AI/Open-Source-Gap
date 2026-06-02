@@ -85,3 +85,42 @@ def test_build_and_cache_roundtrip(monkeypatch, tmp_path):
     assert b2 is not None
     assert calls["n"] == 1
     assert b2.prob_exceeds("A", "B") == pytest.approx(2 / 3)
+
+
+def _patch_counting_fit(monkeypatch, calls):
+    monkeypatch.setattr(ebm, "_read_validated_df", lambda t: "DF")
+
+    def fake_fit(df, n_samples, seed, use_analytical_jacobian):
+        calls["n"] += 1
+        return ["A", "B"], np.array([[3.0, 1.0], [4.0, 1.0], [2.0, 5.0]])
+    monkeypatch.setattr(ebm, "_fit_capability_draws", fake_fit)
+
+
+def test_cache_invalidates_on_source_change(monkeypatch, tmp_path):
+    calls = {"n": 0}
+    _patch_counting_fit(monkeypatch, calls)
+    monkeypatch.setattr(ebm, "_fetch_csv_text", lambda url, timeout=120: "TEXT-A")
+    ebm.build_eci_bootstrap(n_samples=3, cache_dir=str(tmp_path))
+    ebm.build_eci_bootstrap(n_samples=3, cache_dir=str(tmp_path))
+    assert calls["n"] == 1  # same hash -> cache hit
+    monkeypatch.setattr(ebm, "_fetch_csv_text", lambda url, timeout=120: "TEXT-B")
+    ebm.build_eci_bootstrap(n_samples=3, cache_dir=str(tmp_path))
+    assert calls["n"] == 2  # different source -> refit
+
+
+def test_cache_invalidates_on_seed_change(monkeypatch, tmp_path):
+    calls = {"n": 0}
+    _patch_counting_fit(monkeypatch, calls)
+    monkeypatch.setattr(ebm, "_fetch_csv_text", lambda url, timeout=120: "TEXT")
+    ebm.build_eci_bootstrap(n_samples=3, seed=1, cache_dir=str(tmp_path))
+    ebm.build_eci_bootstrap(n_samples=3, seed=2, cache_dir=str(tmp_path))
+    assert calls["n"] == 2  # different seed -> refit
+
+
+def test_cache_invalidates_on_nsamples_change(monkeypatch, tmp_path):
+    calls = {"n": 0}
+    _patch_counting_fit(monkeypatch, calls)
+    monkeypatch.setattr(ebm, "_fetch_csv_text", lambda url, timeout=120: "TEXT")
+    ebm.build_eci_bootstrap(n_samples=3, cache_dir=str(tmp_path))
+    ebm.build_eci_bootstrap(n_samples=5, cache_dir=str(tmp_path))
+    assert calls["n"] == 2  # different requested sample count -> refit

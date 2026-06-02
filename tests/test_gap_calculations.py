@@ -888,6 +888,20 @@ class TestFrontierMatchMap:
         m = build_frontier_match_map(df, None)
         assert m == {"O1": "C_new"}
 
+    def test_china_framing_laggard_col(self):
+        # China framing: laggard = is_china, leader = everything else. Mirrors
+        # the JS china chart's universe (df_frontier filtered by is_china).
+        df = pd.DataFrame({
+            "Model": ["US_old", "US_new", "CN1"],
+            "eci": [100.0, 120.0, 119.0],
+            "date": pd.to_datetime(["2023-01-01", "2024-01-01", "2024-06-01"]),
+            "Open": [False, False, True],
+            "is_china": [False, False, True],
+        })
+        # threshold 1.0: earliest non-china leader with score >= 119-1=118 -> US_new.
+        m = build_frontier_match_map(df, None, laggard_col="is_china")
+        assert m == {"CN1": "US_new"}
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
