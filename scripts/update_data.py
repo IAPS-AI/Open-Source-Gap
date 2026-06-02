@@ -274,6 +274,9 @@ def calculate_horizontal_gaps(
     if len(df) == 0:
         return []
 
+    std_col = f"{score_col}_std"
+    has_std = std_col in df.columns
+
     df_open = df[df["Open"]].sort_values("date")
     df_closed = df[~df["Open"]].sort_values("date")
 
@@ -282,6 +285,7 @@ def calculate_horizontal_gaps(
     for _, closed_row in df_closed.iterrows():
         closed_score = closed_row[score_col]
         closed_date = closed_row["date"]
+        closed_std = closed_row[std_col] if has_std else np.nan
 
         if pd.isna(closed_score) or pd.isna(closed_date):
             continue
@@ -295,10 +299,13 @@ def calculate_horizontal_gaps(
             if open_row["date"] <= closed_date:
                 continue
 
-            # Match if open model is within threshold of closed model
-            if open_row[score_col] >= closed_score - threshold:
+            # Match when the open model has plausibly caught up to the closed
+            # model under the within-5% bootstrap criterion (falls back to the
+            # threshold when no CI is available); see _open_caught_up.
+            open_std = open_row[std_col] if has_std else np.nan
+            if _open_caught_up(open_row[score_col], open_std, closed_score, closed_std, threshold):
                 matching_open = open_row
-                match_type = "exact"
+                match_type = "caught_up"
                 break
 
         if matching_open is not None:
@@ -617,77 +624,86 @@ def calculate_historical_gaps(
     model_col: str = "Model"
 ) -> list[dict]:
     """
-    Calculate the gap metric at various points in history.
-    This shows how the gap has evolved over time.
+    Gap metric sampled monthly through history, using the SAME within-5%
+    catch-up criterion as calculate_gap_metrics (see _open_caught_up).
 
-    Approach: At each point in time, calculate how far behind the open frontier
-    is from the closed frontier. This is measured as:
-    - Time since the closed frontier first achieved its current score level
-      minus time since the open frontier achieved its current score level
-
-    Simpler approach: Find when the best open model was released, and when
-    a closed model first achieved that score level. The gap is the time difference.
+    At each monthly checkpoint we take the best open-weight model available and
+    find the most recent closed-weight SOTA model it has plausibly caught up to;
+    the gap is the time elapsed since that SOTA model. ``matched`` indicates the
+    open frontier has caught up to the *current* closed frontier. This is the
+    monthly-sampled companion to the day-by-day headline statistic, so the chart
+    and the headline tell a consistent story.
     """
-    df = df.dropna(subset=["date", score_col]).copy()
-    df = df.sort_values("date")
+    std_col = f"{score_col}_std"
+    has_std = std_col in df.columns
+    df = df.dropna(subset=["date", score_col]).copy().sort_values("date", kind="mergesort")
 
     if len(df) < 2:
         return []
 
-    historical_gaps = []
+    df_open_all = df[df["Open"]]
+    df_closed_all = df[~df["Open"]]
+    if df_open_all.empty or df_closed_all.empty:
+        return []
 
-    # Sample monthly from first closed model to now
+    # Closed-weight SOTA sequence (running max), carrying model name + std.
+    sota: list[dict] = []
+    run_max = -np.inf
+    for _, r in df_closed_all.iterrows():
+        s = r[score_col]
+        if s > run_max:
+            run_max = s
+            sota.append({
+                "date": r["date"],
+                "score": float(s),
+                "std": float(r[std_col]) if has_std and pd.notna(r.get(std_col)) else np.nan,
+                "model": r.get(model_col, r.get("model", "Unknown")),
+            })
+    if not sota:
+        return []
+
+    historical_gaps = []
     min_date = df["date"].min()
     max_date = pd.Timestamp(datetime.now())
-
-    # Generate monthly checkpoints
     current = pd.Timestamp(min_date) + pd.DateOffset(months=6)  # Start 6 months in
 
     while current <= max_date:
-        # Get all models released before this date
-        df_at_time = df[df["date"] <= current].copy()
-
-        df_open = df_at_time[df_at_time["Open"]]
-        df_closed = df_at_time[~df_at_time["Open"]]
-
-        if len(df_open) == 0 or len(df_closed) == 0:
+        open_avail = df_open_all[df_open_all["date"] <= current]
+        sota_avail = [s for s in sota if s["date"] <= current]
+        if open_avail.empty or not sota_avail:
             current += pd.DateOffset(months=1)
             continue
 
-        # Find the best open model at this time
-        best_open = df_open.loc[df_open[score_col].idxmax()]
-        best_open_score = best_open[score_col]
-        best_open_date = best_open["date"]
+        best_open = open_avail.loc[open_avail[score_col].idxmax()]
+        best_open_score = float(best_open[score_col])
+        best_open_std = (
+            float(best_open[std_col])
+            if has_std and pd.notna(best_open.get(std_col))
+            else np.nan
+        )
 
-        # Find the best closed model at this time
-        best_closed = df_closed.loc[df_closed[score_col].idxmax()]
-        best_closed_score = best_closed[score_col]
+        # Most recent SOTA the open frontier has plausibly caught up to.
+        ref = None
+        for s in sorted(sota_avail, key=lambda x: x["date"], reverse=True):
+            if _open_caught_up(best_open_score, best_open_std, s["score"], s["std"], threshold):
+                ref = s
+                break
+        if ref is None:
+            ref = sota_avail[0]
+        gap_months = max(0.0, (current - ref["date"]).days / DAYS_PER_MONTH)
 
-        # Find the first closed model to achieve the best open's score level
-        closed_at_open_level = df_closed[df_closed[score_col] >= best_open_score - threshold].sort_values("date")
-
-        if len(closed_at_open_level) > 0:
-            first_closed_at_level = closed_at_open_level.iloc[0]
-            # Gap is: when did closed first hit this level vs when did open hit it
-            gap_days = (best_open_date - first_closed_at_level["date"]).days
-            gap_months = gap_days / DAYS_PER_MONTH
-
-            # If gap is negative, open was first (unusual but possible)
-            gap_months = max(0, gap_months)
-
-            # Determine if the frontier is "matched" (open has caught up to closed frontier)
-            is_matched = best_open_score >= best_closed_score - threshold
-        else:
-            # No closed model at this level yet (open is ahead - very rare)
-            gap_months = 0
-            is_matched = True
+        # Current closed frontier (highest-scoring SOTA so far) for the matched flag.
+        top_sota = max(sota_avail, key=lambda x: x["score"])
+        is_matched = _open_caught_up(
+            best_open_score, best_open_std, top_sota["score"], top_sota["std"], threshold
+        )
 
         historical_gaps.append({
             "date": current.isoformat(),
             "gap_months": round(float(gap_months), 1),
             "matched": bool(is_matched),
-            "reference_model": best_closed.get(model_col, best_closed.get("model", "Unknown")),
-            "reference_score": round(float(best_closed_score), 1),
+            "reference_model": top_sota["model"],
+            "reference_score": round(float(top_sota["score"]), 1),
             "open_frontier_model": best_open.get(model_col, best_open.get("model", "Unknown")),
             "open_frontier_score": round(float(best_open_score), 1),
         })
@@ -821,7 +837,10 @@ def calculate_gap_metrics(
     first_open = open_rows["date"].min()
     first_closed = sota[0]["date"]
     ws = pd.Timestamp(window_start) if window_start is not None else max(first_open, first_closed)
-    we = pd.Timestamp(window_end) if window_end is not None else d["date"].max()
+    # Default the window end to "today" (not the latest release date) so the
+    # gap keeps growing while no new open model has caught up, mirroring
+    # calculate_historical_gaps and the current-gap framing.
+    we = pd.Timestamp(window_end) if window_end is not None else pd.Timestamp(datetime.now())
     if ws > we:
         return None
 

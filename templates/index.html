@@ -80,8 +80,8 @@
             </div>
             <div id="chart"></div>
             <p class="subtitle" id="chart-note" style="text-align: center; margin-top: var(--spacing-sm);">
-                Note: A model is deemed to have caught up if its score is <strong>within the threshold</strong> of the reference model.<br>
-                <em>Average gap is computed by sampling 100 score levels and measuring time-to-match at each level, starting from the level where reference models first appear.<br>
+                Note: A model is counted as having <strong>caught up</strong> to a reference model when the reference is not significantly ahead &mdash; i.e. the open model's score beats the reference's in at least 5% of bootstrap samples (equivalently, the reference is not significantly better at the 5% level), approximated from each model's 90% confidence interval.<br>
+                <em>The average gap is computed day-by-day across the full history: on each day we take the best available open model and measure the time back to the most recent reference model it has caught up to.<br>
                 Matched/Unmatched counts reflect all reference models shown on the chart.</em>
             </p>
         </div>

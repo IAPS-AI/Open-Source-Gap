@@ -238,13 +238,15 @@ def calculate_horizontal_gaps(df: pd.DataFrame) -> list[dict]:
     for _, closed_row in df_closed.iterrows():
         closed_eci = closed_row["eci"]
         closed_date = closed_row["date"]
+        closed_std = closed_row.get("eci_std", np.nan)
 
         if pd.isna(closed_eci) or pd.isna(closed_date):
             continue
 
-        # Find first open model released AFTER this closed model that matches or exceeds this ECI
+        # Find first open model released AFTER this closed model that has
+        # plausibly caught up under the within-5% bootstrap criterion.
         matching_open = None
-        match_type = None  # 'exact' or 'statistical'
+        match_type = None
         for _, open_row in df_open.iterrows():
             if pd.isna(open_row["eci"]) or pd.isna(open_row["date"]):
                 continue
@@ -253,10 +255,10 @@ def calculate_horizontal_gaps(df: pd.DataFrame) -> list[dict]:
             if open_row["date"] <= closed_date:
                 continue
 
-            # Check if open model is >= closed model's ECI (with 1 point tolerance)
-            if open_row["eci"] >= closed_eci - 1:
+            if _open_caught_up(open_row["eci"], open_row.get("eci_std", np.nan),
+                               closed_eci, closed_std, ECI_MATCH_THRESHOLD):
                 matching_open = open_row
-                match_type = "exact"
+                match_type = "caught_up"
                 break
 
         if matching_open is not None:
@@ -457,7 +459,9 @@ def calculate_gap_metrics(
     first_open = open_rows["date"].min()
     first_closed = sota[0]["date"]
     ws = pd.Timestamp(window_start) if window_start is not None else max(first_open, first_closed)
-    we = pd.Timestamp(window_end) if window_end is not None else d["date"].max()
+    # Default the window end to "today" so the gap grows while no new open model
+    # has caught up (mirrors scripts/update_data.py and calculate_historical_gaps).
+    we = pd.Timestamp(window_end) if window_end is not None else pd.Timestamp(datetime.now())
     if ws > we:
         return None
 
