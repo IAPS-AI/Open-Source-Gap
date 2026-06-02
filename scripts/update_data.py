@@ -275,7 +275,8 @@ def calculate_horizontal_gaps(
     df: pd.DataFrame,
     score_col: str = "eci",
     threshold: float = ECI_MATCH_THRESHOLD,
-    model_col: str = "Model"
+    model_col: str = "Model",
+    bootstrap=None,
 ) -> list[dict]:
     """
     Calculate horizontal gaps between closed and open models.
@@ -292,6 +293,7 @@ def calculate_horizontal_gaps(
     df_open = df[df["Open"]].sort_values("date")
     df_closed = df[~df["Open"]].sort_values("date")
 
+    std_col = f"{score_col}_std"
     gaps = []
 
     for _, closed_row in df_closed.iterrows():
@@ -310,10 +312,21 @@ def calculate_horizontal_gaps(
             if open_row["date"] <= closed_date:
                 continue
 
-            # Match if open model is within threshold of closed model
-            if open_row[score_col] >= closed_score - threshold:
+            # Match if the open model has plausibly caught up to the closed
+            # model (bootstrap for ECI; analytical/threshold fallback otherwise).
+            open_name = open_row.get(model_col, open_row.get("model"))
+            closed_name = closed_row.get(model_col, closed_row.get("model"))
+            if _open_caught_up(
+                open_row[score_col], open_row.get(std_col, np.nan),
+                closed_score, closed_row.get(std_col, np.nan),
+                threshold,
+                open_name=open_name, sota_name=closed_name, bootstrap=bootstrap,
+            ):
                 matching_open = open_row
-                match_type = "exact"
+                match_type = _match_method(
+                    open_row.get(std_col, np.nan), closed_row.get(std_col, np.nan),
+                    open_name=open_name, sota_name=closed_name, bootstrap=bootstrap,
+                )
                 break
 
         if matching_open is not None:

@@ -774,5 +774,28 @@ class TestBootstrapCriterion:
         assert CAUGHT_UP_PROB == 0.05
 
 
+class TestHorizontalGapsBootstrap:
+    def test_bootstrap_overrides_threshold_verdict(self):
+        # No std -> the no-bootstrap path is the point-estimate threshold(1.0),
+        # which says NOT matched (98.5 < 99). The bootstrap (P(open>closed)=0.10)
+        # is consulted first and says matched, overriding the threshold.
+        df = pd.DataFrame({
+            "Model": ["ClosedA", "OpenB"],
+            "eci": [100.0, 98.5],
+            "date": pd.to_datetime(["2024-01-01", "2024-06-01"]),
+            "Open": [False, True],
+        })
+        a = _np.concatenate([_np.full(10, 200.0), _np.zeros(90)])  # P(open>closed)=0.10
+        b = _np.full(100, 100.0)
+        boot = EciBootstrap({"OpenB": a, "ClosedA": b}, n_samples=100, seed=1, source_hash="h")
+
+        no_boot = calculate_horizontal_gaps(df)
+        assert no_boot[0]["matched"] is False  # threshold path (no std)
+
+        with_boot = calculate_horizontal_gaps(df, bootstrap=boot)
+        assert with_boot[0]["matched"] is True
+        assert with_boot[0]["match_type"] == "bootstrap"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
