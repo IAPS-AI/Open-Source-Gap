@@ -267,14 +267,17 @@ function updateBenchmarkDisplay() {
                 A model is deemed to have <strong>caught up</strong> if its p50 horizon meets or exceeds the reference model's.<br>
                 <em>Data merged from METR Time Horizon v1.0 and v1.1, with v1.1 taking precedence for shared models.<br>
                 Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
-        } else if (appState.currentBenchmark === 'eci') {
-            chartNote.innerHTML = `Note: A model is counted as having <strong>caught up</strong> to a reference model when the reference is not significantly ahead &mdash; i.e. the open model's score beats the reference's in at least 5% of bootstrap samples (equivalently, the reference is not significantly better at the 5% level), approximated from each model's 90% confidence interval.<br>
-                <em>The average gap is computed day-by-day across the full history: on each day we take the best available open model and measure the time back to the most recent reference model it has caught up to.<br>
-                Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
         } else {
-            const thresholdDesc = `${thresholdValue} percentage point${thresholdValue !== 1 ? 's' : ''}`;
-            chartNote.innerHTML = `Note: A model is counted as having <strong>caught up</strong> to a reference model when the reference is not significantly ahead &mdash; i.e. the open model's score beats the reference's in at least 5% of bootstrap samples (equivalently, the reference is not significantly better at the 5% level), based on each model's reported uncertainty; where a benchmark reports none, a <strong>${thresholdDesc}</strong> tolerance is used instead.<br>
-                <em>The average gap is computed day-by-day across the full history: on each day we take the best available open model and measure the time back to the most recent reference model it has caught up to.<br>
+            // Generate appropriate threshold description based on benchmark type
+            let thresholdDesc;
+            if (appState.currentBenchmark === 'eci') {
+                thresholdDesc = `${thresholdValue} ECI point${thresholdValue !== 1 ? 's' : ''}`;
+            } else {
+                thresholdDesc = `${thresholdValue} percentage point${thresholdValue !== 1 ? 's' : ''}`;
+            }
+
+            chartNote.innerHTML = `Note: A model is deemed to have caught up if its score is <strong>within ${thresholdDesc}</strong> of the reference model.<br>
+                <em>Average gap is computed by sampling 100 score levels and measuring time-to-match at each level, starting from the level where reference models first appear.<br>
                 Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
         }
     }
@@ -1446,26 +1449,6 @@ function getHistoricalLabels(framing) {
  * A "frontier" release is one that raises the running max score within its
  * side. Returns dates as Date objects keyed `_d`, preserves model/score.
  */
-// One-sided 5% critical value (Phi^-1(0.95)); mirrors Z_ONE_SIDED_05 in the
-// Python pipeline.
-const Z_ONE_SIDED_05 = 1.6448536269514722;
-
-/**
- * JS mirror of Python's _open_caught_up (scripts/update_data.py): has the open
- * model plausibly caught up to a reference model under the within-5% bootstrap
- * criterion? Approximated from each model's std (derived from its 90% CI):
- * caught up iff (refScore - openScore) <= z * sqrt(openStd^2 + refStd^2).
- * Falls back to a point-estimate match within `threshold` when either std is
- * missing (e.g. METR horizons).
- */
-function openCaughtUp(openScore, openStd, refScore, refStd, threshold, z = Z_ONE_SIDED_05) {
-    if (openStd != null && refStd != null && (openStd > 0 || refStd > 0)) {
-        const se = Math.sqrt(openStd * openStd + refStd * refStd);
-        return (refScore - openScore) <= z * se;
-    }
-    return openScore >= refScore - threshold;
-}
-
 function buildFrontierEvents(models, framing, parityStart) {
     const isLaggard = framing === 'china'
         ? (m) => m.is_china === true
@@ -1474,8 +1457,6 @@ function buildFrontierEvents(models, framing, parityStart) {
         ? (m) => m.is_china !== true
         : (m) => m.is_open !== true;
     const scoreField = getScoreField();
-    const stdField = getScoreStdField();
-    const stdOf = (m) => (m[stdField] != null ? Number(m[stdField]) : null);
 
     const byDate = (a, b) => parseUTCDate(a.date) - parseUTCDate(b.date);
     const laggard = [];
@@ -1494,10 +1475,10 @@ function buildFrontierEvents(models, framing, parityStart) {
         }
         if (isLaggard(m) && s > maxLag) {
             maxLag = s;
-            laggard.push({ model: m.model, display: m.display_name || m.model, date: m.date, _d: d, score: s, std: stdOf(m) });
+            laggard.push({ model: m.model, display: m.display_name || m.model, date: m.date, _d: d, score: s });
         } else if (isLeader(m) && s > maxLed) {
             maxLed = s;
-            leader.push({ model: m.model, display: m.display_name || m.model, date: m.date, _d: d, score: s, std: stdOf(m) });
+            leader.push({ model: m.model, display: m.display_name || m.model, date: m.date, _d: d, score: s });
         }
     }
     return { laggard, leader };
@@ -1540,28 +1521,23 @@ function renderHistoricalChart(data) {
     let { laggard: laggardFrontierRaw, leader: leaderFrontier } =
         buildFrontierEvents(allModels, framing, null);
 
-    // Match the same way the rest of the app does (Python's
-    // calculate_gap_metrics / _open_caught_up): for each open-frontier release
-    // we find the MOST RECENT leader the open model has plausibly caught up to
-    // under the within-5% bootstrap criterion (falling back to the threshold
-    // when no CI is available). The gap is the months since that leader's
-    // release. Releases with no caught-up leader, or where it is later than the
-    // laggard, are dropped.
+    // Match the same way the main chart does (Python's
+    // calculate_historical_gaps): the matched closed model is the FIRST
+    // closed (by date) whose score >= laggard.score - threshold. The gap
+    // is the months between the matched closed release and the laggard
+    // release. Releases with no matched closed, or where the matched
+    // closed is later than the laggard, are dropped.
     const DAYS_PER_MONTH = 365.25 / 12;
     const matchThreshold = Number(data.metadata?.threshold) || 0;
-    function mostRecentCaughtUpLeader(ev) {
-        let result = null;
-        for (const ld of leaderFrontier) {        // date-ordered (increasing)
-            if (ld._d > ev._d) break;              // only leaders up to this release
-            if (openCaughtUp(ev.score, ev.std, ld.score, ld.std, matchThreshold)) {
-                result = ld;                       // keep the most recent satisfying
-            }
+    function firstLeaderToReach(score) {
+        for (const ld of leaderFrontier) {
+            if (ld.score >= score - matchThreshold) return ld;
         }
-        return result;
+        return null;
     }
     const laggardFrontier = [];
     for (const ev of laggardFrontierRaw) {
-        const ld = mostRecentCaughtUpLeader(ev);
+        const ld = firstLeaderToReach(ev.score);
         if (!ld) continue;
         const gapMonths = (ev._d - ld._d) / (1000 * 60 * 60 * 24) / DAYS_PER_MONTH;
         if (gapMonths < 0) continue;

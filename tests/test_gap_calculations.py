@@ -612,15 +612,10 @@ class TestGapMetrics:
             "Open": [False, False, True],
         })
 
-        # Pin the window to the open model's release day (default window_end is
-        # now datetime.now()).
-        m = calculate_gap_metrics(
-            df, score_col="eci", threshold=1.0,
-            window_start="2025-01-01", window_end="2025-01-01",
-        )
+        m = calculate_gap_metrics(df, score_col="eci", threshold=1.0)
 
         assert m is not None
-        # Single-day window.
+        # Window collapses to the single day the open model exists (latest date).
         assert m["n_days"] == 1
         # Open (121) catches the most recent closed SOTA C2 (120, within
         # threshold). Gap = Jul 1 2024 -> Jan 1 2025 = 184 days.
@@ -663,13 +658,10 @@ class TestGapMetrics:
             "Open": [False, False, True],
         })
 
-        # Pin the window to the open model's release day.
-        m = calculate_gap_metrics(
-            df, score_col="eci",
-            window_start="2024-06-01", window_end="2024-06-01",
-        )
+        m = calculate_gap_metrics(df, score_col="eci")
         assert m is not None
-        # Single day. Lenient -> ref C_new (2024-01-01); strict -> C_old (2023-01-01).
+        # n_days == 1 (open exists only on its release day, the latest date).
+        # Lenient -> ref C_new (2024-01-01); strict -> ref C_old (2023-01-01).
         lenient_days = (pd.to_datetime("2024-06-01") - pd.to_datetime("2024-01-01")).days
         strict_days = (pd.to_datetime("2024-06-01") - pd.to_datetime("2023-01-01")).days
         assert abs(m["avg_time_gap_months"] - lenient_days / DAYS_PER_MONTH) < 1e-6
