@@ -83,6 +83,21 @@ except ImportError as e:
     METR_FETCHER_AVAILABLE = False
     print(f"Note: METR benchmark unavailable ({e})")
 
+# ECI bootstrap (eci-public). Lazy: importing this module never imports the
+# heavy `eci` package, so update_data always loads even without it installed.
+try:
+    from eci_bootstrap import build_eci_bootstrap, EciBootstrap
+    ECI_BOOTSTRAP_AVAILABLE = True
+except Exception as e:  # pragma: no cover - defensive
+    build_eci_bootstrap = None
+    EciBootstrap = None
+    ECI_BOOTSTRAP_AVAILABLE = False
+    print(f"Note: ECI bootstrap module unavailable ({e})")
+
+# Open model is "caught up" when its bootstrapped ECI exceeds the SOTA model's
+# in at least this fraction of paired resamples (Epoch AI's 5% rule).
+CAUGHT_UP_PROB = 0.05
+
 def get_rank(
     df: pd.DataFrame,
     n: int | None = None,
@@ -260,7 +275,8 @@ def calculate_horizontal_gaps(
     df: pd.DataFrame,
     score_col: str = "eci",
     threshold: float = ECI_MATCH_THRESHOLD,
-    model_col: str = "Model"
+    model_col: str = "Model",
+    bootstrap=None,
 ) -> list[dict]:
     """
     Calculate horizontal gaps between closed and open models.
@@ -277,6 +293,7 @@ def calculate_horizontal_gaps(
     df_open = df[df["Open"]].sort_values("date")
     df_closed = df[~df["Open"]].sort_values("date")
 
+    std_col = f"{score_col}_std"
     gaps = []
 
     for _, closed_row in df_closed.iterrows():
@@ -295,10 +312,21 @@ def calculate_horizontal_gaps(
             if open_row["date"] <= closed_date:
                 continue
 
-            # Match if open model is within threshold of closed model
-            if open_row[score_col] >= closed_score - threshold:
+            # Match if the open model has plausibly caught up to the closed
+            # model (bootstrap for ECI; analytical/threshold fallback otherwise).
+            open_name = open_row.get(model_col, open_row.get("model"))
+            closed_name = closed_row.get(model_col, closed_row.get("model"))
+            if _open_caught_up(
+                open_row[score_col], open_row.get(std_col, np.nan),
+                closed_score, closed_row.get(std_col, np.nan),
+                threshold,
+                open_name=open_name, sota_name=closed_name, bootstrap=bootstrap,
+            ):
                 matching_open = open_row
-                match_type = "exact"
+                match_type = _match_method(
+                    open_row.get(std_col, np.nan), closed_row.get(std_col, np.nan),
+                    open_name=open_name, sota_name=closed_name, bootstrap=bootstrap,
+                )
                 break
 
         if matching_open is not None:
@@ -614,7 +642,8 @@ def calculate_historical_gaps(
     df: pd.DataFrame,
     score_col: str = "eci",
     threshold: float = ECI_MATCH_THRESHOLD,
-    model_col: str = "Model"
+    model_col: str = "Model",
+    bootstrap=None,
 ) -> list[dict]:
     """
     Calculate the gap metric at various points in history.
@@ -630,6 +659,7 @@ def calculate_historical_gaps(
     """
     df = df.dropna(subset=["date", score_col]).copy()
     df = df.sort_values("date")
+    std_col = f"{score_col}_std"
 
     if len(df) < 2:
         return []
@@ -663,11 +693,25 @@ def calculate_historical_gaps(
         best_closed = df_closed.loc[df_closed[score_col].idxmax()]
         best_closed_score = best_closed[score_col]
 
-        # Find the first closed model to achieve the best open's score level
-        closed_at_open_level = df_closed[df_closed[score_col] >= best_open_score - threshold].sort_values("date")
+        best_open_name = best_open.get(model_col, best_open.get("model"))
+        best_open_std = best_open.get(std_col, np.nan)
+        best_closed_name = best_closed.get(model_col, best_closed.get("model"))
+        best_closed_std = best_closed.get(std_col, np.nan)
 
-        if len(closed_at_open_level) > 0:
-            first_closed_at_level = closed_at_open_level.iloc[0]
+        # First closed model (by date) to reach the best open's level: the
+        # leader has "caught up to" the open frontier (a=closed, b=open).
+        first_closed_at_level = None
+        for _, c in df_closed.sort_values("date").iterrows():
+            if _open_caught_up(
+                c[score_col], c.get(std_col, np.nan),
+                best_open_score, best_open_std, threshold,
+                open_name=c.get(model_col, c.get("model")),
+                sota_name=best_open_name, bootstrap=bootstrap,
+            ):
+                first_closed_at_level = c
+                break
+
+        if first_closed_at_level is not None:
             # Gap is: when did closed first hit this level vs when did open hit it
             gap_days = (best_open_date - first_closed_at_level["date"]).days
             gap_months = gap_days / DAYS_PER_MONTH
@@ -676,7 +720,12 @@ def calculate_historical_gaps(
             gap_months = max(0, gap_months)
 
             # Determine if the frontier is "matched" (open has caught up to closed frontier)
-            is_matched = best_open_score >= best_closed_score - threshold
+            is_matched = _open_caught_up(
+                best_open_score, best_open_std,
+                best_closed_score, best_closed_std, threshold,
+                open_name=best_open_name, sota_name=best_closed_name,
+                bootstrap=bootstrap,
+            )
         else:
             # No closed model at this level yet (open is ahead - very rare)
             gap_months = 0
@@ -697,10 +746,73 @@ def calculate_historical_gaps(
     return historical_gaps
 
 
+def build_frontier_match_map(
+    df_frontier: pd.DataFrame,
+    bootstrap=None,
+    score_col: str = "eci",
+    model_col: str = "Model",
+    threshold: float = ECI_MATCH_THRESHOLD,
+    laggard_col: str = "Open",
+) -> dict:
+    """For each laggard running-max frontier model, the earliest leader
+    running-max frontier model it has reached -- i.e. the earliest leader L with
+    ``_open_caught_up(open=L, sota=laggard)``. Mirrors the JS firstLeaderToReach
+    but uses the bootstrap predicate when draws exist. Used to drive the Gap
+    Over Time chart server-side. Keys/values are ``model_col`` names.
+
+    Works for both framings: pass the open/closed frontier (laggard = Open) or
+    the China/US frontier (process_data sets ``Open`` = is_china there)."""
+    std_col = f"{score_col}_std"
+    d = df_frontier.dropna(subset=["date", score_col]).sort_values(
+        "date", kind="mergesort")
+
+    laggards, leaders = [], []
+    run_lag = run_led = -np.inf
+    for _, r in d.iterrows():
+        s = float(r[score_col])
+        if bool(r[laggard_col]):
+            if s > run_lag:
+                run_lag = s
+                laggards.append(r)
+        else:
+            if s > run_led:
+                run_led = s
+                leaders.append(r)
+
+    result: dict = {}
+    for lag in laggards:
+        lag_name = lag.get(model_col, lag.get("model"))
+        lag_std = lag.get(std_col, np.nan)
+        matched = None
+        for ld in leaders:  # ascending by date
+            if _open_caught_up(
+                ld[score_col], ld.get(std_col, np.nan),
+                lag[score_col], lag_std, threshold,
+                open_name=ld.get(model_col, ld.get("model")),
+                sota_name=lag_name, bootstrap=bootstrap,
+            ):
+                matched = ld.get(model_col, ld.get("model"))
+                break
+        result[lag_name] = matched
+    return result
+
+
 # One-sided 5% critical value: P(Z <= 1.6448) = 0.95. The bootstrap
 # ">=5% of paired samples" rule is the one-sided 5% significance test in
 # disguise (see _open_caught_up).
 Z_ONE_SIDED_05 = float(norm.ppf(0.95))  # 1.6448...
+
+
+def _match_method(open_std, sota_std, *, open_name=None, sota_name=None,
+                  bootstrap=None) -> str:
+    """Which criterion applies to this pair: 'bootstrap' (paired draws exist
+    for both models), 'analytical' (usable std on both), or 'threshold'."""
+    if (bootstrap is not None and open_name and sota_name
+            and bootstrap.prob_exceeds(open_name, sota_name) is not None):
+        return "bootstrap"
+    if pd.notna(open_std) and pd.notna(sota_std) and (open_std > 0 or sota_std > 0):
+        return "analytical"
+    return "threshold"
 
 
 def _open_caught_up(
@@ -710,6 +822,10 @@ def _open_caught_up(
     sota_std: float,
     threshold: float,
     z: float = Z_ONE_SIDED_05,
+    *,
+    open_name: Optional[str] = None,
+    sota_name: Optional[str] = None,
+    bootstrap=None,
 ) -> bool:
     """Has the open model *plausibly caught up* to a historical SOTA model?
 
@@ -745,11 +861,11 @@ def _open_caught_up(
     Falls back to a point-estimate match within ``threshold`` when either
     model lacks usable uncertainty (e.g. METR horizons, which ship no CI).
     """
-    if (
-        pd.notna(open_std)
-        and pd.notna(sota_std)
-        and (open_std > 0 or sota_std > 0)
-    ):
+    method = _match_method(open_std, sota_std, open_name=open_name,
+                           sota_name=sota_name, bootstrap=bootstrap)
+    if method == "bootstrap":
+        return bootstrap.prob_exceeds(open_name, sota_name) >= CAUGHT_UP_PROB
+    if method == "analytical":
         se = math.sqrt(open_std ** 2 + sota_std ** 2)
         return (sota_score - open_score) <= z * se
     # No usable uncertainty: fall back to "approximately equal" within threshold.
@@ -763,6 +879,7 @@ def calculate_gap_metrics(
     window_start: Optional[Any] = None,
     window_end: Optional[Any] = None,
     z: float = Z_ONE_SIDED_05,
+    bootstrap=None,
 ) -> Optional[dict]:
     """Day-by-day open-vs-SOTA gap, mirroring Epoch AI's methodology.
 
@@ -814,6 +931,7 @@ def calculate_gap_metrics(
                 "date": r["date"],
                 "score": float(s),
                 "std": float(r[std_col]) if has_std and pd.notna(r.get(std_col)) else np.nan,
+                "name": r.get("Model", r.get("model")),
             })
     if not sota:
         return None
@@ -842,6 +960,7 @@ def calculate_gap_metrics(
             if has_std and pd.notna(best_open.get(std_col))
             else np.nan
         )
+        best_open_name = best_open.get("Model", best_open.get("model"))
 
         sota_avail = [s for s in sota if s["date"] <= day]
         if not sota_avail:
@@ -859,7 +978,9 @@ def calculate_gap_metrics(
         # open model has plausibly caught up to.
         ref_date = None
         for s in sorted(sota_avail, key=lambda x: x["date"], reverse=True):
-            if _open_caught_up(best_open_score, best_open_std, s["score"], s["std"], threshold, z):
+            if _open_caught_up(best_open_score, best_open_std, s["score"], s["std"],
+                               threshold, z, open_name=best_open_name,
+                               sota_name=s["name"], bootstrap=bootstrap):
                 ref_date = s["date"]
                 break
         if ref_date is None:
@@ -911,6 +1032,7 @@ def calculate_statistics(
     threshold: float = ECI_MATCH_THRESHOLD,
     window_start: Optional[Any] = None,
     window_end: Optional[Any] = None,
+    bootstrap=None,
 ) -> dict:
     """Calculate summary statistics.
 
@@ -954,6 +1076,7 @@ def calculate_statistics(
         threshold=threshold,
         window_start=window_start,
         window_end=window_end,
+        bootstrap=bootstrap,
     )
 
     if metrics is not None:
@@ -1080,6 +1203,17 @@ def process_data() -> dict[str, Any]:
     df_combined = pd.concat([df_open, df_closed]).sort_values("date")
     df_frontier = df_combined[df_combined["group_rank"] <= 1].copy()
 
+    # ECI bootstrap draws power the paired "caught up" criterion (ECI only).
+    # build_eci_bootstrap is fail-open: None here -> analytical fallback. The
+    # cache (keyed by the source CSV hash, gitignored) skips the refit when the
+    # benchmark data is unchanged.
+    bootstrap = build_eci_bootstrap(cache_dir="data") if build_eci_bootstrap is not None else None
+    if bootstrap is not None:
+        displayed = {row.get("Model") for _, row in df_frontier.iterrows()}
+        matched = sum(1 for n in displayed if n and bootstrap.has(n))
+        logger.info("ECI bootstrap name-join: %d/%d frontier models matched",
+                    matched, len(displayed))
+
     models = []
     for _, row in df_frontier.iterrows():
         models.append({
@@ -1107,17 +1241,17 @@ def process_data() -> dict[str, Any]:
             "is_china": bool(row.get("is_china", False)),
         })
 
-    gaps = calculate_horizontal_gaps(df_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model")
+    gaps = calculate_horizontal_gaps(df_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model", bootstrap=bootstrap)
     # Rename score fields to eci for backward compatibility
     for gap in gaps:
         gap["closed_eci"] = gap.pop("closed_score")
         gap["open_eci"] = gap.pop("open_score")
 
-    stats = calculate_statistics(df_frontier, gaps, score_col="eci")
+    stats = calculate_statistics(df_frontier, gaps, score_col="eci", bootstrap=bootstrap)
     trends = calculate_trends(df_all_valid, use_apr_2024_split=True)  # ECI uses April 2024 split
 
     # Calculate historical gaps for the timeline chart
-    historical_gaps = calculate_historical_gaps(df_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model")
+    historical_gaps = calculate_historical_gaps(df_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model", bootstrap=bootstrap)
     # Rename score fields to eci for backward compatibility
     for hg in historical_gaps:
         hg["reference_eci"] = hg.pop("reference_score")
@@ -1137,14 +1271,14 @@ def process_data() -> dict[str, Any]:
         df_china_us_combined = pd.concat([df_china_models, df_us_models]).sort_values("date")
         df_china_us_frontier = df_china_us_combined[df_china_us_combined["group_rank"] <= 1].copy()
 
-        china_gaps = calculate_horizontal_gaps(df_china_us_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model")
+        china_gaps = calculate_horizontal_gaps(df_china_us_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model", bootstrap=bootstrap)
         for gap in china_gaps:
             gap["closed_eci"] = gap.pop("closed_score")
             gap["open_eci"] = gap.pop("open_score")
 
-        china_stats = calculate_statistics(df_china_us_frontier, china_gaps, score_col="eci")
+        china_stats = calculate_statistics(df_china_us_frontier, china_gaps, score_col="eci", bootstrap=bootstrap)
 
-        china_historical = calculate_historical_gaps(df_china_us_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model")
+        china_historical = calculate_historical_gaps(df_china_us_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model", bootstrap=bootstrap)
         for hg in china_historical:
             hg["reference_eci"] = hg.pop("reference_score")
             hg["open_frontier_eci"] = hg.pop("open_frontier_score")
@@ -1153,6 +1287,19 @@ def process_data() -> dict[str, Any]:
         china_stats = {}
         china_historical = []
 
+    # Per-laggard matched-leader maps for the Gap Over Time chart (one per
+    # framing). The frontend uses these for ECI instead of recomputing matches
+    # in JS, so the bootstrap criterion drives the timeline too.
+    frontier_matches = {"default": build_frontier_match_map(df_frontier, bootstrap)}
+    if len(df_china_models) > 0 and len(df_us_models) > 0:
+        # The China Gap Over Time chart iterates benchmark.models (== df_frontier)
+        # filtered by is_china in JS, so build its match map over the SAME universe
+        # (laggard = is_china, leader = everything else) rather than
+        # df_china_us_frontier -- otherwise server-named leaders can be absent from
+        # the JS frontier and the laggard is silently dropped from the chart.
+        frontier_matches["china"] = build_frontier_match_map(
+            df_frontier, bootstrap, laggard_col="is_china")
+
     return {
         "models": models,
         "trend_models": trend_models,
@@ -1160,6 +1307,7 @@ def process_data() -> dict[str, Any]:
         "statistics": stats,
         "trends": trends,
         "historical_gaps": historical_gaps,
+        "frontier_matches": frontier_matches,
         "china_framing": {
             "gaps": china_gaps,
             "statistics": china_stats,
@@ -1445,6 +1593,7 @@ def process_all_benchmarks() -> dict:
         "statistics": eci_data["statistics"],
         "trends": eci_data["trends"],
         "historical_gaps": eci_data["historical_gaps"],
+        "frontier_matches": eci_data["frontier_matches"],
         "china_framing": eci_data["china_framing"],
     }
 

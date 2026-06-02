@@ -1535,9 +1535,50 @@ function renderHistoricalChart(data) {
         }
         return null;
     }
+
+    // ECI ships a server-computed bootstrap match map; other benchmarks match
+    // client-side via the threshold above. Map framing -> server key.
+    const fkey = framing === 'china' ? 'china' : 'default';
+    const serverMatches = benchmark?.frontier_matches?.[fkey] || null;
+
+    // Idempotent methodology note for the bootstrap-matched (ECI) view.
+    let methodNote = document.getElementById('historical-method-note');
+    if (serverMatches) {
+        if (!methodNote && container) {
+            methodNote = document.createElement('p');
+            methodNote.id = 'historical-method-note';
+            methodNote.className = 'subtitle';
+            methodNote.style.textAlign = 'center';
+            methodNote.style.marginTop = 'var(--spacing-sm)';
+            container.appendChild(methodNote);
+        }
+        if (methodNote) {
+            methodNote.textContent =
+                "Matches use Epoch AI's paired bootstrap (open model ahead in at least 5% of resamples). " +
+                "Plotted scores are Epoch's published ECI point estimates.";
+            methodNote.hidden = false;
+        }
+    } else if (methodNote) {
+        methodNote.hidden = true;
+    }
+
+    // For ECI, use the server's bootstrap match; otherwise the JS threshold.
+    function matchedLeaderFor(ev) {
+        if (serverMatches && Object.prototype.hasOwnProperty.call(serverMatches, ev.model)) {
+            const lm = serverMatches[ev.model];
+            if (lm === null) return null;               // server: no leader caught up
+            const found = leaderFrontier.find(l => l.model === lm);
+            if (found) return found;
+            // Server named a leader not present in this frontier view: degrade
+            // gracefully to the threshold match rather than dropping the laggard.
+            return firstLeaderToReach(ev.score);
+        }
+        return firstLeaderToReach(ev.score);
+    }
+
     const laggardFrontier = [];
     for (const ev of laggardFrontierRaw) {
-        const ld = firstLeaderToReach(ev.score);
+        const ld = matchedLeaderFor(ev);
         if (!ld) continue;
         const gapMonths = (ev._d - ld._d) / (1000 * 60 * 60 * 24) / DAYS_PER_MONTH;
         if (gapMonths < 0) continue;

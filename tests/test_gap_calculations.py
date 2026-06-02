@@ -734,5 +734,174 @@ class TestStatisticsNewFields:
         assert stats["gap_window"]["n_days"] >= 1
 
 
+from eci_bootstrap import EciBootstrap
+import numpy as _np
+from update_data import _match_method, CAUGHT_UP_PROB
+
+
+def _boot(prob_a_over_b):
+    # Construct draws so P(A>B) == prob_a_over_b over 100 samples.
+    k = int(round(prob_a_over_b * 100))
+    a = _np.concatenate([_np.full(k, 2.0), _np.full(100 - k, 0.0)])
+    b = _np.ones(100)
+    return EciBootstrap({"A": a, "B": b}, n_samples=100, seed=1, source_hash="h")
+
+
+class TestBootstrapCriterion:
+    def test_bootstrap_caught_up_at_5pct(self):
+        boot = _boot(0.05)  # exactly 5% -> caught up (>= 0.05)
+        assert _open_caught_up(0, 1, 100, 1, threshold=1.0,
+                               open_name="A", sota_name="B", bootstrap=boot) is True
+
+    def test_bootstrap_not_caught_up_below_5pct(self):
+        boot = _boot(0.04)
+        assert _open_caught_up(0, 1, 100, 1, threshold=1.0,
+                               open_name="A", sota_name="B", bootstrap=boot) is False
+
+    def test_bootstrap_falls_back_when_name_missing(self):
+        boot = _boot(0.04)  # would say "not caught up" if used
+        # "Z" absent -> prob_exceeds None -> analytical path. Open well above SOTA.
+        assert _open_caught_up(105, 1, 100, 1, threshold=1.0,
+                               open_name="Z", sota_name="B", bootstrap=boot) is True
+
+    def test_match_method_labels(self):
+        boot = _boot(0.5)
+        assert _match_method(1, 1, open_name="A", sota_name="B", bootstrap=boot) == "bootstrap"
+        assert _match_method(2.0, 2.0) == "analytical"
+        assert _match_method(_np.nan, _np.nan) == "threshold"
+
+    def test_caught_up_prob_constant(self):
+        assert CAUGHT_UP_PROB == 0.05
+
+
+class TestHorizontalGapsBootstrap:
+    def test_bootstrap_overrides_threshold_verdict(self):
+        # No std -> the no-bootstrap path is the point-estimate threshold(1.0),
+        # which says NOT matched (98.5 < 99). The bootstrap (P(open>closed)=0.10)
+        # is consulted first and says matched, overriding the threshold.
+        df = pd.DataFrame({
+            "Model": ["ClosedA", "OpenB"],
+            "eci": [100.0, 98.5],
+            "date": pd.to_datetime(["2024-01-01", "2024-06-01"]),
+            "Open": [False, True],
+        })
+        a = _np.concatenate([_np.full(10, 200.0), _np.zeros(90)])  # P(open>closed)=0.10
+        b = _np.full(100, 100.0)
+        boot = EciBootstrap({"OpenB": a, "ClosedA": b}, n_samples=100, seed=1, source_hash="h")
+
+        no_boot = calculate_horizontal_gaps(df)
+        assert no_boot[0]["matched"] is False  # threshold path (no std)
+
+        with_boot = calculate_horizontal_gaps(df, bootstrap=boot)
+        assert with_boot[0]["matched"] is True
+        assert with_boot[0]["match_type"] == "bootstrap"
+
+
+class TestGapMetricsBootstrap:
+    def test_lenient_uses_bootstrap_reference(self):
+        # Open(119) vs two closed SOTA: C_new(120, 2024-01) and C_old(100, 2023-01).
+        # Bootstrap: P(open>C_new)=0.10 (caught up), so lenient ref = C_new.
+        df = pd.DataFrame({
+            "Model": ["C_old", "C_new", "O1"],
+            "eci": [100.0, 120.0, 119.0],
+            "eci_std": [2.0, 2.0, 2.0],
+            "date": pd.to_datetime(["2023-01-01", "2024-01-01", "2024-06-01"]),
+            "Open": [False, False, True],
+        })
+        a = _np.concatenate([_np.full(10, 999.0), _np.zeros(90)])  # P(O1>C_new)=0.10
+        cnew = _np.full(100, 120.0)
+        cold = _np.zeros(100)  # O1 always > C_old
+        boot = EciBootstrap({"O1": a, "C_new": cnew, "C_old": cold},
+                            n_samples=100, seed=1, source_hash="h")
+        m = calculate_gap_metrics(df, score_col="eci", bootstrap=boot)
+        assert m is not None
+        lenient_days = (pd.to_datetime("2024-06-01") - pd.to_datetime("2024-01-01")).days
+        assert abs(m["avg_time_gap_months"] - lenient_days / DAYS_PER_MONTH) < 1e-6
+
+    def test_statistics_forwards_bootstrap(self):
+        df = pd.DataFrame({
+            "Model": ["C1", "O1"],
+            "eci": [100.0, 98.0],
+            "eci_std": [1.0, 1.0],
+            "date": pd.to_datetime(["2024-01-01", "2024-06-01"]),
+            "Open": [False, True],
+        })
+        a = _np.concatenate([_np.full(20, 200.0), _np.zeros(80)])  # P=0.20 caught up
+        b = _np.full(100, 100.0)
+        boot = EciBootstrap({"O1": a, "C1": b}, n_samples=100, seed=1, source_hash="h")
+        gaps = calculate_horizontal_gaps(df, bootstrap=boot)
+        stats = calculate_statistics(df, gaps, bootstrap=boot)
+        assert stats["avg_horizontal_gap_months"] >= 0
+        assert stats["total_matched"] == 1
+
+
+class TestHistoricalGapsBootstrap:
+    def test_accepts_bootstrap_and_runs(self):
+        df = pd.DataFrame({
+            "Model": ["ClosedA", "OpenB", "ClosedC", "OpenD"],
+            "eci": [100.0, 105.0, 120.0, 125.0],
+            "eci_std": [2.0, 2.0, 2.0, 2.0],
+            "date": pd.to_datetime(["2023-01-01", "2023-06-01", "2024-01-01", "2024-06-01"]),
+            "Open": [False, True, False, True],
+        })
+        names = ["ClosedA", "OpenB", "ClosedC", "OpenD"]
+        boot = EciBootstrap({n: _np.full(50, i * 10.0) for i, n in enumerate(names)},
+                            n_samples=50, seed=1, source_hash="h")
+        hist = calculate_historical_gaps(df, bootstrap=boot)
+        assert isinstance(hist, list) and len(hist) > 0
+        for e in hist:
+            assert e["gap_months"] >= 0
+            assert "reference_model" in e and "open_frontier_model" in e
+
+
+from update_data import build_frontier_match_map
+
+
+class TestFrontierMatchMap:
+    def test_maps_each_laggard_to_earliest_caught_up_leader(self):
+        # Open frontier: O1(2024-06). Closed frontier: C_old(2023-01,100), C_new(2024-01,120).
+        df = pd.DataFrame({
+            "Model": ["C_old", "C_new", "O1"],
+            "eci": [100.0, 120.0, 119.0],
+            "eci_std": [2.0, 2.0, 2.0],
+            "date": pd.to_datetime(["2023-01-01", "2024-01-01", "2024-06-01"]),
+            "Open": [False, False, True],
+        })
+        # caught_up(leader, laggard): C_old plausibly >= O1? P(C_old>O1)=0 -> no.
+        # C_new plausibly >= O1? P(C_new>O1)=0.30 -> yes. Earliest such leader = C_new.
+        boot = EciBootstrap({
+            "O1": _np.full(100, 119.0),
+            "C_old": _np.zeros(100),
+            "C_new": _np.concatenate([_np.full(30, 999.0), _np.full(70, 0.0)]),
+        }, n_samples=100, seed=1, source_hash="h")
+        m = build_frontier_match_map(df, boot)
+        assert m == {"O1": "C_new"}
+
+    def test_threshold_fallback_without_bootstrap(self):
+        df = pd.DataFrame({
+            "Model": ["C_old", "C_new", "O1"],
+            "eci": [100.0, 120.0, 119.0],
+            "date": pd.to_datetime(["2023-01-01", "2024-01-01", "2024-06-01"]),
+            "Open": [False, False, True],
+        })
+        # threshold 1.0: earliest leader with score >= 119-1=118 -> C_new(120).
+        m = build_frontier_match_map(df, None)
+        assert m == {"O1": "C_new"}
+
+    def test_china_framing_laggard_col(self):
+        # China framing: laggard = is_china, leader = everything else. Mirrors
+        # the JS china chart's universe (df_frontier filtered by is_china).
+        df = pd.DataFrame({
+            "Model": ["US_old", "US_new", "CN1"],
+            "eci": [100.0, 120.0, 119.0],
+            "date": pd.to_datetime(["2023-01-01", "2024-01-01", "2024-06-01"]),
+            "Open": [False, False, True],
+            "is_china": [False, False, True],
+        })
+        # threshold 1.0: earliest non-china leader with score >= 119-1=118 -> US_new.
+        m = build_frontier_match_map(df, None, laggard_col="is_china")
+        assert m == {"CN1": "US_new"}
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
