@@ -854,5 +854,40 @@ class TestHistoricalGapsBootstrap:
             assert "reference_model" in e and "open_frontier_model" in e
 
 
+from update_data import build_frontier_match_map
+
+
+class TestFrontierMatchMap:
+    def test_maps_each_laggard_to_earliest_caught_up_leader(self):
+        # Open frontier: O1(2024-06). Closed frontier: C_old(2023-01,100), C_new(2024-01,120).
+        df = pd.DataFrame({
+            "Model": ["C_old", "C_new", "O1"],
+            "eci": [100.0, 120.0, 119.0],
+            "eci_std": [2.0, 2.0, 2.0],
+            "date": pd.to_datetime(["2023-01-01", "2024-01-01", "2024-06-01"]),
+            "Open": [False, False, True],
+        })
+        # caught_up(leader, laggard): C_old plausibly >= O1? P(C_old>O1)=0 -> no.
+        # C_new plausibly >= O1? P(C_new>O1)=0.30 -> yes. Earliest such leader = C_new.
+        boot = EciBootstrap({
+            "O1": _np.full(100, 119.0),
+            "C_old": _np.zeros(100),
+            "C_new": _np.concatenate([_np.full(30, 999.0), _np.full(70, 0.0)]),
+        }, n_samples=100, seed=1, source_hash="h")
+        m = build_frontier_match_map(df, boot)
+        assert m == {"O1": "C_new"}
+
+    def test_threshold_fallback_without_bootstrap(self):
+        df = pd.DataFrame({
+            "Model": ["C_old", "C_new", "O1"],
+            "eci": [100.0, 120.0, 119.0],
+            "date": pd.to_datetime(["2023-01-01", "2024-01-01", "2024-06-01"]),
+            "Open": [False, False, True],
+        })
+        # threshold 1.0: earliest leader with score >= 119-1=118 -> C_new(120).
+        m = build_frontier_match_map(df, None)
+        assert m == {"O1": "C_new"}
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

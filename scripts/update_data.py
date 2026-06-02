@@ -746,6 +746,57 @@ def calculate_historical_gaps(
     return historical_gaps
 
 
+def build_frontier_match_map(
+    df_frontier: pd.DataFrame,
+    bootstrap=None,
+    score_col: str = "eci",
+    model_col: str = "Model",
+    threshold: float = ECI_MATCH_THRESHOLD,
+    laggard_col: str = "Open",
+) -> dict:
+    """For each laggard running-max frontier model, the earliest leader
+    running-max frontier model it has reached -- i.e. the earliest leader L with
+    ``_open_caught_up(open=L, sota=laggard)``. Mirrors the JS firstLeaderToReach
+    but uses the bootstrap predicate when draws exist. Used to drive the Gap
+    Over Time chart server-side. Keys/values are ``model_col`` names.
+
+    Works for both framings: pass the open/closed frontier (laggard = Open) or
+    the China/US frontier (process_data sets ``Open`` = is_china there)."""
+    std_col = f"{score_col}_std"
+    d = df_frontier.dropna(subset=["date", score_col]).sort_values(
+        "date", kind="mergesort")
+
+    laggards, leaders = [], []
+    run_lag = run_led = -np.inf
+    for _, r in d.iterrows():
+        s = float(r[score_col])
+        if bool(r[laggard_col]):
+            if s > run_lag:
+                run_lag = s
+                laggards.append(r)
+        else:
+            if s > run_led:
+                run_led = s
+                leaders.append(r)
+
+    result: dict = {}
+    for lag in laggards:
+        lag_name = lag.get(model_col, lag.get("model"))
+        lag_std = lag.get(std_col, np.nan)
+        matched = None
+        for ld in leaders:  # ascending by date
+            if _open_caught_up(
+                ld[score_col], ld.get(std_col, np.nan),
+                lag[score_col], lag_std, threshold,
+                open_name=ld.get(model_col, ld.get("model")),
+                sota_name=lag_name, bootstrap=bootstrap,
+            ):
+                matched = ld.get(model_col, ld.get("model"))
+                break
+        result[lag_name] = matched
+    return result
+
+
 # One-sided 5% critical value: P(Z <= 1.6448) = 0.95. The bootstrap
 # ">=5% of paired samples" rule is the one-sided 5% significance test in
 # disguise (see _open_caught_up).
@@ -1152,6 +1203,15 @@ def process_data() -> dict[str, Any]:
     df_combined = pd.concat([df_open, df_closed]).sort_values("date")
     df_frontier = df_combined[df_combined["group_rank"] <= 1].copy()
 
+    # ECI bootstrap draws power the paired "caught up" criterion (ECI only).
+    # build_eci_bootstrap is fail-open: None here -> analytical fallback.
+    bootstrap = build_eci_bootstrap() if build_eci_bootstrap is not None else None
+    if bootstrap is not None:
+        displayed = {row.get("Model") for _, row in df_frontier.iterrows()}
+        matched = sum(1 for n in displayed if n and bootstrap.has(n))
+        logger.info("ECI bootstrap name-join: %d/%d frontier models matched",
+                    matched, len(displayed))
+
     models = []
     for _, row in df_frontier.iterrows():
         models.append({
@@ -1179,17 +1239,17 @@ def process_data() -> dict[str, Any]:
             "is_china": bool(row.get("is_china", False)),
         })
 
-    gaps = calculate_horizontal_gaps(df_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model")
+    gaps = calculate_horizontal_gaps(df_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model", bootstrap=bootstrap)
     # Rename score fields to eci for backward compatibility
     for gap in gaps:
         gap["closed_eci"] = gap.pop("closed_score")
         gap["open_eci"] = gap.pop("open_score")
 
-    stats = calculate_statistics(df_frontier, gaps, score_col="eci")
+    stats = calculate_statistics(df_frontier, gaps, score_col="eci", bootstrap=bootstrap)
     trends = calculate_trends(df_all_valid, use_apr_2024_split=True)  # ECI uses April 2024 split
 
     # Calculate historical gaps for the timeline chart
-    historical_gaps = calculate_historical_gaps(df_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model")
+    historical_gaps = calculate_historical_gaps(df_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model", bootstrap=bootstrap)
     # Rename score fields to eci for backward compatibility
     for hg in historical_gaps:
         hg["reference_eci"] = hg.pop("reference_score")
@@ -1209,14 +1269,14 @@ def process_data() -> dict[str, Any]:
         df_china_us_combined = pd.concat([df_china_models, df_us_models]).sort_values("date")
         df_china_us_frontier = df_china_us_combined[df_china_us_combined["group_rank"] <= 1].copy()
 
-        china_gaps = calculate_horizontal_gaps(df_china_us_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model")
+        china_gaps = calculate_horizontal_gaps(df_china_us_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model", bootstrap=bootstrap)
         for gap in china_gaps:
             gap["closed_eci"] = gap.pop("closed_score")
             gap["open_eci"] = gap.pop("open_score")
 
-        china_stats = calculate_statistics(df_china_us_frontier, china_gaps, score_col="eci")
+        china_stats = calculate_statistics(df_china_us_frontier, china_gaps, score_col="eci", bootstrap=bootstrap)
 
-        china_historical = calculate_historical_gaps(df_china_us_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model")
+        china_historical = calculate_historical_gaps(df_china_us_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model", bootstrap=bootstrap)
         for hg in china_historical:
             hg["reference_eci"] = hg.pop("reference_score")
             hg["open_frontier_eci"] = hg.pop("open_frontier_score")
@@ -1225,6 +1285,13 @@ def process_data() -> dict[str, Any]:
         china_stats = {}
         china_historical = []
 
+    # Per-laggard matched-leader maps for the Gap Over Time chart (one per
+    # framing). The frontend uses these for ECI instead of recomputing matches
+    # in JS, so the bootstrap criterion drives the timeline too.
+    frontier_matches = {"default": build_frontier_match_map(df_frontier, bootstrap)}
+    if len(df_china_models) > 0 and len(df_us_models) > 0:
+        frontier_matches["china"] = build_frontier_match_map(df_china_us_frontier, bootstrap)
+
     return {
         "models": models,
         "trend_models": trend_models,
@@ -1232,6 +1299,7 @@ def process_data() -> dict[str, Any]:
         "statistics": stats,
         "trends": trends,
         "historical_gaps": historical_gaps,
+        "frontier_matches": frontier_matches,
         "china_framing": {
             "gaps": china_gaps,
             "statistics": china_stats,
@@ -1517,6 +1585,7 @@ def process_all_benchmarks() -> dict:
         "statistics": eci_data["statistics"],
         "trends": eci_data["trends"],
         "historical_gaps": eci_data["historical_gaps"],
+        "frontier_matches": eci_data["frontier_matches"],
         "china_framing": eci_data["china_framing"],
     }
 
