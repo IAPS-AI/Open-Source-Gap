@@ -83,6 +83,21 @@ except ImportError as e:
     METR_FETCHER_AVAILABLE = False
     print(f"Note: METR benchmark unavailable ({e})")
 
+# ECI bootstrap (eci-public). Lazy: importing this module never imports the
+# heavy `eci` package, so update_data always loads even without it installed.
+try:
+    from eci_bootstrap import build_eci_bootstrap, EciBootstrap
+    ECI_BOOTSTRAP_AVAILABLE = True
+except Exception as e:  # pragma: no cover - defensive
+    build_eci_bootstrap = None
+    EciBootstrap = None
+    ECI_BOOTSTRAP_AVAILABLE = False
+    print(f"Note: ECI bootstrap module unavailable ({e})")
+
+# Open model is "caught up" when its bootstrapped ECI exceeds the SOTA model's
+# in at least this fraction of paired resamples (Epoch AI's 5% rule).
+CAUGHT_UP_PROB = 0.05
+
 def get_rank(
     df: pd.DataFrame,
     n: int | None = None,
@@ -703,6 +718,18 @@ def calculate_historical_gaps(
 Z_ONE_SIDED_05 = float(norm.ppf(0.95))  # 1.6448...
 
 
+def _match_method(open_std, sota_std, *, open_name=None, sota_name=None,
+                  bootstrap=None) -> str:
+    """Which criterion applies to this pair: 'bootstrap' (paired draws exist
+    for both models), 'analytical' (usable std on both), or 'threshold'."""
+    if (bootstrap is not None and open_name and sota_name
+            and bootstrap.prob_exceeds(open_name, sota_name) is not None):
+        return "bootstrap"
+    if pd.notna(open_std) and pd.notna(sota_std) and (open_std > 0 or sota_std > 0):
+        return "analytical"
+    return "threshold"
+
+
 def _open_caught_up(
     open_score: float,
     open_std: float,
@@ -710,6 +737,10 @@ def _open_caught_up(
     sota_std: float,
     threshold: float,
     z: float = Z_ONE_SIDED_05,
+    *,
+    open_name: Optional[str] = None,
+    sota_name: Optional[str] = None,
+    bootstrap=None,
 ) -> bool:
     """Has the open model *plausibly caught up* to a historical SOTA model?
 
@@ -745,11 +776,11 @@ def _open_caught_up(
     Falls back to a point-estimate match within ``threshold`` when either
     model lacks usable uncertainty (e.g. METR horizons, which ship no CI).
     """
-    if (
-        pd.notna(open_std)
-        and pd.notna(sota_std)
-        and (open_std > 0 or sota_std > 0)
-    ):
+    method = _match_method(open_std, sota_std, open_name=open_name,
+                           sota_name=sota_name, bootstrap=bootstrap)
+    if method == "bootstrap":
+        return bootstrap.prob_exceeds(open_name, sota_name) >= CAUGHT_UP_PROB
+    if method == "analytical":
         se = math.sqrt(open_std ** 2 + sota_std ** 2)
         return (sota_score - open_score) <= z * se
     # No usable uncertainty: fall back to "approximately equal" within threshold.

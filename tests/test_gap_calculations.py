@@ -734,5 +734,45 @@ class TestStatisticsNewFields:
         assert stats["gap_window"]["n_days"] >= 1
 
 
+from eci_bootstrap import EciBootstrap
+import numpy as _np
+from update_data import _match_method, CAUGHT_UP_PROB
+
+
+def _boot(prob_a_over_b):
+    # Construct draws so P(A>B) == prob_a_over_b over 100 samples.
+    k = int(round(prob_a_over_b * 100))
+    a = _np.concatenate([_np.full(k, 2.0), _np.full(100 - k, 0.0)])
+    b = _np.ones(100)
+    return EciBootstrap({"A": a, "B": b}, n_samples=100, seed=1, source_hash="h")
+
+
+class TestBootstrapCriterion:
+    def test_bootstrap_caught_up_at_5pct(self):
+        boot = _boot(0.05)  # exactly 5% -> caught up (>= 0.05)
+        assert _open_caught_up(0, 1, 100, 1, threshold=1.0,
+                               open_name="A", sota_name="B", bootstrap=boot) is True
+
+    def test_bootstrap_not_caught_up_below_5pct(self):
+        boot = _boot(0.04)
+        assert _open_caught_up(0, 1, 100, 1, threshold=1.0,
+                               open_name="A", sota_name="B", bootstrap=boot) is False
+
+    def test_bootstrap_falls_back_when_name_missing(self):
+        boot = _boot(0.04)  # would say "not caught up" if used
+        # "Z" absent -> prob_exceeds None -> analytical path. Open well above SOTA.
+        assert _open_caught_up(105, 1, 100, 1, threshold=1.0,
+                               open_name="Z", sota_name="B", bootstrap=boot) is True
+
+    def test_match_method_labels(self):
+        boot = _boot(0.5)
+        assert _match_method(1, 1, open_name="A", sota_name="B", bootstrap=boot) == "bootstrap"
+        assert _match_method(2.0, 2.0) == "analytical"
+        assert _match_method(_np.nan, _np.nan) == "threshold"
+
+    def test_caught_up_prob_constant(self):
+        assert CAUGHT_UP_PROB == 0.05
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
