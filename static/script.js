@@ -267,15 +267,13 @@ function updateBenchmarkDisplay() {
                 A model is deemed to have <strong>caught up</strong> if its p50 horizon meets or exceeds the reference model's.<br>
                 <em>Data merged from METR Time Horizon v1.0 and v1.1, with v1.1 taking precedence for shared models.<br>
                 Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
+        } else if (appState.currentBenchmark === 'eci') {
+            // ECI uses Epoch AI's paired-bootstrap criterion, not a fixed threshold.
+            chartNote.innerHTML = `Note: A model is deemed to have <strong>caught up</strong> when its capability exceeds the reference model's in at least 5% of Epoch AI's paired bootstrap resamples (their published criterion).<br>
+                <em>The average gap is measured day by day across the overlapping history &mdash; the open frontier versus the most recent state-of-the-art model it has caught up to. Plotted scores are Epoch's published ECI point estimates.<br>
+                Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
         } else {
-            // Generate appropriate threshold description based on benchmark type
-            let thresholdDesc;
-            if (appState.currentBenchmark === 'eci') {
-                thresholdDesc = `${thresholdValue} ECI point${thresholdValue !== 1 ? 's' : ''}`;
-            } else {
-                thresholdDesc = `${thresholdValue} percentage point${thresholdValue !== 1 ? 's' : ''}`;
-            }
-
+            const thresholdDesc = `${thresholdValue} percentage point${thresholdValue !== 1 ? 's' : ''}`;
             chartNote.innerHTML = `Note: A model is deemed to have caught up if its score is <strong>within ${thresholdDesc}</strong> of the reference model.<br>
                 <em>Average gap is computed by sampling 100 score levels and measuring time-to-match at each level, starting from the level where reference models first appear.<br>
                 Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
@@ -1563,7 +1561,10 @@ function renderHistoricalChart(data) {
     }
 
     // For ECI, use the server's bootstrap match; otherwise the JS threshold.
-    function matchedLeaderFor(ev) {
+    // Named distinctly from the tooltip helper matchedLeaderFor(lag) defined
+    // later: function declarations hoist, so a duplicate name would override
+    // this one and the loop would silently call the wrong function.
+    function pickMatchedLeader(ev) {
         if (serverMatches && Object.prototype.hasOwnProperty.call(serverMatches, ev.model)) {
             const lm = serverMatches[ev.model];
             if (lm === null) return null;               // server: no leader caught up
@@ -1578,7 +1579,7 @@ function renderHistoricalChart(data) {
 
     const laggardFrontier = [];
     for (const ev of laggardFrontierRaw) {
-        const ld = matchedLeaderFor(ev);
+        const ld = pickMatchedLeader(ev);
         if (!ld) continue;
         const gapMonths = (ev._d - ld._d) / (1000 * 60 * 60 * 24) / DAYS_PER_MONTH;
         if (gapMonths < 0) continue;
