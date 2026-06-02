@@ -642,7 +642,8 @@ def calculate_historical_gaps(
     df: pd.DataFrame,
     score_col: str = "eci",
     threshold: float = ECI_MATCH_THRESHOLD,
-    model_col: str = "Model"
+    model_col: str = "Model",
+    bootstrap=None,
 ) -> list[dict]:
     """
     Calculate the gap metric at various points in history.
@@ -658,6 +659,7 @@ def calculate_historical_gaps(
     """
     df = df.dropna(subset=["date", score_col]).copy()
     df = df.sort_values("date")
+    std_col = f"{score_col}_std"
 
     if len(df) < 2:
         return []
@@ -691,11 +693,25 @@ def calculate_historical_gaps(
         best_closed = df_closed.loc[df_closed[score_col].idxmax()]
         best_closed_score = best_closed[score_col]
 
-        # Find the first closed model to achieve the best open's score level
-        closed_at_open_level = df_closed[df_closed[score_col] >= best_open_score - threshold].sort_values("date")
+        best_open_name = best_open.get(model_col, best_open.get("model"))
+        best_open_std = best_open.get(std_col, np.nan)
+        best_closed_name = best_closed.get(model_col, best_closed.get("model"))
+        best_closed_std = best_closed.get(std_col, np.nan)
 
-        if len(closed_at_open_level) > 0:
-            first_closed_at_level = closed_at_open_level.iloc[0]
+        # First closed model (by date) to reach the best open's level: the
+        # leader has "caught up to" the open frontier (a=closed, b=open).
+        first_closed_at_level = None
+        for _, c in df_closed.sort_values("date").iterrows():
+            if _open_caught_up(
+                c[score_col], c.get(std_col, np.nan),
+                best_open_score, best_open_std, threshold,
+                open_name=c.get(model_col, c.get("model")),
+                sota_name=best_open_name, bootstrap=bootstrap,
+            ):
+                first_closed_at_level = c
+                break
+
+        if first_closed_at_level is not None:
             # Gap is: when did closed first hit this level vs when did open hit it
             gap_days = (best_open_date - first_closed_at_level["date"]).days
             gap_months = gap_days / DAYS_PER_MONTH
@@ -704,7 +720,12 @@ def calculate_historical_gaps(
             gap_months = max(0, gap_months)
 
             # Determine if the frontier is "matched" (open has caught up to closed frontier)
-            is_matched = best_open_score >= best_closed_score - threshold
+            is_matched = _open_caught_up(
+                best_open_score, best_open_std,
+                best_closed_score, best_closed_std, threshold,
+                open_name=best_open_name, sota_name=best_closed_name,
+                bootstrap=bootstrap,
+            )
         else:
             # No closed model at this level yet (open is ahead - very rare)
             gap_months = 0

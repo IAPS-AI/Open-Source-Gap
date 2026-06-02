@@ -835,5 +835,24 @@ class TestGapMetricsBootstrap:
         assert stats["total_matched"] == 1
 
 
+class TestHistoricalGapsBootstrap:
+    def test_accepts_bootstrap_and_runs(self):
+        df = pd.DataFrame({
+            "Model": ["ClosedA", "OpenB", "ClosedC", "OpenD"],
+            "eci": [100.0, 105.0, 120.0, 125.0],
+            "eci_std": [2.0, 2.0, 2.0, 2.0],
+            "date": pd.to_datetime(["2023-01-01", "2023-06-01", "2024-01-01", "2024-06-01"]),
+            "Open": [False, True, False, True],
+        })
+        names = ["ClosedA", "OpenB", "ClosedC", "OpenD"]
+        boot = EciBootstrap({n: _np.full(50, i * 10.0) for i, n in enumerate(names)},
+                            n_samples=50, seed=1, source_hash="h")
+        hist = calculate_historical_gaps(df, bootstrap=boot)
+        assert isinstance(hist, list) and len(hist) > 0
+        for e in hist:
+            assert e["gap_months"] >= 0
+            assert "reference_model" in e and "open_frontier_model" in e
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
