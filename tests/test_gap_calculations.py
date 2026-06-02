@@ -797,5 +797,43 @@ class TestHorizontalGapsBootstrap:
         assert with_boot[0]["match_type"] == "bootstrap"
 
 
+class TestGapMetricsBootstrap:
+    def test_lenient_uses_bootstrap_reference(self):
+        # Open(119) vs two closed SOTA: C_new(120, 2024-01) and C_old(100, 2023-01).
+        # Bootstrap: P(open>C_new)=0.10 (caught up), so lenient ref = C_new.
+        df = pd.DataFrame({
+            "Model": ["C_old", "C_new", "O1"],
+            "eci": [100.0, 120.0, 119.0],
+            "eci_std": [2.0, 2.0, 2.0],
+            "date": pd.to_datetime(["2023-01-01", "2024-01-01", "2024-06-01"]),
+            "Open": [False, False, True],
+        })
+        a = _np.concatenate([_np.full(10, 999.0), _np.zeros(90)])  # P(O1>C_new)=0.10
+        cnew = _np.full(100, 120.0)
+        cold = _np.zeros(100)  # O1 always > C_old
+        boot = EciBootstrap({"O1": a, "C_new": cnew, "C_old": cold},
+                            n_samples=100, seed=1, source_hash="h")
+        m = calculate_gap_metrics(df, score_col="eci", bootstrap=boot)
+        assert m is not None
+        lenient_days = (pd.to_datetime("2024-06-01") - pd.to_datetime("2024-01-01")).days
+        assert abs(m["avg_time_gap_months"] - lenient_days / DAYS_PER_MONTH) < 1e-6
+
+    def test_statistics_forwards_bootstrap(self):
+        df = pd.DataFrame({
+            "Model": ["C1", "O1"],
+            "eci": [100.0, 98.0],
+            "eci_std": [1.0, 1.0],
+            "date": pd.to_datetime(["2024-01-01", "2024-06-01"]),
+            "Open": [False, True],
+        })
+        a = _np.concatenate([_np.full(20, 200.0), _np.zeros(80)])  # P=0.20 caught up
+        b = _np.full(100, 100.0)
+        boot = EciBootstrap({"O1": a, "C1": b}, n_samples=100, seed=1, source_hash="h")
+        gaps = calculate_horizontal_gaps(df, bootstrap=boot)
+        stats = calculate_statistics(df, gaps, bootstrap=boot)
+        assert stats["avg_horizontal_gap_months"] >= 0
+        assert stats["total_matched"] == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

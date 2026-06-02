@@ -807,6 +807,7 @@ def calculate_gap_metrics(
     window_start: Optional[Any] = None,
     window_end: Optional[Any] = None,
     z: float = Z_ONE_SIDED_05,
+    bootstrap=None,
 ) -> Optional[dict]:
     """Day-by-day open-vs-SOTA gap, mirroring Epoch AI's methodology.
 
@@ -858,6 +859,7 @@ def calculate_gap_metrics(
                 "date": r["date"],
                 "score": float(s),
                 "std": float(r[std_col]) if has_std and pd.notna(r.get(std_col)) else np.nan,
+                "name": r.get("Model", r.get("model")),
             })
     if not sota:
         return None
@@ -886,6 +888,7 @@ def calculate_gap_metrics(
             if has_std and pd.notna(best_open.get(std_col))
             else np.nan
         )
+        best_open_name = best_open.get("Model", best_open.get("model"))
 
         sota_avail = [s for s in sota if s["date"] <= day]
         if not sota_avail:
@@ -903,7 +906,9 @@ def calculate_gap_metrics(
         # open model has plausibly caught up to.
         ref_date = None
         for s in sorted(sota_avail, key=lambda x: x["date"], reverse=True):
-            if _open_caught_up(best_open_score, best_open_std, s["score"], s["std"], threshold, z):
+            if _open_caught_up(best_open_score, best_open_std, s["score"], s["std"],
+                               threshold, z, open_name=best_open_name,
+                               sota_name=s["name"], bootstrap=bootstrap):
                 ref_date = s["date"]
                 break
         if ref_date is None:
@@ -955,6 +960,7 @@ def calculate_statistics(
     threshold: float = ECI_MATCH_THRESHOLD,
     window_start: Optional[Any] = None,
     window_end: Optional[Any] = None,
+    bootstrap=None,
 ) -> dict:
     """Calculate summary statistics.
 
@@ -998,6 +1004,7 @@ def calculate_statistics(
         threshold=threshold,
         window_start=window_start,
         window_end=window_end,
+        bootstrap=bootstrap,
     )
 
     if metrics is not None:
