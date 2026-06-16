@@ -901,6 +901,17 @@ function renderTrendChart(data) {
             xanchor: 'right',
             yanchor: 'bottom',
             font: { size: 10, color: '#888' }
+        },
+        {
+            x: 1,
+            y: 160.87,
+            xref: 'paper',
+            yref: 'y',
+            text: 'Claude Fable 5 (161)',
+            showarrow: false,
+            xanchor: 'right',
+            yanchor: 'bottom',
+            font: { size: 10, color: '#888' }
         }
     ] : [];
 
@@ -941,6 +952,19 @@ function renderTrendChart(data) {
                     type: 'line',
                     y0: 150,
                     y1: 150,
+                    x0: 0,
+                    x1: 1,
+                    xref: 'paper',
+                    line: {
+                        color: 'rgba(150, 150, 150, 0.4)',
+                        width: 1,
+                        dash: 'dot'
+                    }
+                },
+                {
+                    type: 'line',
+                    y0: 160.87,
+                    y1: 160.87,
                     x0: 0,
                     x1: 1,
                     xref: 'paper',
@@ -1224,6 +1248,19 @@ function renderChart(data) {
                     width: 1,
                     dash: 'dot'
                 }
+            },
+            {
+                type: 'line',
+                y0: 160.87,
+                y1: 160.87,
+                x0: 0,
+                x1: 1,
+                xref: 'paper',
+                line: {
+                    color: 'rgba(150, 150, 150, 0.4)',
+                    width: 1,
+                    dash: 'dot'
+                }
             }
         );
     }
@@ -1310,6 +1347,17 @@ function renderChart(data) {
                 xref: 'paper',
                 yref: 'y',
                 text: 'GPT-5 (150)',
+                showarrow: false,
+                xanchor: 'right',
+                yanchor: 'bottom',
+                font: { size: 10, color: '#aaa' }
+            },
+            {
+                x: 1,
+                y: 160.87,
+                xref: 'paper',
+                yref: 'y',
+                text: 'Claude Fable 5 (161)',
                 showarrow: false,
                 xanchor: 'right',
                 yanchor: 'bottom',
