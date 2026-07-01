@@ -17,6 +17,8 @@ from typing import Optional
 import pandas as pd
 import requests
 
+from accessibility import ACCESSIBILITY_OVERRIDES, classify_accessibility
+
 logger = logging.getLogger(__name__)
 
 # URL for Epoch AI's benchmark data export
@@ -90,21 +92,26 @@ CHINA_ORGS = {
     'qwen', 'tsinghua', 'peking university', 'chinese academy'
 }
 
-# Organizations known to release open models
+# Last-resort heuristics, used only for models absent from the Epoch
+# capabilities index AND the vendored overrides (see _classify_model).
+# Only UNAMBIGUOUS signals belong here: mixed-release labs (Alibaba/Qwen,
+# Mistral, Microsoft, Moonshot, Zhipu, Cohere, AI21) ship both open-weight
+# and API-only models, so org membership alone proves nothing for them
+# (audit finding F1, docs/audits/2026-07-01-calculation-logic-audit.md).
 OPEN_SOURCE_ORGS = {
-    'deepseek', 'meta', 'mistral', 'alibaba', 'qwen', '01.ai',
-    'zhipu', 'thudm', 'baichuan', 'bigscience', 'eleutherai',
-    'stability ai', 'together', 'shanghai ai', 'idea research',
-    'modelbest', 'hugging face', 'tii', 'databricks', 'moonshot'
+    'deepseek', 'meta', '01.ai', 'thudm', 'baichuan', 'bigscience',
+    'eleutherai', 'stability ai', 'together', 'shanghai ai',
+    'idea research', 'modelbest', 'hugging face', 'tii', 'databricks',
 }
 
-# Open-weight model name patterns (catches fine-tunes from orgs not in the lists above)
-OPEN_MODEL_PATTERNS = {'llama', 'gemma'}
+# Open-weight model name patterns (catch releases regardless of org — e.g.
+# gpt-oss is open despite the OpenAI org)
+OPEN_MODEL_PATTERNS = {'llama', 'gemma', 'gpt-oss', 'gpt_oss'}
 
-# Known closed-source organizations
+# Known closed-source organizations (exclusively closed-weights)
 CLOSED_SOURCE_ORGS = {
-    'openai', 'anthropic', 'google', 'deepmind', 'xai', 'microsoft',
-    'amazon', 'cohere', 'ai21', 'inflection', 'character.ai'
+    'openai', 'anthropic', 'google', 'deepmind', 'xai',
+    'amazon', 'inflection', 'character.ai'
 }
 
 
@@ -115,6 +122,7 @@ class CSVBenchmarkFetcher:
         self._cache_dir = cache_dir or "/tmp/epoch_benchmark_cache"
         self._zip_data = None
         self._csv_cache = {}
+        self._accessibility_by_version: Optional[dict] = None
 
     def _download_zip(self) -> bytes:
         """Download the benchmark data zip file."""
@@ -163,34 +171,54 @@ class CSVBenchmarkFetcher:
         org_lower = org.lower()
         return any(china_org in org_lower for china_org in CHINA_ORGS)
 
-    def _is_open_model(self, row: pd.Series) -> bool:
-        """Determine if a model is open-source based on organization and accessibility."""
-        # Check explicit accessibility field if present
-        if 'Model accessibility' in row and pd.notna(row.get('Model accessibility')):
-            accessibility = str(row['Model accessibility']).lower()
-            if 'open' in accessibility:
-                return True
-            if 'api' in accessibility or 'closed' in accessibility:
-                return False
+    def _get_accessibility_map(self) -> dict:
+        """Model version -> Model accessibility from the Epoch capabilities
+        index (shipped in the same benchmark_data.zip). The benchmark CSVs
+        themselves carry no accessibility column, so this join is the primary
+        classification source (mirrors open_closed_gap's approach)."""
+        if self._accessibility_by_version is None:
+            mapping: dict = {}
+            idx = self._read_csv("epoch_capabilities_index.csv")
+            if idx is not None and "Model version" in idx.columns \
+                    and "Model accessibility" in idx.columns:
+                idx = idx.drop_duplicates(subset=["Model version"], keep="first")
+                for _, r in idx.iterrows():
+                    if pd.notna(r["Model accessibility"]):
+                        mapping[str(r["Model version"]).strip()] = r["Model accessibility"]
+            else:
+                logger.warning("epoch_capabilities_index.csv unavailable; "
+                               "falling back to overrides/heuristics only")
+            self._accessibility_by_version = mapping
+        return self._accessibility_by_version
 
-        # Check if model name indicates an open-weight base (e.g. Llama fine-tunes)
-        model_name = str(row.get('Model version', row.get('Model name', ''))).lower()
-        if any(pattern in model_name for pattern in OPEN_MODEL_PATTERNS):
+    def _classify_model(self, row: pd.Series) -> Optional[bool]:
+        """True = open weights, False = closed, None = unclassifiable
+        (callers must exclude None rows rather than guess).
+
+        Precedence: the CSV's own accessibility column (if ever present) >
+        Epoch capabilities index > vendored overrides > unambiguous
+        name/org heuristics > None."""
+        label = classify_accessibility(row.get('Model accessibility'))
+        if label is not None:
+            return label
+
+        name = str(row.get('Model version', row.get('Model name', ''))).strip()
+        label = classify_accessibility(self._get_accessibility_map().get(name))
+        if label is not None:
+            return label
+        label = classify_accessibility(ACCESSIBILITY_OVERRIDES.get(name))
+        if label is not None:
+            return label
+
+        name_lower = name.lower()
+        if any(pattern in name_lower for pattern in OPEN_MODEL_PATTERNS):
             return True
-
-        # Fall back to organization-based heuristics
         org = str(row.get('Organization', '')).lower() if pd.notna(row.get('Organization')) else ''
-
-        # Check closed-source orgs first (more specific)
         if any(closed_org in org for closed_org in CLOSED_SOURCE_ORGS):
             return False
-
-        # Check open-source orgs
         if any(open_org in org for open_org in OPEN_SOURCE_ORGS):
             return True
-
-        # Default to closed for unknown
-        return False
+        return None
 
     def get_available_benchmarks(self) -> list:
         """Return list of available benchmarks."""
@@ -227,6 +255,7 @@ class CSVBenchmarkFetcher:
         logger.info(f"Processing {config['name']} ({len(df)} rows)...")
 
         models = []
+        excluded_unclassifiable = []
         for _, row in df.iterrows():
             # Get score - check various column names
             score = None
@@ -273,8 +302,12 @@ class CSVBenchmarkFetcher:
                 if config["scale"] != 1 and stderr <= 1.0:
                     stderr = stderr * config["scale"]
 
-            # Determine if open/closed and China/US
-            is_open = self._is_open_model(row)
+            # Determine if open/closed and China/US. Unclassifiable models
+            # are excluded — guessing poisons the frontier (audit F1).
+            is_open = self._classify_model(row)
+            if is_open is None:
+                excluded_unclassifiable.append(str(model_name))
+                continue
             is_china = self._is_china_org(org)
 
             # Get country
@@ -301,6 +334,9 @@ class CSVBenchmarkFetcher:
         open_count = sum(1 for m in models if m['is_open'])
         closed_count = len(models) - open_count
         logger.info(f"  Found {len(models)} models ({open_count} open, {closed_count} closed)")
+        if excluded_unclassifiable:
+            logger.info(f"  Excluded {len(excluded_unclassifiable)} unclassifiable: "
+                        f"{excluded_unclassifiable[:8]}")
 
         return {
             "models": models,

@@ -36,24 +36,9 @@ EPOCH_UA = (
 ECI_MATCH_THRESHOLD = 1.0  # ECI points - model is "matched" if within this range
 DAYS_PER_MONTH = 365.25 / 12  # 30.4375 - accurate average days per month accounting for leap years
 
-# Labs that ship ~exclusively closed weights. A blank Model accessibility from
-# one of these is a data gap, not an implicit open release, so we don't flip
-# it to open. Meta/Mistral/Microsoft are excluded because they release open
-# models often enough that a blank could plausibly be open.
-KNOWN_CLOSED_LABS = {
-    "OpenAI",
-    "Anthropic",
-    "Google",
-    "Google DeepMind",
-    "xAI",
-}
-
-
-def _is_known_closed_lab(org: str) -> bool:
-    if not isinstance(org, str):
-        return False
-    org_lower = org.lower()
-    return any(lab.lower() in org_lower for lab in KNOWN_CLOSED_LABS)
+# Shared accessibility classification (open/closed/None-excluded); see
+# docs/audits/2026-07-01-calculation-logic-audit.md findings F1/F2.
+from accessibility import ACCESSIBILITY_OVERRIDES, classify_accessibility
 
 # Import CSV-based benchmark fetcher (no credentials required)
 try:
@@ -267,20 +252,17 @@ def fetch_eci_data() -> pd.DataFrame:
             if col in df.columns:
                 df[col] = df[col].fillna("Unknown").astype(str)
 
-        # Blank Model accessibility is treated as open *unless* the row is from
-        # a known closed-weights lab (OpenAI etc.), where a blank is almost
-        # certainly a data gap rather than an implicit open release. csv.DictReader
-        # yields "" for empty cells (not NaN), so a plain fillna above would miss
-        # them and process_data would silently classify everything blank as closed.
+        # Blank Model accessibility (csv.DictReader yields "" for empty
+        # cells) is filled from the vendored override map where the label is
+        # known; anything still blank stays blank and is EXCLUDED downstream
+        # in process_data — guessing a side poisons the frontier (audit F2;
+        # the previous "assumed open" rule marked Alibaba's hosted-API Qwen
+        # models as open).
         if "Model accessibility" in df.columns:
             accessibility = df["Model accessibility"].fillna("").astype(str).str.strip()
-            is_blank = accessibility == ""
-            org = df.get("Organization", pd.Series([""] * len(df), index=df.index)).astype(str)
-            from_closed_lab = org.apply(_is_known_closed_lab)
-            df["Model accessibility"] = (
-                accessibility
-                .mask(is_blank & from_closed_lab, "Unknown")
-                .mask(is_blank & ~from_closed_lab, "Open weights (assumed)")
+            override = df["Model"].map(ACCESSIBILITY_OVERRIDES).fillna("")
+            df["Model accessibility"] = accessibility.mask(
+                (accessibility == "") & (override != ""), override
             )
 
         # Derive eci_std from confidence intervals (assuming 90% CI)
@@ -1213,7 +1195,16 @@ def is_us_org(org: str) -> bool:
 def process_data() -> dict[str, Any]:
     """Process ECI data and calculate gaps."""
     df = fetch_eci_data()
-    df["Open"] = df["Model accessibility"].str.contains("Open", na=False)
+
+    # True = open weights, False = closed (API/hosted), None = unclassifiable
+    # (blank/Unreleased) — excluded rather than guessed (audit F2).
+    labels = df["Model accessibility"].apply(classify_accessibility)
+    excluded = df.loc[labels.isna(), "Model"].tolist()
+    if excluded:
+        logger.info(f"Excluding {len(excluded)} models with unclassifiable "
+                    f"accessibility: {excluded[:8]}")
+    df = df[labels.notna()].copy()
+    df["Open"] = labels[labels.notna()].astype(bool)
 
     df["is_china"] = df["Organization"].apply(is_china_org)
     df["is_us"] = df["Organization"].apply(is_us_org)

@@ -38,6 +38,11 @@ Plan: `docs/plans/2026-07-01-threshold-gap-integration.md`
 
 # Calculation-Logic Audit vs open_closed_gap (2026-07-01)
 
-- [ ] Compare update_data.py / app.py / threshold_gap.py against source analysis.py
-- [ ] Write audit report with findings + recommendations
-- [ ] Implement clear correctness improvements (if any)
+- [x] Compare update_data.py / app.py / threshold_gap.py against source analysis.py
+- [x] Write audit report with findings + recommendations
+      → `docs/audits/2026-07-01-calculation-logic-audit.md`
+- [x] Implement clear correctness improvements
+      → F1/F2 fixed: index-join + vendored-overrides + exclusion-based
+        classification (`scripts/accessibility.py`); 11 wrong matched gaps
+        eliminated; F3 (app.py /api/data legacy drift) and F4 (METR patterns)
+        left as recommendations.
