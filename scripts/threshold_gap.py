@@ -231,3 +231,62 @@ def compute_threshold_datapoints(
         ]
         members[-1]["accepted"] = True
     return rows
+
+
+def _gaussian_smooth_grid(dates_int: np.ndarray, values: np.ndarray,
+                          grid_int: np.ndarray, bandwidth: float,
+                          min_ess: float = SMOOTH_MIN_ESS) -> np.ndarray:
+    """Gaussian-kernel weighted mean at each grid point (vectorised).
+    NaN where effective sample size sum(w) < min_ess."""
+    dt = grid_int[:, None] - dates_int[None, :]  # (g, n)
+    w = np.exp(-0.5 * (dt / bandwidth) ** 2)
+    sw = w.sum(axis=1)
+    num = (w * values[None, :]).sum(axis=1)
+    out = np.full(sw.shape, np.nan, dtype=float)
+    ok = sw >= min_ess
+    out[ok] = num[ok] / sw[ok]
+    return out
+
+
+def gaussian_smooth_with_ci(
+    dates: pd.Series,
+    values: pd.Series,
+    *,
+    bandwidth_days: float = SMOOTH_BANDWIDTH_DAYS,
+    step_days: int = SMOOTH_STEP_DAYS,
+    n_boot: int = SMOOTH_N_BOOT,
+    ci: float = SMOOTH_CI,
+    min_ess: float = SMOOTH_MIN_ESS,
+    seed: int = SMOOTH_SEED,
+):
+    """Nadaraya-Watson Gaussian-kernel smoother with bootstrap CI on a
+    uniform date grid. Returns (grid_dates, mean, lo, hi) as pd.Series."""
+    dates = pd.to_datetime(pd.Series(list(dates))).reset_index(drop=True)
+    if dates.empty:
+        empty_d = pd.Series([], dtype="datetime64[ns]")
+        empty_f = pd.Series([], dtype=float)
+        return empty_d, empty_f, empty_f.copy(), empty_f.copy()
+    values = pd.Series(list(values)).reset_index(drop=True).astype(float).values
+
+    d_int = dates.values.astype("datetime64[D]").astype(np.int64)
+    grid = pd.date_range(dates.min(), dates.max(), freq=f"{step_days}D")
+    grid_int = grid.values.astype("datetime64[D]").astype(np.int64)
+    h = float(bandwidth_days)
+
+    central = _gaussian_smooth_grid(d_int, values, grid_int, h, min_ess)
+
+    n = len(values)
+    rng = np.random.default_rng(seed)
+    boot = np.empty((n_boot, len(grid_int)), dtype=float)
+    for b in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        boot[b] = _gaussian_smooth_grid(d_int[idx], values[idx], grid_int, h, min_ess)
+
+    alpha = (1 - ci) / 2
+    import warnings
+    with warnings.catch_warnings():
+        # All-NaN grid columns (outside every bootstrap's support) are expected.
+        warnings.filterwarnings("ignore", message="All-NaN slice encountered")
+        lo = np.nanquantile(boot, alpha, axis=0)
+        hi = np.nanquantile(boot, 1 - alpha, axis=0)
+    return pd.Series(grid), pd.Series(central), pd.Series(lo), pd.Series(hi)

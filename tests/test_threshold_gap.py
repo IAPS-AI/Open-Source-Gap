@@ -202,3 +202,51 @@ class TestValidityAndDedup:
         assert len(accepted) == 2
         assert {(r["first_closed_model"], r["first_open_model"])
                 for r in accepted} == {("C1", "O1"), ("C2", "O2")}
+
+
+from threshold_gap import gaussian_smooth_with_ci  # noqa: E402
+
+
+class TestGaussianSmoother:
+    def test_constant_series_smooths_to_constant(self):
+        dates = pd.date_range("2023-01-01", periods=10, freq="30D")
+        grid, mean, lo, hi = gaussian_smooth_with_ci(
+            pd.Series(dates), pd.Series([5.0] * 10), n_boot=50,
+        )
+        assert np.allclose(mean.dropna(), 5.0)
+        assert np.allclose(lo.dropna(), 5.0)
+        assert np.allclose(hi.dropna(), 5.0)
+
+    def test_nan_outside_effective_support(self):
+        # Two tight clusters 3 years apart, bandwidth 60d: the middle of the
+        # grid has ~zero kernel weight -> NaN (no extrapolation).
+        dates = list(pd.date_range("2022-01-01", periods=5, freq="7D"))
+        dates += list(pd.date_range("2025-01-01", periods=5, freq="7D"))
+        values = [1.0] * 5 + [9.0] * 5
+        grid, mean, _, _ = gaussian_smooth_with_ci(
+            pd.Series(dates), pd.Series(values), n_boot=20,
+        )
+        assert mean.isna().any()
+        assert mean.notna().any()
+
+    def test_deterministic_under_seed(self):
+        dates = pd.Series(pd.date_range("2023-01-01", periods=8, freq="45D"))
+        values = pd.Series([1.0, 3.0, 2.0, 5.0, 4.0, 6.0, 5.0, 7.0])
+        a = gaussian_smooth_with_ci(dates, values, n_boot=30, seed=0)
+        b = gaussian_smooth_with_ci(dates, values, n_boot=30, seed=0)
+        for x, y in zip(a, b):
+            pd.testing.assert_series_equal(x, y)
+
+    def test_ci_brackets_mean(self):
+        rng = np.random.default_rng(42)
+        dates = pd.Series(pd.date_range("2023-01-01", periods=30, freq="14D"))
+        values = pd.Series(rng.normal(10.0, 2.0, size=30))
+        _, mean, lo, hi = gaussian_smooth_with_ci(dates, values, n_boot=200)
+        ok = mean.notna() & lo.notna() & hi.notna()
+        assert (lo[ok] <= hi[ok]).all()
+
+    def test_empty_input(self):
+        grid, mean, lo, hi = gaussian_smooth_with_ci(
+            pd.Series(dtype="datetime64[ns]"), pd.Series(dtype=float)
+        )
+        assert len(grid) == 0 and len(mean) == 0
