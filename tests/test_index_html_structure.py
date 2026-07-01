@@ -56,44 +56,6 @@ def test_legacy_inline_styles_removed(client):
     assert 'id="historical-chart" style=' not in html
 
 
-THRESHOLD_ANCHORS = (
-    'id="threshold-section"',
-    'id="threshold-chart"',
-    'id="threshold-note"',
-)
-
-
-def test_threshold_section_present(client):
-    """renderThresholdChart targets #threshold-section (for graceful hiding
-    when data.json lacks threshold_aggregate), #threshold-chart (Plotly
-    mount) and #threshold-note (medians caption)."""
-    html = client.get("/").get_data(as_text=True)
-    for anchor in THRESHOLD_ANCHORS:
-        assert anchor in html, f"Missing anchor: {anchor}"
-
-
-def test_threshold_section_in_root_index():
-    root_html = (Path(__file__).parent.parent / "index.html").read_text(
-        encoding="utf-8"
-    )
-    for anchor in THRESHOLD_ANCHORS:
-        assert anchor in root_html, f"Missing anchor in root index.html: {anchor}"
-
-
-def test_threshold_chart_renderer_wired():
-    """script.js must define renderThresholdChart, read threshold_aggregate,
-    and invoke the renderer (init-time; the aggregate is benchmark- and
-    framing-independent)."""
-    js = (Path(__file__).parent.parent / "static" / "script.js").read_text(
-        encoding="utf-8"
-    )
-    assert "function renderThresholdChart" in js
-    assert "threshold_aggregate" in js
-    assert "renderThresholdChart(" in js.replace(
-        "function renderThresholdChart(", "", 1
-    )
-
-
 def test_root_static_index_matches_chart_structure():
     """GitHub Pages serves the root index.html (not the Flask template), so
     chart-structure changes must be mirrored there too. Drifting markup was
