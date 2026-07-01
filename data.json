@@ -3315,6 +3315,291 @@
             "open_frontier_eci": 153.2
           }
         ]
+      },
+      "threshold_analysis": {
+        "config": {
+          "keep": false,
+          "data_access": null,
+          "validity_floor": 99.53191597512452,
+          "thresholds": null,
+          "accepted_thresholds": null,
+          "source_review": null
+        },
+        "datapoints": [
+          {
+            "threshold": 66.90044520293418,
+            "first_closed_model": "GPT-4 (Mar 2023)",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "LLaMA-7B",
+            "first_open_date": "2023-02-24T00:00:00",
+            "gap_days": -18,
+            "gap_months": -0.6,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 71.86822226183867,
+            "first_closed_model": "GPT-4 (Mar 2023)",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "LLaMA-7B",
+            "first_open_date": "2023-02-24T00:00:00",
+            "gap_days": -18,
+            "gap_months": -0.6,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 76.83599932074314,
+            "first_closed_model": "GPT-4 (Mar 2023)",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "LLaMA-7B",
+            "first_open_date": "2023-02-24T00:00:00",
+            "gap_days": -18,
+            "gap_months": -0.6,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 81.80377637964763,
+            "first_closed_model": "GPT-4 (Mar 2023)",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "LLaMA-7B",
+            "first_open_date": "2023-02-24T00:00:00",
+            "gap_days": -18,
+            "gap_months": -0.6,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 86.7715534385521,
+            "first_closed_model": "GPT-4 (Mar 2023)",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "LLaMA-7B",
+            "first_open_date": "2023-02-24T00:00:00",
+            "gap_days": -18,
+            "gap_months": -0.6,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 91.73933049745659,
+            "first_closed_model": "GPT-4 (Mar 2023)",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "LLaMA-7B",
+            "first_open_date": "2023-02-24T00:00:00",
+            "gap_days": -18,
+            "gap_months": -0.6,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 96.70710755636108,
+            "first_closed_model": "GPT-4 (Mar 2023)",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "LLaMA-65B",
+            "first_open_date": "2023-02-24T00:00:00",
+            "gap_days": -18,
+            "gap_months": -0.6,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 101.67488461526557,
+            "first_closed_model": "GPT-4 (Mar 2023)",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "LLaMA-65B",
+            "first_open_date": "2023-02-24T00:00:00",
+            "gap_days": -18,
+            "gap_months": -0.6,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 106.64266167417004,
+            "first_closed_model": "GPT-4 (Mar 2023)",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "LLaMA-65B",
+            "first_open_date": "2023-02-24T00:00:00",
+            "gap_days": -18,
+            "gap_months": -0.6,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 111.61043873307452,
+            "first_closed_model": "GPT-4 (Mar 2023)",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "Llama 2-70B",
+            "first_open_date": "2023-07-18T00:00:00",
+            "gap_days": 126,
+            "gap_months": 4.1,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 116.578215791979,
+            "first_closed_model": "GPT-4 (Mar 2023)",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "Yi-34B",
+            "first_open_date": "2023-11-22T00:00:00",
+            "gap_days": 253,
+            "gap_months": 8.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 121.5459928508835,
+            "first_closed_model": "GPT-4 (Mar 2023)",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "Llama 3-70B",
+            "first_open_date": "2024-04-18T00:00:00",
+            "gap_days": 401,
+            "gap_months": 13.2,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 126.51376990978798,
+            "first_closed_model": "Claude 3 Opus",
+            "first_closed_date": "2024-02-29T00:00:00",
+            "first_open_model": "Llama 3.1-405B",
+            "first_open_date": "2024-07-23T00:00:00",
+            "gap_days": 145,
+            "gap_months": 4.8,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 131.48154696869247,
+            "first_closed_model": "o1-preview",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-V3",
+            "first_open_date": "2024-12-26T00:00:00",
+            "gap_days": 105,
+            "gap_months": 3.4,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 136.44932402759693,
+            "first_closed_model": "o1-mini",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 141.41710108650142,
+            "first_closed_model": "o1",
+            "first_closed_date": "2024-12-17T00:00:00",
+            "first_open_model": "DeepSeek-R1 (May 2025)",
+            "first_open_date": "2025-05-28T00:00:00",
+            "gap_days": 162,
+            "gap_months": 5.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 146.3848781454059,
+            "first_closed_model": "o4-mini",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": "DeepSeek-V3.2",
+            "first_open_date": "2025-12-01T00:00:00",
+            "gap_days": 229,
+            "gap_months": 7.5,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 151.3526552043104,
+            "first_closed_model": "Gemini 3 Pro",
+            "first_closed_date": "2025-11-18T00:00:00",
+            "first_open_model": "Kimi K2.6",
+            "first_open_date": "2026-04-20T00:00:00",
+            "gap_days": 153,
+            "gap_months": 5.0,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 99.53191597512452
+          },
+          {
+            "threshold": 156.32043226321488,
+            "first_closed_model": "GPT-5.4 Pro",
+            "first_closed_date": "2026-03-05T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 3.9,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 99.53191597512452
+          }
+        ],
+        "summary": {
+          "n_thresholds": 19,
+          "n_valid": 11,
+          "n_accepted": 10,
+          "n_still_open": 1,
+          "median_gap_months": 4.9
+        }
       }
     },
     "metr_time_horizon": {
@@ -5381,6 +5666,152 @@
             "open_frontier_score": 57.6
           }
         ]
+      },
+      "threshold_analysis": {
+        "config": {
+          "keep": true,
+          "data_access": "private",
+          "validity_floor": 1.5,
+          "thresholds": [
+            2.0,
+            5.0,
+            10.0,
+            20.0,
+            50.0,
+            100.0,
+            200.0,
+            500.0
+          ],
+          "accepted_thresholds": [
+            2.0,
+            5.0,
+            10.0,
+            20.0,
+            50.0
+          ],
+          "source_review": "open_closed_gap"
+        },
+        "datapoints": [
+          {
+            "threshold": 2.0,
+            "first_closed_model": "gpt_4",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "qwen_2_72b",
+            "first_open_date": "2024-06-07T00:00:00",
+            "gap_days": 451,
+            "gap_months": 14.8,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 1.5
+          },
+          {
+            "threshold": 5.0,
+            "first_closed_model": "gpt_4_0125",
+            "first_closed_date": "2024-01-25T00:00:00",
+            "first_open_model": "qwen_2_5_72b",
+            "first_open_date": "2024-09-19T00:00:00",
+            "gap_days": 238,
+            "gap_months": 7.8,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 1.5
+          },
+          {
+            "threshold": 10.0,
+            "first_closed_model": "claude_3_5_sonnet_20240620_inspect",
+            "first_closed_date": "2024-06-20T00:00:00",
+            "first_open_model": "deepseek_v3",
+            "first_open_date": "2024-12-26T00:00:00",
+            "gap_days": 189,
+            "gap_months": 6.2,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 1.5
+          },
+          {
+            "threshold": 20.0,
+            "first_closed_model": "o1_preview",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "deepseek_r1",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 1.5
+          },
+          {
+            "threshold": 50.0,
+            "first_closed_model": "claude_3_7_sonnet_inspect",
+            "first_closed_date": "2025-02-24T00:00:00",
+            "first_open_model": "kimi_k2_thinking",
+            "first_open_date": "2025-11-06T00:00:00",
+            "gap_days": 255,
+            "gap_months": 8.4,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 1.5
+          },
+          {
+            "threshold": 100.0,
+            "first_closed_model": "o3_inspect",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 14.5,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 1.5
+          },
+          {
+            "threshold": 200.0,
+            "first_closed_model": "gpt_5_2025_08_07_inspect",
+            "first_closed_date": "2025-08-07T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 10.8,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 1.5
+          },
+          {
+            "threshold": 500.0,
+            "first_closed_model": "claude_opus_4_6_inspect",
+            "first_closed_date": "2026-02-05T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 4.8,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 1.5
+          }
+        ],
+        "summary": {
+          "n_thresholds": 8,
+          "n_valid": 5,
+          "n_accepted": 5,
+          "n_still_open": 3,
+          "median_gap_months": 7.8
+        }
       }
     },
     "gpqa_diamond": {
@@ -8092,7 +8523,291 @@
           "open_frontier_model": "qwen3.7-max",
           "open_frontier_score": 91.6
         }
-      ]
+      ],
+      "threshold_analysis": {
+        "config": {
+          "keep": true,
+          "data_access": "public",
+          "validity_floor": 20.0,
+          "thresholds": null,
+          "accepted_thresholds": [
+            35.0,
+            40.0,
+            45.0,
+            50.0,
+            55.0,
+            60.0,
+            65.0,
+            70.0,
+            75.0,
+            80.0,
+            85.0,
+            90.0
+          ],
+          "source_review": "open_closed_gap"
+        },
+        "datapoints": [
+          {
+            "threshold": 5.0,
+            "first_closed_model": "gpt-4-0314",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "Llama-2-70b-chat-hf",
+            "first_open_date": "2023-07-18T00:00:00",
+            "gap_days": 126,
+            "gap_months": 4.1,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 10.0,
+            "first_closed_model": "gpt-4-0314",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "Llama-2-70b-chat-hf",
+            "first_open_date": "2023-07-18T00:00:00",
+            "gap_days": 126,
+            "gap_months": 4.1,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 15.0,
+            "first_closed_model": "gpt-4-0314",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "Llama-2-70b-chat-hf",
+            "first_open_date": "2023-07-18T00:00:00",
+            "gap_days": 126,
+            "gap_months": 4.1,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 20.0,
+            "first_closed_model": "gpt-4-0314",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "Llama-2-70b-chat-hf",
+            "first_open_date": "2023-07-18T00:00:00",
+            "gap_days": 126,
+            "gap_months": 4.1,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 25.0,
+            "first_closed_model": "gpt-4-0314",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "Llama-2-70b-chat-hf",
+            "first_open_date": "2023-07-18T00:00:00",
+            "gap_days": 126,
+            "gap_months": 4.1,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 30.0,
+            "first_closed_model": "gpt-4-0314",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "Mixtral-8x7B-Instruct-v0.1",
+            "first_open_date": "2023-12-11T00:00:00",
+            "gap_days": 272,
+            "gap_months": 8.9,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 35.0,
+            "first_closed_model": "gpt-4-0314",
+            "first_closed_date": "2023-03-14T00:00:00",
+            "first_open_model": "mistral-large-2402",
+            "first_open_date": "2024-02-26T00:00:00",
+            "gap_days": 349,
+            "gap_months": 11.5,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 40.0,
+            "first_closed_model": "gpt-4-1106-preview",
+            "first_closed_date": "2023-11-06T00:00:00",
+            "first_open_model": "Meta-Llama-3-70B-Instruct",
+            "first_open_date": "2024-04-18T00:00:00",
+            "gap_days": 164,
+            "gap_months": 5.4,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 45.0,
+            "first_closed_model": "claude-3-opus-20240229",
+            "first_closed_date": "2024-02-29T00:00:00",
+            "first_open_model": "Llama-3.1-405B-Instruct",
+            "first_open_date": "2024-07-23T00:00:00",
+            "gap_days": 145,
+            "gap_months": 4.8,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 50.0,
+            "first_closed_model": "claude-3-5-sonnet-20240620",
+            "first_closed_date": "2024-06-20T00:00:00",
+            "first_open_model": "Llama-3.1-405B-Instruct",
+            "first_open_date": "2024-07-23T00:00:00",
+            "gap_days": 33,
+            "gap_months": 1.1,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 55.0,
+            "first_closed_model": "o1-mini-2024-09-12_medium",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-V3",
+            "first_open_date": "2024-12-26T00:00:00",
+            "gap_days": 105,
+            "gap_months": 3.4,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 60.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 65.0,
+            "first_closed_model": "o1-2024-12-17_high",
+            "first_closed_date": "2024-12-17T00:00:00",
+            "first_open_model": "DeepSeek-R1",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 34,
+            "gap_months": 1.1,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 70.0,
+            "first_closed_model": "o1-2024-12-17_high",
+            "first_closed_date": "2024-12-17T00:00:00",
+            "first_open_model": "qwen3-235b-a22b",
+            "first_open_date": "2025-04-29T00:00:00",
+            "gap_days": 133,
+            "gap_months": 4.4,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 75.0,
+            "first_closed_model": "o1-2024-12-17_high",
+            "first_closed_date": "2024-12-17T00:00:00",
+            "first_open_model": "DeepSeek-R1-0528",
+            "first_open_date": "2025-05-28T00:00:00",
+            "gap_days": 162,
+            "gap_months": 5.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 80.0,
+            "first_closed_model": "gemini-2.5-pro-exp-03-25",
+            "first_closed_date": "2025-03-25T00:00:00",
+            "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": 122,
+            "gap_months": 4.0,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 85.0,
+            "first_closed_model": "gemini-2.5-pro",
+            "first_closed_date": "2025-06-17T00:00:00",
+            "first_open_model": "fireworks/kimi-k2p5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 224,
+            "gap_months": 7.4,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 90.0,
+            "first_closed_model": "gemini-3-pro-preview",
+            "first_closed_date": "2025-11-18T00:00:00",
+            "first_open_model": "kimi-k2.6",
+            "first_open_date": "2026-04-20T00:00:00",
+            "gap_days": 153,
+            "gap_months": 5.0,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          }
+        ],
+        "summary": {
+          "n_thresholds": 18,
+          "n_valid": 12,
+          "n_accepted": 12,
+          "n_still_open": 0,
+          "median_gap_months": 4.6
+        }
+      }
     },
     "math_level_5": {
       "metadata": {
@@ -10009,7 +10724,307 @@
           "open_frontier_model": "qwen3-max-2025-09-23",
           "open_frontier_score": 97.1
         }
-      ]
+      ],
+      "threshold_analysis": {
+        "config": {
+          "keep": true,
+          "data_access": "public",
+          "validity_floor": 10.0,
+          "thresholds": null,
+          "accepted_thresholds": [
+            15.0,
+            20.0,
+            25.0,
+            30.0,
+            35.0,
+            40.0,
+            45.0,
+            50.0,
+            55.0,
+            60.0,
+            65.0,
+            80.0,
+            90.0,
+            95.0
+          ],
+          "source_review": "open_closed_gap"
+        },
+        "datapoints": [
+          {
+            "threshold": 5.0,
+            "first_closed_model": "gpt-4-0613",
+            "first_closed_date": "2023-06-13T00:00:00",
+            "first_open_model": "Yi-34B-Chat",
+            "first_open_date": "2023-11-22T00:00:00",
+            "gap_days": 162,
+            "gap_months": 5.3,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 10.0,
+            "first_closed_model": "gpt-4-0613",
+            "first_closed_date": "2023-06-13T00:00:00",
+            "first_open_model": "mistral-large-2402",
+            "first_open_date": "2024-02-26T00:00:00",
+            "gap_days": 258,
+            "gap_months": 8.5,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 15.0,
+            "first_closed_model": "gpt-4-0613",
+            "first_closed_date": "2023-06-13T00:00:00",
+            "first_open_model": "mistral-large-2402",
+            "first_open_date": "2024-02-26T00:00:00",
+            "gap_days": 258,
+            "gap_months": 8.5,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 20.0,
+            "first_closed_model": "gpt-4-0613",
+            "first_closed_date": "2023-06-13T00:00:00",
+            "first_open_model": "mistral-large-2402",
+            "first_open_date": "2024-02-26T00:00:00",
+            "gap_days": 258,
+            "gap_months": 8.5,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 25.0,
+            "first_closed_model": "gpt-4-1106-preview",
+            "first_closed_date": "2023-11-06T00:00:00",
+            "first_open_model": "Yi-1.5-34B-Chat",
+            "first_open_date": "2024-05-13T00:00:00",
+            "gap_days": 189,
+            "gap_months": 6.2,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 30.0,
+            "first_closed_model": "gpt-4-1106-preview",
+            "first_closed_date": "2023-11-06T00:00:00",
+            "first_open_model": "qwen2-72b-instruct",
+            "first_open_date": "2024-06-07T00:00:00",
+            "gap_days": 214,
+            "gap_months": 7.0,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 35.0,
+            "first_closed_model": "gpt-4-1106-preview",
+            "first_closed_date": "2023-11-06T00:00:00",
+            "first_open_model": "qwen2-72b-instruct",
+            "first_open_date": "2024-06-07T00:00:00",
+            "gap_days": 214,
+            "gap_months": 7.0,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 40.0,
+            "first_closed_model": "gpt-4-1106-preview",
+            "first_closed_date": "2023-11-06T00:00:00",
+            "first_open_model": "Llama-3.1-405B-Instruct",
+            "first_open_date": "2024-07-23T00:00:00",
+            "gap_days": 260,
+            "gap_months": 8.5,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 45.0,
+            "first_closed_model": "gpt-4-turbo-2024-04-09",
+            "first_closed_date": "2024-04-09T00:00:00",
+            "first_open_model": "Llama-3.1-405B-Instruct",
+            "first_open_date": "2024-07-23T00:00:00",
+            "gap_days": 105,
+            "gap_months": 3.4,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 50.0,
+            "first_closed_model": "gpt-4o-2024-05-13",
+            "first_closed_date": "2024-05-13T00:00:00",
+            "first_open_model": "qwen2.5-32b-instruct",
+            "first_open_date": "2024-09-17T00:00:00",
+            "gap_days": 127,
+            "gap_months": 4.2,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 55.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "qwen2.5-32b-instruct",
+            "first_open_date": "2024-09-17T00:00:00",
+            "gap_days": 5,
+            "gap_months": 0.2,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 60.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "qwen2.5-72b-instruct",
+            "first_open_date": "2024-09-19T00:00:00",
+            "gap_days": 7,
+            "gap_months": 0.2,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 65.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 70.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 75.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 80.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 85.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 90.0,
+            "first_closed_model": "o1-2024-12-17_medium",
+            "first_closed_date": "2024-12-17T00:00:00",
+            "first_open_model": "DeepSeek-R1",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 34,
+            "gap_months": 1.1,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 95.0,
+            "first_closed_model": "o3-mini-2025-01-31_medium",
+            "first_closed_date": "2025-01-31T00:00:00",
+            "first_open_model": "DeepSeek-R1-0528",
+            "first_open_date": "2025-05-28T00:00:00",
+            "gap_days": 117,
+            "gap_months": 3.8,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          }
+        ],
+        "summary": {
+          "n_thresholds": 19,
+          "n_valid": 14,
+          "n_accepted": 11,
+          "n_still_open": 0,
+          "median_gap_months": 4.2
+        }
+      }
     },
     "swe_bench_verified": {
       "metadata": {
@@ -10758,7 +11773,250 @@
           "open_frontier_model": "glm-5.2_max",
           "open_frontier_score": 78.7
         }
-      ]
+      ],
+      "threshold_analysis": {
+        "config": {
+          "keep": false,
+          "data_access": "public",
+          "validity_floor": 59.09,
+          "thresholds": null,
+          "accepted_thresholds": null,
+          "source_review": "open_closed_gap"
+        },
+        "datapoints": [
+          {
+            "threshold": 5.0,
+            "first_closed_model": "gpt-4o-2024-11-20",
+            "first_closed_date": "2024-11-20T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 433,
+            "gap_months": 14.2,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 10.0,
+            "first_closed_model": "gpt-4o-2024-11-20",
+            "first_closed_date": "2024-11-20T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 433,
+            "gap_months": 14.2,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 15.0,
+            "first_closed_model": "gpt-4o-2024-11-20",
+            "first_closed_date": "2024-11-20T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 433,
+            "gap_months": 14.2,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 20.0,
+            "first_closed_model": "gpt-4o-2024-11-20",
+            "first_closed_date": "2024-11-20T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 433,
+            "gap_months": 14.2,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 25.0,
+            "first_closed_model": "gpt-4o-2024-11-20",
+            "first_closed_date": "2024-11-20T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 433,
+            "gap_months": 14.2,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 30.0,
+            "first_closed_model": "gpt-4o-2024-11-20",
+            "first_closed_date": "2024-11-20T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 433,
+            "gap_months": 14.2,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 35.0,
+            "first_closed_model": "claude-3-7-sonnet-20250219",
+            "first_closed_date": "2025-02-24T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 337,
+            "gap_months": 11.1,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 40.0,
+            "first_closed_model": "claude-3-7-sonnet-20250219",
+            "first_closed_date": "2025-02-24T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 337,
+            "gap_months": 11.1,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 45.0,
+            "first_closed_model": "claude-3-7-sonnet-20250219",
+            "first_closed_date": "2025-02-24T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 337,
+            "gap_months": 11.1,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 50.0,
+            "first_closed_model": "claude-3-7-sonnet-20250219",
+            "first_closed_date": "2025-02-24T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 337,
+            "gap_months": 11.1,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 55.0,
+            "first_closed_model": "claude-3-7-sonnet-20250219",
+            "first_closed_date": "2025-02-24T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 337,
+            "gap_months": 11.1,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 60.0,
+            "first_closed_model": "claude-3-7-sonnet-20250219",
+            "first_closed_date": "2025-02-24T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 337,
+            "gap_months": 11.1,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 65.0,
+            "first_closed_model": "claude-opus-4-20250514",
+            "first_closed_date": "2025-05-22T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 250,
+            "gap_months": 8.2,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 70.0,
+            "first_closed_model": "claude-opus-4-20250514",
+            "first_closed_date": "2025-05-22T00:00:00",
+            "first_open_model": "kimi-k2.5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 250,
+            "gap_months": 8.2,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 75.0,
+            "first_closed_model": "claude-opus-4-5-20251101",
+            "first_closed_date": "2025-11-24T00:00:00",
+            "first_open_model": "kimi-k2.6",
+            "first_open_date": "2026-04-20T00:00:00",
+            "gap_days": 147,
+            "gap_months": 4.8,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 59.09
+          },
+          {
+            "threshold": 80.0,
+            "first_closed_model": "claude-opus-4-7_max",
+            "first_closed_date": "2026-04-16T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 2.5,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 59.09
+          }
+        ],
+        "summary": {
+          "n_thresholds": 16,
+          "n_valid": 4,
+          "n_accepted": 3,
+          "n_still_open": 1,
+          "median_gap_months": 8.2
+        }
+      }
     },
     "frontiermath_public": {
       "metadata": {
@@ -12491,7 +13749,172 @@
           "open_frontier_model": "muse-spark",
           "open_frontier_score": 39.0
         }
-      ]
+      ],
+      "threshold_analysis": {
+        "config": {
+          "keep": true,
+          "data_access": "private",
+          "validity_floor": 10.0,
+          "thresholds": null,
+          "accepted_thresholds": [
+            10.0,
+            15.0,
+            25.0,
+            30.0,
+            35.0
+          ],
+          "source_review": "open_closed_gap"
+        },
+        "datapoints": [
+          {
+            "threshold": 5.0,
+            "first_closed_model": "o1-2024-12-17_high",
+            "first_closed_date": "2024-12-17T00:00:00",
+            "first_open_model": "Qwen/Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": 220,
+            "gap_months": 7.2,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 10.0,
+            "first_closed_model": "o3-mini-2025-01-31_high",
+            "first_closed_date": "2025-01-31T00:00:00",
+            "first_open_model": "moonshotai/Kimi-K2-Thinking",
+            "first_open_date": "2025-11-06T00:00:00",
+            "gap_days": 279,
+            "gap_months": 9.2,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 15.0,
+            "first_closed_model": "o3-2025-04-16_high",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": "moonshotai/Kimi-K2-Thinking",
+            "first_open_date": "2025-11-06T00:00:00",
+            "gap_days": 204,
+            "gap_months": 6.7,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 20.0,
+            "first_closed_model": "o4-mini-2025-04-16_high",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": "moonshotai/Kimi-K2-Thinking",
+            "first_open_date": "2025-11-06T00:00:00",
+            "gap_days": 204,
+            "gap_months": 6.7,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 25.0,
+            "first_closed_model": "gemini-2.5-deep-think-2025-08-01-webapp",
+            "first_closed_date": "2025-08-01T00:00:00",
+            "first_open_model": "fireworks/kimi-k2p5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 179,
+            "gap_months": 5.9,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 30.0,
+            "first_closed_model": "gpt-5-2025-08-07_high",
+            "first_closed_date": "2025-08-07T00:00:00",
+            "first_open_model": "glm-5.1",
+            "first_open_date": "2026-04-07T00:00:00",
+            "gap_days": 243,
+            "gap_months": 8.0,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 35.0,
+            "first_closed_model": "gemini-3-pro-preview",
+            "first_closed_date": "2025-11-18T00:00:00",
+            "first_open_model": "muse-spark",
+            "first_open_date": "2026-04-08T00:00:00",
+            "gap_days": 141,
+            "gap_months": 4.6,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 40.0,
+            "first_closed_model": "gpt-5.2-2025-12-11_high",
+            "first_closed_date": "2025-12-11T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 6.6,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 45.0,
+            "first_closed_model": "gpt-5.4-2026-03-05_xhigh",
+            "first_closed_date": "2026-03-05T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 3.9,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 10.0
+          },
+          {
+            "threshold": 50.0,
+            "first_closed_model": "gpt-5.4-pro-2026-03-05_xhigh",
+            "first_closed_date": "2026-03-05T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 3.9,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 10.0
+          }
+        ],
+        "summary": {
+          "n_thresholds": 10,
+          "n_valid": 5,
+          "n_accepted": 5,
+          "n_still_open": 3,
+          "median_gap_months": 6.7
+        }
+      }
     },
     "simpleqa_verified": {
       "metadata": {
@@ -13470,7 +14893,236 @@
           "open_frontier_model": "qwen3-max-2025-09-23",
           "open_frontier_score": 67.5
         }
-      ]
+      ],
+      "threshold_analysis": {
+        "config": {
+          "keep": false,
+          "data_access": "public",
+          "validity_floor": 20.0,
+          "thresholds": null,
+          "accepted_thresholds": null,
+          "source_review": "open_closed_gap"
+        },
+        "datapoints": [
+          {
+            "threshold": 5.0,
+            "first_closed_model": "claude-3-5-haiku-20241022",
+            "first_closed_date": "2024-10-22T00:00:00",
+            "first_open_model": "DeepSeek-R1-0528",
+            "first_open_date": "2025-05-28T00:00:00",
+            "gap_days": 218,
+            "gap_months": 7.2,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 10.0,
+            "first_closed_model": "grok-3-mini-beta_high",
+            "first_closed_date": "2025-04-09T00:00:00",
+            "first_open_model": "DeepSeek-R1-0528",
+            "first_open_date": "2025-05-28T00:00:00",
+            "gap_days": 49,
+            "gap_months": 1.6,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 15.0,
+            "first_closed_model": "grok-3-mini-beta_high",
+            "first_closed_date": "2025-04-09T00:00:00",
+            "first_open_model": "DeepSeek-R1-0528",
+            "first_open_date": "2025-05-28T00:00:00",
+            "gap_days": 49,
+            "gap_months": 1.6,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 20.0,
+            "first_closed_model": "grok-3-mini-beta_high",
+            "first_closed_date": "2025-04-09T00:00:00",
+            "first_open_model": "DeepSeek-R1-0528",
+            "first_open_date": "2025-05-28T00:00:00",
+            "gap_days": 49,
+            "gap_months": 1.6,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 25.0,
+            "first_closed_model": "o3-2025-04-16_high",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": "DeepSeek-R1-0528",
+            "first_open_date": "2025-05-28T00:00:00",
+            "gap_days": 42,
+            "gap_months": 1.4,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 30.0,
+            "first_closed_model": "o3-2025-04-16_high",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": 100,
+            "gap_months": 3.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 35.0,
+            "first_closed_model": "o3-2025-04-16_high",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": 100,
+            "gap_months": 3.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 40.0,
+            "first_closed_model": "o3-2025-04-16_high",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": 100,
+            "gap_months": 3.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 45.0,
+            "first_closed_model": "o3-2025-04-16_high",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": 100,
+            "gap_months": 3.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 50.0,
+            "first_closed_model": "o3-2025-04-16_high",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": 100,
+            "gap_months": 3.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 55.0,
+            "first_closed_model": "gemini-2.5-pro",
+            "first_closed_date": "2025-06-17T00:00:00",
+            "first_open_model": "qwen3-max-2025-09-23",
+            "first_open_date": "2025-09-24T00:00:00",
+            "gap_days": 99,
+            "gap_months": 3.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 60.0,
+            "first_closed_model": "gemini-3-pro-preview",
+            "first_closed_date": "2025-11-18T00:00:00",
+            "first_open_model": "qwen3-max-2025-09-23",
+            "first_open_date": "2025-09-24T00:00:00",
+            "gap_days": -55,
+            "gap_months": -1.8,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 65.0,
+            "first_closed_model": "gemini-3-pro-preview",
+            "first_closed_date": "2025-11-18T00:00:00",
+            "first_open_model": "qwen3-max-2025-09-23",
+            "first_open_date": "2025-09-24T00:00:00",
+            "gap_days": -55,
+            "gap_months": -1.8,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 70.0,
+            "first_closed_model": "gemini-3-pro-preview",
+            "first_closed_date": "2025-11-18T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 7.4,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 20.0
+          },
+          {
+            "threshold": 75.0,
+            "first_closed_model": "gemini-3.1-pro-preview",
+            "first_closed_date": "2026-02-19T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 4.3,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 20.0
+          }
+        ],
+        "summary": {
+          "n_thresholds": 15,
+          "n_valid": 9,
+          "n_accepted": 4,
+          "n_still_open": 2,
+          "median_gap_months": 2.3
+        }
+      }
     },
     "chess_puzzles": {
       "metadata": {
@@ -14381,7 +16033,194 @@
           "open_frontier_model": "kimi-k2.6",
           "open_frontier_score": 26.0
         }
-      ]
+      ],
+      "threshold_analysis": {
+        "config": {
+          "keep": false,
+          "data_access": "private",
+          "validity_floor": 12.0,
+          "thresholds": null,
+          "accepted_thresholds": null,
+          "source_review": "open_closed_gap"
+        },
+        "datapoints": [
+          {
+            "threshold": 5.0,
+            "first_closed_model": "o3-mini-2025-01-31_high",
+            "first_closed_date": "2025-01-31T00:00:00",
+            "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": 175,
+            "gap_months": 5.7,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 12.0
+          },
+          {
+            "threshold": 10.0,
+            "first_closed_model": "o3-mini-2025-01-31_high",
+            "first_closed_date": "2025-01-31T00:00:00",
+            "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": 175,
+            "gap_months": 5.7,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 12.0
+          },
+          {
+            "threshold": 15.0,
+            "first_closed_model": "o3-mini-2025-01-31_high",
+            "first_closed_date": "2025-01-31T00:00:00",
+            "first_open_model": "kimi-k2-thinking-turbo",
+            "first_open_date": "2025-11-06T00:00:00",
+            "gap_days": 279,
+            "gap_months": 9.2,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 12.0
+          },
+          {
+            "threshold": 20.0,
+            "first_closed_model": "o4-mini-2025-04-16_high",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": "kimi-k2-thinking-turbo",
+            "first_open_date": "2025-11-06T00:00:00",
+            "gap_days": 204,
+            "gap_months": 6.7,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 12.0
+          },
+          {
+            "threshold": 25.0,
+            "first_closed_model": "o4-mini-2025-04-16_high",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": "kimi-k2.6",
+            "first_open_date": "2026-04-20T00:00:00",
+            "gap_days": 369,
+            "gap_months": 12.1,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 12.0
+          },
+          {
+            "threshold": 30.0,
+            "first_closed_model": "gpt-5-2025-08-07_high",
+            "first_closed_date": "2025-08-07T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 10.8,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 12.0
+          },
+          {
+            "threshold": 35.0,
+            "first_closed_model": "gpt-5-2025-08-07_high",
+            "first_closed_date": "2025-08-07T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 10.8,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 12.0
+          },
+          {
+            "threshold": 40.0,
+            "first_closed_model": "gpt-5.2-2025-12-11_xhigh",
+            "first_closed_date": "2025-12-11T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 6.6,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 12.0
+          },
+          {
+            "threshold": 45.0,
+            "first_closed_model": "gpt-5.2-2025-12-11_xhigh",
+            "first_closed_date": "2025-12-11T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 6.6,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 12.0
+          },
+          {
+            "threshold": 50.0,
+            "first_closed_model": "gemini-3.1-pro-preview",
+            "first_closed_date": "2026-02-19T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 4.3,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 12.0
+          },
+          {
+            "threshold": 55.0,
+            "first_closed_model": "gemini-3.1-pro-preview",
+            "first_closed_date": "2026-02-19T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 4.3,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 12.0
+          },
+          {
+            "threshold": 60.0,
+            "first_closed_model": "gpt-5.5-pro-pre-release_xhigh",
+            "first_closed_date": "2026-04-23T00:00:00",
+            "first_open_model": null,
+            "first_open_date": null,
+            "gap_days": null,
+            "gap_months": null,
+            "gap_months_so_far": 2.3,
+            "valid": false,
+            "accepted": false,
+            "still_open": true,
+            "validity_floor": 12.0
+          }
+        ],
+        "summary": {
+          "n_thresholds": 12,
+          "n_valid": 3,
+          "n_accepted": 3,
+          "n_still_open": 7,
+          "median_gap_months": 9.2
+        }
+      }
     },
     "otis_mock_aime": {
       "metadata": {
@@ -16916,9 +18755,2442 @@
           "open_frontier_model": "deepseek-v4-pro_max",
           "open_frontier_score": 96.7
         }
-      ]
+      ],
+      "threshold_analysis": {
+        "config": {
+          "keep": true,
+          "data_access": "public",
+          "validity_floor": 5.0,
+          "thresholds": null,
+          "accepted_thresholds": [
+            5.0,
+            10.0,
+            15.0,
+            20.0,
+            45.0,
+            50.0,
+            55.0,
+            60.0,
+            65.0,
+            70.0,
+            75.0,
+            80.0,
+            85.0,
+            90.0,
+            95.0
+          ],
+          "source_review": "open_closed_gap"
+        },
+        "datapoints": [
+          {
+            "threshold": 5.0,
+            "first_closed_model": "gpt-4-turbo-2024-04-09",
+            "first_closed_date": "2024-04-09T00:00:00",
+            "first_open_model": "Llama-3.1-405B-Instruct",
+            "first_open_date": "2024-07-23T00:00:00",
+            "gap_days": 105,
+            "gap_months": 3.4,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 10.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-V3",
+            "first_open_date": "2024-12-26T00:00:00",
+            "gap_days": 105,
+            "gap_months": 3.4,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 15.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-V3",
+            "first_open_date": "2024-12-26T00:00:00",
+            "gap_days": 105,
+            "gap_months": 3.4,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 20.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1-Distill-Llama-70B",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 25.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1-Distill-Llama-70B",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 30.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1-Distill-Llama-70B",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 35.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1-Distill-Llama-70B",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 40.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1-Distill-Llama-70B",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": false,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 45.0,
+            "first_closed_model": "o1-mini-2024-09-12_high",
+            "first_closed_date": "2024-09-12T00:00:00",
+            "first_open_model": "DeepSeek-R1-Distill-Llama-70B",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 50.0,
+            "first_closed_model": "o1-2024-12-17_medium",
+            "first_closed_date": "2024-12-17T00:00:00",
+            "first_open_model": "DeepSeek-R1-Distill-Llama-70B",
+            "first_open_date": "2025-01-20T00:00:00",
+            "gap_days": 34,
+            "gap_months": 1.1,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 55.0,
+            "first_closed_model": "o1-2024-12-17_medium",
+            "first_closed_date": "2024-12-17T00:00:00",
+            "first_open_model": "DeepSeek-R1-0528",
+            "first_open_date": "2025-05-28T00:00:00",
+            "gap_days": 162,
+            "gap_months": 5.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 60.0,
+            "first_closed_model": "o1-2024-12-17_medium",
+            "first_closed_date": "2024-12-17T00:00:00",
+            "first_open_model": "DeepSeek-R1-0528",
+            "first_open_date": "2025-05-28T00:00:00",
+            "gap_days": 162,
+            "gap_months": 5.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": false,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 65.0,
+            "first_closed_model": "o1-2024-12-17_medium",
+            "first_closed_date": "2024-12-17T00:00:00",
+            "first_open_model": "DeepSeek-R1-0528",
+            "first_open_date": "2025-05-28T00:00:00",
+            "gap_days": 162,
+            "gap_months": 5.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 70.0,
+            "first_closed_model": "o1-2024-12-17_medium",
+            "first_closed_date": "2024-12-17T00:00:00",
+            "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": 220,
+            "gap_months": 7.2,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 75.0,
+            "first_closed_model": "o3-mini-2025-01-31_high",
+            "first_closed_date": "2025-01-31T00:00:00",
+            "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": 175,
+            "gap_months": 5.7,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 80.0,
+            "first_closed_model": "o3-2025-04-16_high",
+            "first_closed_date": "2025-04-16T00:00:00",
+            "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": 100,
+            "gap_months": 3.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 85.0,
+            "first_closed_model": "openai/gpt-oss-120b_high",
+            "first_closed_date": "2025-08-05T00:00:00",
+            "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+            "first_open_date": "2025-07-25T00:00:00",
+            "gap_days": -11,
+            "gap_months": -0.4,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 90.0,
+            "first_closed_model": "gpt-5-2025-08-07_high",
+            "first_closed_date": "2025-08-07T00:00:00",
+            "first_open_model": "fireworks/kimi-k2p5",
+            "first_open_date": "2026-01-27T00:00:00",
+            "gap_days": 173,
+            "gap_months": 5.7,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 5.0
+          },
+          {
+            "threshold": 95.0,
+            "first_closed_model": "gpt-5.2-2025-12-11_high",
+            "first_closed_date": "2025-12-11T00:00:00",
+            "first_open_model": "kimi-k2.6",
+            "first_open_date": "2026-04-20T00:00:00",
+            "gap_days": 130,
+            "gap_months": 4.3,
+            "gap_months_so_far": null,
+            "valid": true,
+            "accepted": true,
+            "still_open": false,
+            "validity_floor": 5.0
+          }
+        ],
+        "summary": {
+          "n_thresholds": 19,
+          "n_valid": 15,
+          "n_accepted": 11,
+          "n_still_open": 0,
+          "median_gap_months": 4.3
+        }
+      }
     }
   },
   "default_benchmark": "eci",
-  "last_updated": "2026-07-01T02:56:38.689753"
+  "threshold_aggregate": {
+    "datapoints": [
+      {
+        "benchmark_id": "gpqa_diamond",
+        "benchmark_name": "GPQA Diamond",
+        "data_access": "public",
+        "threshold": 35.0,
+        "first_closed_model": "gpt-4-0314",
+        "first_closed_date": "2023-03-14T00:00:00",
+        "first_open_model": "mistral-large-2402",
+        "first_open_date": "2024-02-26T00:00:00",
+        "gap_days": 349,
+        "gap_months": 11.5
+      },
+      {
+        "benchmark_id": "math_level_5",
+        "benchmark_name": "MATH Level 5",
+        "data_access": "public",
+        "threshold": 20.0,
+        "first_closed_model": "gpt-4-0613",
+        "first_closed_date": "2023-06-13T00:00:00",
+        "first_open_model": "mistral-large-2402",
+        "first_open_date": "2024-02-26T00:00:00",
+        "gap_days": 258,
+        "gap_months": 8.5
+      },
+      {
+        "benchmark_id": "gpqa_diamond",
+        "benchmark_name": "GPQA Diamond",
+        "data_access": "public",
+        "threshold": 40.0,
+        "first_closed_model": "gpt-4-1106-preview",
+        "first_closed_date": "2023-11-06T00:00:00",
+        "first_open_model": "Meta-Llama-3-70B-Instruct",
+        "first_open_date": "2024-04-18T00:00:00",
+        "gap_days": 164,
+        "gap_months": 5.4
+      },
+      {
+        "benchmark_id": "math_level_5",
+        "benchmark_name": "MATH Level 5",
+        "data_access": "public",
+        "threshold": 25.0,
+        "first_closed_model": "gpt-4-1106-preview",
+        "first_closed_date": "2023-11-06T00:00:00",
+        "first_open_model": "Yi-1.5-34B-Chat",
+        "first_open_date": "2024-05-13T00:00:00",
+        "gap_days": 189,
+        "gap_months": 6.2
+      },
+      {
+        "benchmark_id": "math_level_5",
+        "benchmark_name": "MATH Level 5",
+        "data_access": "public",
+        "threshold": 35.0,
+        "first_closed_model": "gpt-4-1106-preview",
+        "first_closed_date": "2023-11-06T00:00:00",
+        "first_open_model": "qwen2-72b-instruct",
+        "first_open_date": "2024-06-07T00:00:00",
+        "gap_days": 214,
+        "gap_months": 7.0
+      },
+      {
+        "benchmark_id": "metr_time_horizon",
+        "benchmark_name": "METR Time Horizon",
+        "data_access": "private",
+        "threshold": 2.0,
+        "first_closed_model": "gpt_4",
+        "first_closed_date": "2023-03-14T00:00:00",
+        "first_open_model": "qwen_2_72b",
+        "first_open_date": "2024-06-07T00:00:00",
+        "gap_days": 451,
+        "gap_months": 14.8
+      },
+      {
+        "benchmark_id": "gpqa_diamond",
+        "benchmark_name": "GPQA Diamond",
+        "data_access": "public",
+        "threshold": 45.0,
+        "first_closed_model": "claude-3-opus-20240229",
+        "first_closed_date": "2024-02-29T00:00:00",
+        "first_open_model": "Llama-3.1-405B-Instruct",
+        "first_open_date": "2024-07-23T00:00:00",
+        "gap_days": 145,
+        "gap_months": 4.8
+      },
+      {
+        "benchmark_id": "gpqa_diamond",
+        "benchmark_name": "GPQA Diamond",
+        "data_access": "public",
+        "threshold": 50.0,
+        "first_closed_model": "claude-3-5-sonnet-20240620",
+        "first_closed_date": "2024-06-20T00:00:00",
+        "first_open_model": "Llama-3.1-405B-Instruct",
+        "first_open_date": "2024-07-23T00:00:00",
+        "gap_days": 33,
+        "gap_months": 1.1
+      },
+      {
+        "benchmark_id": "math_level_5",
+        "benchmark_name": "MATH Level 5",
+        "data_access": "public",
+        "threshold": 40.0,
+        "first_closed_model": "gpt-4-1106-preview",
+        "first_closed_date": "2023-11-06T00:00:00",
+        "first_open_model": "Llama-3.1-405B-Instruct",
+        "first_open_date": "2024-07-23T00:00:00",
+        "gap_days": 260,
+        "gap_months": 8.5
+      },
+      {
+        "benchmark_id": "math_level_5",
+        "benchmark_name": "MATH Level 5",
+        "data_access": "public",
+        "threshold": 45.0,
+        "first_closed_model": "gpt-4-turbo-2024-04-09",
+        "first_closed_date": "2024-04-09T00:00:00",
+        "first_open_model": "Llama-3.1-405B-Instruct",
+        "first_open_date": "2024-07-23T00:00:00",
+        "gap_days": 105,
+        "gap_months": 3.4
+      },
+      {
+        "benchmark_id": "otis_mock_aime",
+        "benchmark_name": "OTIS Mock AIME",
+        "data_access": "public",
+        "threshold": 5.0,
+        "first_closed_model": "gpt-4-turbo-2024-04-09",
+        "first_closed_date": "2024-04-09T00:00:00",
+        "first_open_model": "Llama-3.1-405B-Instruct",
+        "first_open_date": "2024-07-23T00:00:00",
+        "gap_days": 105,
+        "gap_months": 3.4
+      },
+      {
+        "benchmark_id": "math_level_5",
+        "benchmark_name": "MATH Level 5",
+        "data_access": "public",
+        "threshold": 50.0,
+        "first_closed_model": "gpt-4o-2024-05-13",
+        "first_closed_date": "2024-05-13T00:00:00",
+        "first_open_model": "qwen2.5-32b-instruct",
+        "first_open_date": "2024-09-17T00:00:00",
+        "gap_days": 127,
+        "gap_months": 4.2
+      },
+      {
+        "benchmark_id": "math_level_5",
+        "benchmark_name": "MATH Level 5",
+        "data_access": "public",
+        "threshold": 55.0,
+        "first_closed_model": "o1-mini-2024-09-12_high",
+        "first_closed_date": "2024-09-12T00:00:00",
+        "first_open_model": "qwen2.5-32b-instruct",
+        "first_open_date": "2024-09-17T00:00:00",
+        "gap_days": 5,
+        "gap_months": 0.2
+      },
+      {
+        "benchmark_id": "math_level_5",
+        "benchmark_name": "MATH Level 5",
+        "data_access": "public",
+        "threshold": 60.0,
+        "first_closed_model": "o1-mini-2024-09-12_high",
+        "first_closed_date": "2024-09-12T00:00:00",
+        "first_open_model": "qwen2.5-72b-instruct",
+        "first_open_date": "2024-09-19T00:00:00",
+        "gap_days": 7,
+        "gap_months": 0.2
+      },
+      {
+        "benchmark_id": "metr_time_horizon",
+        "benchmark_name": "METR Time Horizon",
+        "data_access": "private",
+        "threshold": 5.0,
+        "first_closed_model": "gpt_4_0125",
+        "first_closed_date": "2024-01-25T00:00:00",
+        "first_open_model": "qwen_2_5_72b",
+        "first_open_date": "2024-09-19T00:00:00",
+        "gap_days": 238,
+        "gap_months": 7.8
+      },
+      {
+        "benchmark_id": "gpqa_diamond",
+        "benchmark_name": "GPQA Diamond",
+        "data_access": "public",
+        "threshold": 55.0,
+        "first_closed_model": "o1-mini-2024-09-12_medium",
+        "first_closed_date": "2024-09-12T00:00:00",
+        "first_open_model": "DeepSeek-V3",
+        "first_open_date": "2024-12-26T00:00:00",
+        "gap_days": 105,
+        "gap_months": 3.4
+      },
+      {
+        "benchmark_id": "metr_time_horizon",
+        "benchmark_name": "METR Time Horizon",
+        "data_access": "private",
+        "threshold": 10.0,
+        "first_closed_model": "claude_3_5_sonnet_20240620_inspect",
+        "first_closed_date": "2024-06-20T00:00:00",
+        "first_open_model": "deepseek_v3",
+        "first_open_date": "2024-12-26T00:00:00",
+        "gap_days": 189,
+        "gap_months": 6.2
+      },
+      {
+        "benchmark_id": "otis_mock_aime",
+        "benchmark_name": "OTIS Mock AIME",
+        "data_access": "public",
+        "threshold": 15.0,
+        "first_closed_model": "o1-mini-2024-09-12_high",
+        "first_closed_date": "2024-09-12T00:00:00",
+        "first_open_model": "DeepSeek-V3",
+        "first_open_date": "2024-12-26T00:00:00",
+        "gap_days": 105,
+        "gap_months": 3.4
+      },
+      {
+        "benchmark_id": "gpqa_diamond",
+        "benchmark_name": "GPQA Diamond",
+        "data_access": "public",
+        "threshold": 60.0,
+        "first_closed_model": "o1-mini-2024-09-12_high",
+        "first_closed_date": "2024-09-12T00:00:00",
+        "first_open_model": "DeepSeek-R1",
+        "first_open_date": "2025-01-20T00:00:00",
+        "gap_days": 130,
+        "gap_months": 4.3
+      },
+      {
+        "benchmark_id": "gpqa_diamond",
+        "benchmark_name": "GPQA Diamond",
+        "data_access": "public",
+        "threshold": 65.0,
+        "first_closed_model": "o1-2024-12-17_high",
+        "first_closed_date": "2024-12-17T00:00:00",
+        "first_open_model": "DeepSeek-R1",
+        "first_open_date": "2025-01-20T00:00:00",
+        "gap_days": 34,
+        "gap_months": 1.1
+      },
+      {
+        "benchmark_id": "math_level_5",
+        "benchmark_name": "MATH Level 5",
+        "data_access": "public",
+        "threshold": 85.0,
+        "first_closed_model": "o1-mini-2024-09-12_high",
+        "first_closed_date": "2024-09-12T00:00:00",
+        "first_open_model": "DeepSeek-R1",
+        "first_open_date": "2025-01-20T00:00:00",
+        "gap_days": 130,
+        "gap_months": 4.3
+      },
+      {
+        "benchmark_id": "math_level_5",
+        "benchmark_name": "MATH Level 5",
+        "data_access": "public",
+        "threshold": 90.0,
+        "first_closed_model": "o1-2024-12-17_medium",
+        "first_closed_date": "2024-12-17T00:00:00",
+        "first_open_model": "DeepSeek-R1",
+        "first_open_date": "2025-01-20T00:00:00",
+        "gap_days": 34,
+        "gap_months": 1.1
+      },
+      {
+        "benchmark_id": "metr_time_horizon",
+        "benchmark_name": "METR Time Horizon",
+        "data_access": "private",
+        "threshold": 20.0,
+        "first_closed_model": "o1_preview",
+        "first_closed_date": "2024-09-12T00:00:00",
+        "first_open_model": "deepseek_r1",
+        "first_open_date": "2025-01-20T00:00:00",
+        "gap_days": 130,
+        "gap_months": 4.3
+      },
+      {
+        "benchmark_id": "otis_mock_aime",
+        "benchmark_name": "OTIS Mock AIME",
+        "data_access": "public",
+        "threshold": 45.0,
+        "first_closed_model": "o1-mini-2024-09-12_high",
+        "first_closed_date": "2024-09-12T00:00:00",
+        "first_open_model": "DeepSeek-R1-Distill-Llama-70B",
+        "first_open_date": "2025-01-20T00:00:00",
+        "gap_days": 130,
+        "gap_months": 4.3
+      },
+      {
+        "benchmark_id": "otis_mock_aime",
+        "benchmark_name": "OTIS Mock AIME",
+        "data_access": "public",
+        "threshold": 50.0,
+        "first_closed_model": "o1-2024-12-17_medium",
+        "first_closed_date": "2024-12-17T00:00:00",
+        "first_open_model": "DeepSeek-R1-Distill-Llama-70B",
+        "first_open_date": "2025-01-20T00:00:00",
+        "gap_days": 34,
+        "gap_months": 1.1
+      },
+      {
+        "benchmark_id": "gpqa_diamond",
+        "benchmark_name": "GPQA Diamond",
+        "data_access": "public",
+        "threshold": 70.0,
+        "first_closed_model": "o1-2024-12-17_high",
+        "first_closed_date": "2024-12-17T00:00:00",
+        "first_open_model": "qwen3-235b-a22b",
+        "first_open_date": "2025-04-29T00:00:00",
+        "gap_days": 133,
+        "gap_months": 4.4
+      },
+      {
+        "benchmark_id": "gpqa_diamond",
+        "benchmark_name": "GPQA Diamond",
+        "data_access": "public",
+        "threshold": 75.0,
+        "first_closed_model": "o1-2024-12-17_high",
+        "first_closed_date": "2024-12-17T00:00:00",
+        "first_open_model": "DeepSeek-R1-0528",
+        "first_open_date": "2025-05-28T00:00:00",
+        "gap_days": 162,
+        "gap_months": 5.3
+      },
+      {
+        "benchmark_id": "math_level_5",
+        "benchmark_name": "MATH Level 5",
+        "data_access": "public",
+        "threshold": 95.0,
+        "first_closed_model": "o3-mini-2025-01-31_medium",
+        "first_closed_date": "2025-01-31T00:00:00",
+        "first_open_model": "DeepSeek-R1-0528",
+        "first_open_date": "2025-05-28T00:00:00",
+        "gap_days": 117,
+        "gap_months": 3.8
+      },
+      {
+        "benchmark_id": "otis_mock_aime",
+        "benchmark_name": "OTIS Mock AIME",
+        "data_access": "public",
+        "threshold": 65.0,
+        "first_closed_model": "o1-2024-12-17_medium",
+        "first_closed_date": "2024-12-17T00:00:00",
+        "first_open_model": "DeepSeek-R1-0528",
+        "first_open_date": "2025-05-28T00:00:00",
+        "gap_days": 162,
+        "gap_months": 5.3
+      },
+      {
+        "benchmark_id": "gpqa_diamond",
+        "benchmark_name": "GPQA Diamond",
+        "data_access": "public",
+        "threshold": 80.0,
+        "first_closed_model": "gemini-2.5-pro-exp-03-25",
+        "first_closed_date": "2025-03-25T00:00:00",
+        "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+        "first_open_date": "2025-07-25T00:00:00",
+        "gap_days": 122,
+        "gap_months": 4.0
+      },
+      {
+        "benchmark_id": "otis_mock_aime",
+        "benchmark_name": "OTIS Mock AIME",
+        "data_access": "public",
+        "threshold": 70.0,
+        "first_closed_model": "o1-2024-12-17_medium",
+        "first_closed_date": "2024-12-17T00:00:00",
+        "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+        "first_open_date": "2025-07-25T00:00:00",
+        "gap_days": 220,
+        "gap_months": 7.2
+      },
+      {
+        "benchmark_id": "otis_mock_aime",
+        "benchmark_name": "OTIS Mock AIME",
+        "data_access": "public",
+        "threshold": 75.0,
+        "first_closed_model": "o3-mini-2025-01-31_high",
+        "first_closed_date": "2025-01-31T00:00:00",
+        "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+        "first_open_date": "2025-07-25T00:00:00",
+        "gap_days": 175,
+        "gap_months": 5.7
+      },
+      {
+        "benchmark_id": "otis_mock_aime",
+        "benchmark_name": "OTIS Mock AIME",
+        "data_access": "public",
+        "threshold": 80.0,
+        "first_closed_model": "o3-2025-04-16_high",
+        "first_closed_date": "2025-04-16T00:00:00",
+        "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+        "first_open_date": "2025-07-25T00:00:00",
+        "gap_days": 100,
+        "gap_months": 3.3
+      },
+      {
+        "benchmark_id": "otis_mock_aime",
+        "benchmark_name": "OTIS Mock AIME",
+        "data_access": "public",
+        "threshold": 85.0,
+        "first_closed_model": "openai/gpt-oss-120b_high",
+        "first_closed_date": "2025-08-05T00:00:00",
+        "first_open_model": "Qwen3-235B-A22B-Thinking-2507",
+        "first_open_date": "2025-07-25T00:00:00",
+        "gap_days": -11,
+        "gap_months": -0.4
+      },
+      {
+        "benchmark_id": "frontiermath_public",
+        "benchmark_name": "FrontierMath",
+        "data_access": "private",
+        "threshold": 10.0,
+        "first_closed_model": "o3-mini-2025-01-31_high",
+        "first_closed_date": "2025-01-31T00:00:00",
+        "first_open_model": "moonshotai/Kimi-K2-Thinking",
+        "first_open_date": "2025-11-06T00:00:00",
+        "gap_days": 279,
+        "gap_months": 9.2
+      },
+      {
+        "benchmark_id": "frontiermath_public",
+        "benchmark_name": "FrontierMath",
+        "data_access": "private",
+        "threshold": 15.0,
+        "first_closed_model": "o3-2025-04-16_high",
+        "first_closed_date": "2025-04-16T00:00:00",
+        "first_open_model": "moonshotai/Kimi-K2-Thinking",
+        "first_open_date": "2025-11-06T00:00:00",
+        "gap_days": 204,
+        "gap_months": 6.7
+      },
+      {
+        "benchmark_id": "metr_time_horizon",
+        "benchmark_name": "METR Time Horizon",
+        "data_access": "private",
+        "threshold": 50.0,
+        "first_closed_model": "claude_3_7_sonnet_inspect",
+        "first_closed_date": "2025-02-24T00:00:00",
+        "first_open_model": "kimi_k2_thinking",
+        "first_open_date": "2025-11-06T00:00:00",
+        "gap_days": 255,
+        "gap_months": 8.4
+      },
+      {
+        "benchmark_id": "frontiermath_public",
+        "benchmark_name": "FrontierMath",
+        "data_access": "private",
+        "threshold": 25.0,
+        "first_closed_model": "gemini-2.5-deep-think-2025-08-01-webapp",
+        "first_closed_date": "2025-08-01T00:00:00",
+        "first_open_model": "fireworks/kimi-k2p5",
+        "first_open_date": "2026-01-27T00:00:00",
+        "gap_days": 179,
+        "gap_months": 5.9
+      },
+      {
+        "benchmark_id": "gpqa_diamond",
+        "benchmark_name": "GPQA Diamond",
+        "data_access": "public",
+        "threshold": 85.0,
+        "first_closed_model": "gemini-2.5-pro",
+        "first_closed_date": "2025-06-17T00:00:00",
+        "first_open_model": "fireworks/kimi-k2p5",
+        "first_open_date": "2026-01-27T00:00:00",
+        "gap_days": 224,
+        "gap_months": 7.4
+      },
+      {
+        "benchmark_id": "otis_mock_aime",
+        "benchmark_name": "OTIS Mock AIME",
+        "data_access": "public",
+        "threshold": 90.0,
+        "first_closed_model": "gpt-5-2025-08-07_high",
+        "first_closed_date": "2025-08-07T00:00:00",
+        "first_open_model": "fireworks/kimi-k2p5",
+        "first_open_date": "2026-01-27T00:00:00",
+        "gap_days": 173,
+        "gap_months": 5.7
+      },
+      {
+        "benchmark_id": "frontiermath_public",
+        "benchmark_name": "FrontierMath",
+        "data_access": "private",
+        "threshold": 30.0,
+        "first_closed_model": "gpt-5-2025-08-07_high",
+        "first_closed_date": "2025-08-07T00:00:00",
+        "first_open_model": "glm-5.1",
+        "first_open_date": "2026-04-07T00:00:00",
+        "gap_days": 243,
+        "gap_months": 8.0
+      },
+      {
+        "benchmark_id": "frontiermath_public",
+        "benchmark_name": "FrontierMath",
+        "data_access": "private",
+        "threshold": 35.0,
+        "first_closed_model": "gemini-3-pro-preview",
+        "first_closed_date": "2025-11-18T00:00:00",
+        "first_open_model": "muse-spark",
+        "first_open_date": "2026-04-08T00:00:00",
+        "gap_days": 141,
+        "gap_months": 4.6
+      },
+      {
+        "benchmark_id": "gpqa_diamond",
+        "benchmark_name": "GPQA Diamond",
+        "data_access": "public",
+        "threshold": 90.0,
+        "first_closed_model": "gemini-3-pro-preview",
+        "first_closed_date": "2025-11-18T00:00:00",
+        "first_open_model": "kimi-k2.6",
+        "first_open_date": "2026-04-20T00:00:00",
+        "gap_days": 153,
+        "gap_months": 5.0
+      },
+      {
+        "benchmark_id": "otis_mock_aime",
+        "benchmark_name": "OTIS Mock AIME",
+        "data_access": "public",
+        "threshold": 95.0,
+        "first_closed_model": "gpt-5.2-2025-12-11_high",
+        "first_closed_date": "2025-12-11T00:00:00",
+        "first_open_model": "kimi-k2.6",
+        "first_open_date": "2026-04-20T00:00:00",
+        "gap_days": 130,
+        "gap_months": 4.3
+      }
+    ],
+    "trends": {
+      "overall": {
+        "points": [
+          {
+            "date": "2024-02-26",
+            "mean": 8.48,
+            "lo": 6.58,
+            "hi": 10.17
+          },
+          {
+            "date": "2024-03-04",
+            "mean": 8.36,
+            "lo": 6.48,
+            "hi": 10.07
+          },
+          {
+            "date": "2024-03-11",
+            "mean": 8.23,
+            "lo": 6.36,
+            "hi": 10.0
+          },
+          {
+            "date": "2024-03-18",
+            "mean": 8.1,
+            "lo": 6.23,
+            "hi": 9.91
+          },
+          {
+            "date": "2024-03-25",
+            "mean": 7.96,
+            "lo": 6.12,
+            "hi": 9.8
+          },
+          {
+            "date": "2024-04-01",
+            "mean": 7.82,
+            "lo": 5.96,
+            "hi": 9.7
+          },
+          {
+            "date": "2024-04-08",
+            "mean": 7.67,
+            "lo": 5.81,
+            "hi": 9.6
+          },
+          {
+            "date": "2024-04-15",
+            "mean": 7.52,
+            "lo": 5.66,
+            "hi": 9.49
+          },
+          {
+            "date": "2024-04-22",
+            "mean": 7.37,
+            "lo": 5.49,
+            "hi": 9.36
+          },
+          {
+            "date": "2024-04-29",
+            "mean": 7.21,
+            "lo": 5.3,
+            "hi": 9.22
+          },
+          {
+            "date": "2024-05-06",
+            "mean": 7.04,
+            "lo": 5.11,
+            "hi": 9.06
+          },
+          {
+            "date": "2024-05-13",
+            "mean": 6.87,
+            "lo": 4.93,
+            "hi": 8.92
+          },
+          {
+            "date": "2024-05-20",
+            "mean": 6.7,
+            "lo": 4.75,
+            "hi": 8.77
+          },
+          {
+            "date": "2024-05-27",
+            "mean": 6.53,
+            "lo": 4.6,
+            "hi": 8.62
+          },
+          {
+            "date": "2024-06-03",
+            "mean": 6.35,
+            "lo": 4.45,
+            "hi": 8.45
+          },
+          {
+            "date": "2024-06-10",
+            "mean": 6.17,
+            "lo": 4.29,
+            "hi": 8.25
+          },
+          {
+            "date": "2024-06-17",
+            "mean": 5.99,
+            "lo": 4.14,
+            "hi": 8.06
+          },
+          {
+            "date": "2024-06-24",
+            "mean": 5.82,
+            "lo": 3.97,
+            "hi": 7.87
+          },
+          {
+            "date": "2024-07-01",
+            "mean": 5.64,
+            "lo": 3.86,
+            "hi": 7.67
+          },
+          {
+            "date": "2024-07-08",
+            "mean": 5.47,
+            "lo": 3.73,
+            "hi": 7.44
+          },
+          {
+            "date": "2024-07-15",
+            "mean": 5.3,
+            "lo": 3.61,
+            "hi": 7.23
+          },
+          {
+            "date": "2024-07-22",
+            "mean": 5.13,
+            "lo": 3.47,
+            "hi": 7.01
+          },
+          {
+            "date": "2024-07-29",
+            "mean": 4.97,
+            "lo": 3.36,
+            "hi": 6.8
+          },
+          {
+            "date": "2024-08-05",
+            "mean": 4.81,
+            "lo": 3.27,
+            "hi": 6.59
+          },
+          {
+            "date": "2024-08-12",
+            "mean": 4.66,
+            "lo": 3.15,
+            "hi": 6.38
+          },
+          {
+            "date": "2024-08-19",
+            "mean": 4.52,
+            "lo": 3.04,
+            "hi": 6.2
+          },
+          {
+            "date": "2024-08-26",
+            "mean": 4.39,
+            "lo": 2.92,
+            "hi": 6.02
+          },
+          {
+            "date": "2024-09-02",
+            "mean": 4.26,
+            "lo": 2.84,
+            "hi": 5.85
+          },
+          {
+            "date": "2024-09-09",
+            "mean": 4.14,
+            "lo": 2.75,
+            "hi": 5.68
+          },
+          {
+            "date": "2024-09-16",
+            "mean": 4.03,
+            "lo": 2.67,
+            "hi": 5.51
+          },
+          {
+            "date": "2024-09-23",
+            "mean": 3.93,
+            "lo": 2.6,
+            "hi": 5.34
+          },
+          {
+            "date": "2024-09-30",
+            "mean": 3.84,
+            "lo": 2.56,
+            "hi": 5.2
+          },
+          {
+            "date": "2024-10-07",
+            "mean": 3.76,
+            "lo": 2.54,
+            "hi": 5.05
+          },
+          {
+            "date": "2024-10-14",
+            "mean": 3.69,
+            "lo": 2.52,
+            "hi": 4.89
+          },
+          {
+            "date": "2024-10-21",
+            "mean": 3.63,
+            "lo": 2.53,
+            "hi": 4.77
+          },
+          {
+            "date": "2024-10-28",
+            "mean": 3.58,
+            "lo": 2.54,
+            "hi": 4.65
+          },
+          {
+            "date": "2024-11-04",
+            "mean": 3.54,
+            "lo": 2.56,
+            "hi": 4.53
+          },
+          {
+            "date": "2024-11-11",
+            "mean": 3.51,
+            "lo": 2.57,
+            "hi": 4.44
+          },
+          {
+            "date": "2024-11-18",
+            "mean": 3.48,
+            "lo": 2.59,
+            "hi": 4.37
+          },
+          {
+            "date": "2024-11-25",
+            "mean": 3.46,
+            "lo": 2.59,
+            "hi": 4.31
+          },
+          {
+            "date": "2024-12-02",
+            "mean": 3.44,
+            "lo": 2.6,
+            "hi": 4.26
+          },
+          {
+            "date": "2024-12-09",
+            "mean": 3.42,
+            "lo": 2.61,
+            "hi": 4.24
+          },
+          {
+            "date": "2024-12-16",
+            "mean": 3.41,
+            "lo": 2.6,
+            "hi": 4.21
+          },
+          {
+            "date": "2024-12-23",
+            "mean": 3.4,
+            "lo": 2.61,
+            "hi": 4.2
+          },
+          {
+            "date": "2024-12-30",
+            "mean": 3.39,
+            "lo": 2.6,
+            "hi": 4.19
+          },
+          {
+            "date": "2025-01-06",
+            "mean": 3.39,
+            "lo": 2.6,
+            "hi": 4.2
+          },
+          {
+            "date": "2025-01-13",
+            "mean": 3.39,
+            "lo": 2.61,
+            "hi": 4.2
+          },
+          {
+            "date": "2025-01-20",
+            "mean": 3.39,
+            "lo": 2.61,
+            "hi": 4.2
+          },
+          {
+            "date": "2025-01-27",
+            "mean": 3.4,
+            "lo": 2.62,
+            "hi": 4.21
+          },
+          {
+            "date": "2025-02-03",
+            "mean": 3.41,
+            "lo": 2.64,
+            "hi": 4.22
+          },
+          {
+            "date": "2025-02-10",
+            "mean": 3.43,
+            "lo": 2.68,
+            "hi": 4.23
+          },
+          {
+            "date": "2025-02-17",
+            "mean": 3.45,
+            "lo": 2.71,
+            "hi": 4.23
+          },
+          {
+            "date": "2025-02-24",
+            "mean": 3.49,
+            "lo": 2.76,
+            "hi": 4.25
+          },
+          {
+            "date": "2025-03-03",
+            "mean": 3.53,
+            "lo": 2.82,
+            "hi": 4.27
+          },
+          {
+            "date": "2025-03-10",
+            "mean": 3.58,
+            "lo": 2.89,
+            "hi": 4.28
+          },
+          {
+            "date": "2025-03-17",
+            "mean": 3.64,
+            "lo": 2.97,
+            "hi": 4.31
+          },
+          {
+            "date": "2025-03-24",
+            "mean": 3.71,
+            "lo": 3.05,
+            "hi": 4.34
+          },
+          {
+            "date": "2025-03-31",
+            "mean": 3.79,
+            "lo": 3.12,
+            "hi": 4.38
+          },
+          {
+            "date": "2025-04-07",
+            "mean": 3.87,
+            "lo": 3.21,
+            "hi": 4.44
+          },
+          {
+            "date": "2025-04-14",
+            "mean": 3.94,
+            "lo": 3.29,
+            "hi": 4.5
+          },
+          {
+            "date": "2025-04-21",
+            "mean": 4.02,
+            "lo": 3.35,
+            "hi": 4.58
+          },
+          {
+            "date": "2025-04-28",
+            "mean": 4.09,
+            "lo": 3.39,
+            "hi": 4.65
+          },
+          {
+            "date": "2025-05-05",
+            "mean": 4.15,
+            "lo": 3.41,
+            "hi": 4.74
+          },
+          {
+            "date": "2025-05-12",
+            "mean": 4.2,
+            "lo": 3.42,
+            "hi": 4.84
+          },
+          {
+            "date": "2025-05-19",
+            "mean": 4.24,
+            "lo": 3.4,
+            "hi": 4.93
+          },
+          {
+            "date": "2025-05-26",
+            "mean": 4.27,
+            "lo": 3.38,
+            "hi": 5.02
+          },
+          {
+            "date": "2025-06-02",
+            "mean": 4.3,
+            "lo": 3.35,
+            "hi": 5.1
+          },
+          {
+            "date": "2025-06-09",
+            "mean": 4.32,
+            "lo": 3.32,
+            "hi": 5.19
+          },
+          {
+            "date": "2025-06-16",
+            "mean": 4.34,
+            "lo": 3.27,
+            "hi": 5.28
+          },
+          {
+            "date": "2025-06-23",
+            "mean": 4.36,
+            "lo": 3.25,
+            "hi": 5.36
+          },
+          {
+            "date": "2025-06-30",
+            "mean": 4.38,
+            "lo": 3.23,
+            "hi": 5.45
+          },
+          {
+            "date": "2025-07-07",
+            "mean": 4.41,
+            "lo": 3.21,
+            "hi": 5.54
+          },
+          {
+            "date": "2025-07-14",
+            "mean": 4.44,
+            "lo": 3.22,
+            "hi": 5.62
+          },
+          {
+            "date": "2025-07-21",
+            "mean": 4.49,
+            "lo": 3.24,
+            "hi": 5.73
+          },
+          {
+            "date": "2025-07-28",
+            "mean": 4.55,
+            "lo": 3.27,
+            "hi": 5.83
+          },
+          {
+            "date": "2025-08-04",
+            "mean": 4.63,
+            "lo": 3.3,
+            "hi": 5.96
+          },
+          {
+            "date": "2025-08-11",
+            "mean": 4.72,
+            "lo": 3.35,
+            "hi": 6.1
+          },
+          {
+            "date": "2025-08-18",
+            "mean": 4.83,
+            "lo": 3.41,
+            "hi": 6.23
+          },
+          {
+            "date": "2025-08-25",
+            "mean": 4.96,
+            "lo": 3.49,
+            "hi": 6.39
+          },
+          {
+            "date": "2025-09-01",
+            "mean": 5.11,
+            "lo": 3.61,
+            "hi": 6.55
+          },
+          {
+            "date": "2025-09-08",
+            "mean": 5.28,
+            "lo": 3.73,
+            "hi": 6.72
+          },
+          {
+            "date": "2025-09-15",
+            "mean": 5.47,
+            "lo": 3.88,
+            "hi": 6.88
+          },
+          {
+            "date": "2025-09-22",
+            "mean": 5.67,
+            "lo": 4.02,
+            "hi": 7.04
+          },
+          {
+            "date": "2025-09-29",
+            "mean": 5.87,
+            "lo": 4.19,
+            "hi": 7.17
+          },
+          {
+            "date": "2025-10-06",
+            "mean": 6.07,
+            "lo": 4.4,
+            "hi": 7.32
+          },
+          {
+            "date": "2025-10-13",
+            "mean": 6.27,
+            "lo": 4.63,
+            "hi": 7.42
+          },
+          {
+            "date": "2025-10-20",
+            "mean": 6.45,
+            "lo": 4.85,
+            "hi": 7.51
+          },
+          {
+            "date": "2025-10-27",
+            "mean": 6.6,
+            "lo": 5.07,
+            "hi": 7.59
+          },
+          {
+            "date": "2025-11-03",
+            "mean": 6.73,
+            "lo": 5.3,
+            "hi": 7.65
+          },
+          {
+            "date": "2025-11-10",
+            "mean": 6.83,
+            "lo": 5.51,
+            "hi": 7.7
+          },
+          {
+            "date": "2025-11-17",
+            "mean": 6.9,
+            "lo": 5.68,
+            "hi": 7.73
+          },
+          {
+            "date": "2025-11-24",
+            "mean": 6.94,
+            "lo": 5.83,
+            "hi": 7.73
+          },
+          {
+            "date": "2025-12-01",
+            "mean": 6.95,
+            "lo": 5.94,
+            "hi": 7.73
+          },
+          {
+            "date": "2025-12-08",
+            "mean": 6.94,
+            "lo": 6.01,
+            "hi": 7.71
+          },
+          {
+            "date": "2025-12-15",
+            "mean": 6.91,
+            "lo": 6.05,
+            "hi": 7.66
+          },
+          {
+            "date": "2025-12-22",
+            "mean": 6.85,
+            "lo": 6.05,
+            "hi": 7.6
+          },
+          {
+            "date": "2025-12-29",
+            "mean": 6.79,
+            "lo": 6.03,
+            "hi": 7.53
+          },
+          {
+            "date": "2026-01-05",
+            "mean": 6.71,
+            "lo": 5.99,
+            "hi": 7.44
+          },
+          {
+            "date": "2026-01-12",
+            "mean": 6.63,
+            "lo": 5.93,
+            "hi": 7.36
+          },
+          {
+            "date": "2026-01-19",
+            "mean": 6.54,
+            "lo": 5.87,
+            "hi": 7.27
+          },
+          {
+            "date": "2026-01-26",
+            "mean": 6.46,
+            "lo": 5.79,
+            "hi": 7.17
+          },
+          {
+            "date": "2026-02-02",
+            "mean": 6.37,
+            "lo": 5.71,
+            "hi": 7.11
+          },
+          {
+            "date": "2026-02-09",
+            "mean": 6.29,
+            "lo": 5.63,
+            "hi": 7.04
+          },
+          {
+            "date": "2026-02-16",
+            "mean": 6.21,
+            "lo": 5.53,
+            "hi": 6.97
+          },
+          {
+            "date": "2026-02-23",
+            "mean": 6.13,
+            "lo": 5.43,
+            "hi": 6.92
+          },
+          {
+            "date": "2026-03-02",
+            "mean": 6.06,
+            "lo": 5.34,
+            "hi": 6.89
+          },
+          {
+            "date": "2026-03-09",
+            "mean": 6.0,
+            "lo": 5.25,
+            "hi": 6.86
+          },
+          {
+            "date": "2026-03-16",
+            "mean": 5.94,
+            "lo": 5.17,
+            "hi": 6.84
+          },
+          {
+            "date": "2026-03-23",
+            "mean": 5.88,
+            "lo": 5.09,
+            "hi": 6.82
+          },
+          {
+            "date": "2026-03-30",
+            "mean": 5.83,
+            "lo": 5.02,
+            "hi": 6.8
+          },
+          {
+            "date": "2026-04-06",
+            "mean": 5.78,
+            "lo": 4.96,
+            "hi": 6.79
+          },
+          {
+            "date": "2026-04-13",
+            "mean": 5.73,
+            "lo": 4.91,
+            "hi": 6.77
+          },
+          {
+            "date": "2026-04-20",
+            "mean": 5.69,
+            "lo": 4.86,
+            "hi": 6.76
+          }
+        ],
+        "n_datapoints": 44,
+        "n_benchmarks": 5
+      },
+      "public": {
+        "points": [
+          {
+            "date": "2024-02-26",
+            "mean": 8.06,
+            "lo": 6.12,
+            "hi": 9.73
+          },
+          {
+            "date": "2024-03-04",
+            "mean": 7.88,
+            "lo": 5.84,
+            "hi": 9.54
+          },
+          {
+            "date": "2024-03-11",
+            "mean": 7.69,
+            "lo": 5.72,
+            "hi": 9.34
+          },
+          {
+            "date": "2024-03-18",
+            "mean": 7.48,
+            "lo": 5.63,
+            "hi": 9.1
+          },
+          {
+            "date": "2024-03-25",
+            "mean": 7.27,
+            "lo": 5.53,
+            "hi": 8.85
+          },
+          {
+            "date": "2024-04-01",
+            "mean": 7.05,
+            "lo": 5.42,
+            "hi": 8.57
+          },
+          {
+            "date": "2024-04-08",
+            "mean": 6.83,
+            "lo": 5.29,
+            "hi": 8.28
+          },
+          {
+            "date": "2024-04-15",
+            "mean": 6.61,
+            "lo": 5.16,
+            "hi": 8.0
+          },
+          {
+            "date": "2024-04-22",
+            "mean": 6.38,
+            "lo": 5.02,
+            "hi": 7.69
+          },
+          {
+            "date": "2024-04-29",
+            "mean": 6.16,
+            "lo": 4.86,
+            "hi": 7.42
+          },
+          {
+            "date": "2024-05-06",
+            "mean": 5.95,
+            "lo": 4.66,
+            "hi": 7.16
+          },
+          {
+            "date": "2024-05-13",
+            "mean": 5.74,
+            "lo": 4.46,
+            "hi": 6.92
+          },
+          {
+            "date": "2024-05-20",
+            "mean": 5.54,
+            "lo": 4.28,
+            "hi": 6.69
+          },
+          {
+            "date": "2024-05-27",
+            "mean": 5.35,
+            "lo": 4.09,
+            "hi": 6.5
+          },
+          {
+            "date": "2024-06-03",
+            "mean": 5.17,
+            "lo": 3.91,
+            "hi": 6.31
+          },
+          {
+            "date": "2024-06-10",
+            "mean": 4.99,
+            "lo": 3.73,
+            "hi": 6.16
+          },
+          {
+            "date": "2024-06-17",
+            "mean": 4.83,
+            "lo": 3.54,
+            "hi": 6.02
+          },
+          {
+            "date": "2024-06-24",
+            "mean": 4.67,
+            "lo": 3.37,
+            "hi": 5.9
+          },
+          {
+            "date": "2024-07-01",
+            "mean": 4.52,
+            "lo": 3.21,
+            "hi": 5.78
+          },
+          {
+            "date": "2024-07-08",
+            "mean": 4.37,
+            "lo": 3.06,
+            "hi": 5.67
+          },
+          {
+            "date": "2024-07-15",
+            "mean": 4.23,
+            "lo": 2.92,
+            "hi": 5.55
+          },
+          {
+            "date": "2024-07-22",
+            "mean": 4.09,
+            "lo": 2.77,
+            "hi": 5.43
+          },
+          {
+            "date": "2024-07-29",
+            "mean": 3.96,
+            "lo": 2.65,
+            "hi": 5.31
+          },
+          {
+            "date": "2024-08-05",
+            "mean": 3.83,
+            "lo": 2.53,
+            "hi": 5.21
+          },
+          {
+            "date": "2024-08-12",
+            "mean": 3.71,
+            "lo": 2.42,
+            "hi": 5.1
+          },
+          {
+            "date": "2024-08-19",
+            "mean": 3.59,
+            "lo": 2.31,
+            "hi": 4.98
+          },
+          {
+            "date": "2024-08-26",
+            "mean": 3.47,
+            "lo": 2.22,
+            "hi": 4.85
+          },
+          {
+            "date": "2024-09-02",
+            "mean": 3.36,
+            "lo": 2.12,
+            "hi": 4.72
+          },
+          {
+            "date": "2024-09-09",
+            "mean": 3.25,
+            "lo": 2.05,
+            "hi": 4.58
+          },
+          {
+            "date": "2024-09-16",
+            "mean": 3.15,
+            "lo": 1.98,
+            "hi": 4.45
+          },
+          {
+            "date": "2024-09-23",
+            "mean": 3.05,
+            "lo": 1.92,
+            "hi": 4.32
+          },
+          {
+            "date": "2024-09-30",
+            "mean": 2.97,
+            "lo": 1.89,
+            "hi": 4.18
+          },
+          {
+            "date": "2024-10-07",
+            "mean": 2.9,
+            "lo": 1.88,
+            "hi": 4.04
+          },
+          {
+            "date": "2024-10-14",
+            "mean": 2.84,
+            "lo": 1.87,
+            "hi": 3.9
+          },
+          {
+            "date": "2024-10-21",
+            "mean": 2.8,
+            "lo": 1.88,
+            "hi": 3.78
+          },
+          {
+            "date": "2024-10-28",
+            "mean": 2.77,
+            "lo": 1.91,
+            "hi": 3.67
+          },
+          {
+            "date": "2024-11-04",
+            "mean": 2.75,
+            "lo": 1.93,
+            "hi": 3.57
+          },
+          {
+            "date": "2024-11-11",
+            "mean": 2.75,
+            "lo": 1.96,
+            "hi": 3.52
+          },
+          {
+            "date": "2024-11-18",
+            "mean": 2.75,
+            "lo": 1.99,
+            "hi": 3.48
+          },
+          {
+            "date": "2024-11-25",
+            "mean": 2.76,
+            "lo": 2.01,
+            "hi": 3.47
+          },
+          {
+            "date": "2024-12-02",
+            "mean": 2.77,
+            "lo": 2.02,
+            "hi": 3.48
+          },
+          {
+            "date": "2024-12-09",
+            "mean": 2.79,
+            "lo": 2.03,
+            "hi": 3.5
+          },
+          {
+            "date": "2024-12-16",
+            "mean": 2.81,
+            "lo": 2.05,
+            "hi": 3.53
+          },
+          {
+            "date": "2024-12-23",
+            "mean": 2.83,
+            "lo": 2.05,
+            "hi": 3.56
+          },
+          {
+            "date": "2024-12-30",
+            "mean": 2.85,
+            "lo": 2.07,
+            "hi": 3.6
+          },
+          {
+            "date": "2025-01-06",
+            "mean": 2.88,
+            "lo": 2.09,
+            "hi": 3.64
+          },
+          {
+            "date": "2025-01-13",
+            "mean": 2.91,
+            "lo": 2.12,
+            "hi": 3.67
+          },
+          {
+            "date": "2025-01-20",
+            "mean": 2.94,
+            "lo": 2.16,
+            "hi": 3.71
+          },
+          {
+            "date": "2025-01-27",
+            "mean": 2.97,
+            "lo": 2.2,
+            "hi": 3.75
+          },
+          {
+            "date": "2025-02-03",
+            "mean": 3.01,
+            "lo": 2.24,
+            "hi": 3.8
+          },
+          {
+            "date": "2025-02-10",
+            "mean": 3.06,
+            "lo": 2.3,
+            "hi": 3.85
+          },
+          {
+            "date": "2025-02-17",
+            "mean": 3.12,
+            "lo": 2.36,
+            "hi": 3.89
+          },
+          {
+            "date": "2025-02-24",
+            "mean": 3.18,
+            "lo": 2.43,
+            "hi": 3.95
+          },
+          {
+            "date": "2025-03-03",
+            "mean": 3.26,
+            "lo": 2.51,
+            "hi": 4.01
+          },
+          {
+            "date": "2025-03-10",
+            "mean": 3.35,
+            "lo": 2.59,
+            "hi": 4.08
+          },
+          {
+            "date": "2025-03-17",
+            "mean": 3.44,
+            "lo": 2.69,
+            "hi": 4.14
+          },
+          {
+            "date": "2025-03-24",
+            "mean": 3.54,
+            "lo": 2.82,
+            "hi": 4.21
+          },
+          {
+            "date": "2025-03-31",
+            "mean": 3.65,
+            "lo": 2.93,
+            "hi": 4.28
+          },
+          {
+            "date": "2025-04-07",
+            "mean": 3.76,
+            "lo": 3.03,
+            "hi": 4.37
+          },
+          {
+            "date": "2025-04-14",
+            "mean": 3.86,
+            "lo": 3.13,
+            "hi": 4.45
+          },
+          {
+            "date": "2025-04-21",
+            "mean": 3.95,
+            "lo": 3.2,
+            "hi": 4.53
+          },
+          {
+            "date": "2025-04-28",
+            "mean": 4.03,
+            "lo": 3.26,
+            "hi": 4.62
+          },
+          {
+            "date": "2025-05-05",
+            "mean": 4.1,
+            "lo": 3.3,
+            "hi": 4.71
+          },
+          {
+            "date": "2025-05-12",
+            "mean": 4.16,
+            "lo": 3.31,
+            "hi": 4.8
+          },
+          {
+            "date": "2025-05-19",
+            "mean": 4.2,
+            "lo": 3.3,
+            "hi": 4.89
+          },
+          {
+            "date": "2025-05-26",
+            "mean": 4.22,
+            "lo": 3.27,
+            "hi": 4.97
+          },
+          {
+            "date": "2025-06-02",
+            "mean": 4.24,
+            "lo": 3.24,
+            "hi": 5.04
+          },
+          {
+            "date": "2025-06-09",
+            "mean": 4.25,
+            "lo": 3.19,
+            "hi": 5.11
+          },
+          {
+            "date": "2025-06-16",
+            "mean": 4.25,
+            "lo": 3.14,
+            "hi": 5.18
+          },
+          {
+            "date": "2025-06-23",
+            "mean": 4.25,
+            "lo": 3.09,
+            "hi": 5.23
+          },
+          {
+            "date": "2025-06-30",
+            "mean": 4.24,
+            "lo": 3.02,
+            "hi": 5.29
+          },
+          {
+            "date": "2025-07-07",
+            "mean": 4.23,
+            "lo": 2.96,
+            "hi": 5.34
+          },
+          {
+            "date": "2025-07-14",
+            "mean": 4.22,
+            "lo": 2.91,
+            "hi": 5.39
+          },
+          {
+            "date": "2025-07-21",
+            "mean": 4.2,
+            "lo": 2.85,
+            "hi": 5.43
+          },
+          {
+            "date": "2025-07-28",
+            "mean": 4.19,
+            "lo": 2.79,
+            "hi": 5.46
+          },
+          {
+            "date": "2025-08-04",
+            "mean": 4.18,
+            "lo": 2.75,
+            "hi": 5.48
+          },
+          {
+            "date": "2025-08-11",
+            "mean": 4.17,
+            "lo": 2.68,
+            "hi": 5.52
+          },
+          {
+            "date": "2025-08-18",
+            "mean": 4.16,
+            "lo": 2.65,
+            "hi": 5.55
+          },
+          {
+            "date": "2025-08-25",
+            "mean": 4.15,
+            "lo": 2.62,
+            "hi": 5.58
+          },
+          {
+            "date": "2025-09-01",
+            "mean": 4.15,
+            "lo": 2.6,
+            "hi": 5.61
+          },
+          {
+            "date": "2025-09-08",
+            "mean": 4.16,
+            "lo": 2.6,
+            "hi": 5.63
+          },
+          {
+            "date": "2025-09-15",
+            "mean": 4.18,
+            "lo": 2.6,
+            "hi": 5.66
+          },
+          {
+            "date": "2025-09-22",
+            "mean": 4.21,
+            "lo": 2.62,
+            "hi": 5.68
+          },
+          {
+            "date": "2025-09-29",
+            "mean": 4.26,
+            "lo": 2.68,
+            "hi": 5.69
+          },
+          {
+            "date": "2025-10-06",
+            "mean": 4.33,
+            "lo": 2.79,
+            "hi": 5.72
+          },
+          {
+            "date": "2025-10-13",
+            "mean": 4.43,
+            "lo": 2.93,
+            "hi": 5.77
+          },
+          {
+            "date": "2025-10-20",
+            "mean": 4.56,
+            "lo": 3.09,
+            "hi": 5.84
+          },
+          {
+            "date": "2025-10-27",
+            "mean": 4.73,
+            "lo": 3.26,
+            "hi": 5.96
+          },
+          {
+            "date": "2025-11-03",
+            "mean": 4.92,
+            "lo": 3.56,
+            "hi": 6.11
+          },
+          {
+            "date": "2025-12-15",
+            "mean": 5.97,
+            "lo": 5.29,
+            "hi": 6.83
+          },
+          {
+            "date": "2025-12-22",
+            "mean": 6.04,
+            "lo": 5.35,
+            "hi": 6.88
+          },
+          {
+            "date": "2025-12-29",
+            "mean": 6.07,
+            "lo": 5.38,
+            "hi": 6.94
+          },
+          {
+            "date": "2026-01-05",
+            "mean": 6.08,
+            "lo": 5.37,
+            "hi": 6.96
+          },
+          {
+            "date": "2026-01-12",
+            "mean": 6.07,
+            "lo": 5.32,
+            "hi": 6.97
+          },
+          {
+            "date": "2026-01-19",
+            "mean": 6.04,
+            "lo": 5.21,
+            "hi": 6.95
+          },
+          {
+            "date": "2026-01-26",
+            "mean": 6.0,
+            "lo": 5.14,
+            "hi": 6.93
+          },
+          {
+            "date": "2026-02-02",
+            "mean": 5.95,
+            "lo": 5.04,
+            "hi": 6.89
+          },
+          {
+            "date": "2026-02-09",
+            "mean": 5.89,
+            "lo": 4.98,
+            "hi": 6.81
+          },
+          {
+            "date": "2026-02-16",
+            "mean": 5.82,
+            "lo": 4.93,
+            "hi": 6.81
+          },
+          {
+            "date": "2026-02-23",
+            "mean": 5.75,
+            "lo": 4.88,
+            "hi": 6.75
+          },
+          {
+            "date": "2026-03-02",
+            "mean": 5.68,
+            "lo": 4.76,
+            "hi": 6.68
+          },
+          {
+            "date": "2026-03-09",
+            "mean": 5.6,
+            "lo": 4.76,
+            "hi": 6.6
+          },
+          {
+            "date": "2026-03-16",
+            "mean": 5.53,
+            "lo": 4.72,
+            "hi": 6.53
+          },
+          {
+            "date": "2026-03-23",
+            "mean": 5.45,
+            "lo": 4.67,
+            "hi": 6.38
+          },
+          {
+            "date": "2026-03-30",
+            "mean": 5.38,
+            "lo": 4.64,
+            "hi": 6.32
+          },
+          {
+            "date": "2026-04-06",
+            "mean": 5.31,
+            "lo": 4.62,
+            "hi": 6.2
+          },
+          {
+            "date": "2026-04-13",
+            "mean": 5.24,
+            "lo": 4.56,
+            "hi": 6.05
+          },
+          {
+            "date": "2026-04-20",
+            "mean": 5.18,
+            "lo": 4.53,
+            "hi": 5.94
+          }
+        ],
+        "n_datapoints": 34,
+        "n_benchmarks": 3
+      },
+      "private": {
+        "points": [
+          {
+            "date": "2024-11-15",
+            "mean": 6.31,
+            "lo": 5.28,
+            "hi": 7.29
+          },
+          {
+            "date": "2024-11-22",
+            "mean": 6.15,
+            "lo": 5.08,
+            "hi": 7.19
+          },
+          {
+            "date": "2024-11-29",
+            "mean": 6.02,
+            "lo": 4.93,
+            "hi": 6.85
+          },
+          {
+            "date": "2024-12-06",
+            "mean": 5.89,
+            "lo": 4.86,
+            "hi": 6.73
+          },
+          {
+            "date": "2024-12-13",
+            "mean": 5.78,
+            "lo": 4.78,
+            "hi": 6.64
+          },
+          {
+            "date": "2024-12-20",
+            "mean": 5.68,
+            "lo": 4.7,
+            "hi": 6.47
+          },
+          {
+            "date": "2024-12-27",
+            "mean": 5.6,
+            "lo": 4.63,
+            "hi": 6.41
+          },
+          {
+            "date": "2025-01-03",
+            "mean": 5.52,
+            "lo": 4.55,
+            "hi": 6.37
+          },
+          {
+            "date": "2025-01-10",
+            "mean": 5.45,
+            "lo": 4.5,
+            "hi": 6.34
+          },
+          {
+            "date": "2025-01-17",
+            "mean": 5.39,
+            "lo": 4.45,
+            "hi": 6.32
+          },
+          {
+            "date": "2025-09-12",
+            "mean": 8.02,
+            "lo": 7.17,
+            "hi": 8.82
+          },
+          {
+            "date": "2025-09-19",
+            "mean": 8.0,
+            "lo": 7.16,
+            "hi": 8.9
+          },
+          {
+            "date": "2025-09-26",
+            "mean": 7.98,
+            "lo": 7.14,
+            "hi": 8.88
+          },
+          {
+            "date": "2025-10-03",
+            "mean": 7.96,
+            "lo": 7.11,
+            "hi": 8.8
+          },
+          {
+            "date": "2025-10-10",
+            "mean": 7.94,
+            "lo": 7.06,
+            "hi": 8.83
+          },
+          {
+            "date": "2025-10-17",
+            "mean": 7.91,
+            "lo": 7.04,
+            "hi": 8.8
+          },
+          {
+            "date": "2025-10-24",
+            "mean": 7.88,
+            "lo": 6.98,
+            "hi": 8.77
+          },
+          {
+            "date": "2025-10-31",
+            "mean": 7.85,
+            "lo": 6.87,
+            "hi": 8.76
+          },
+          {
+            "date": "2025-11-07",
+            "mean": 7.8,
+            "lo": 6.79,
+            "hi": 8.72
+          },
+          {
+            "date": "2025-11-14",
+            "mean": 7.76,
+            "lo": 6.71,
+            "hi": 8.68
+          },
+          {
+            "date": "2025-11-21",
+            "mean": 7.7,
+            "lo": 6.66,
+            "hi": 8.65
+          },
+          {
+            "date": "2025-11-28",
+            "mean": 7.64,
+            "lo": 6.61,
+            "hi": 8.59
+          },
+          {
+            "date": "2025-12-05",
+            "mean": 7.57,
+            "lo": 6.56,
+            "hi": 8.54
+          },
+          {
+            "date": "2025-12-12",
+            "mean": 7.49,
+            "lo": 6.48,
+            "hi": 8.44
+          },
+          {
+            "date": "2025-12-19",
+            "mean": 7.4,
+            "lo": 6.42,
+            "hi": 8.36
+          },
+          {
+            "date": "2025-12-26",
+            "mean": 7.31,
+            "lo": 6.32,
+            "hi": 8.34
+          },
+          {
+            "date": "2026-01-02",
+            "mean": 7.21,
+            "lo": 6.25,
+            "hi": 8.24
+          },
+          {
+            "date": "2026-01-09",
+            "mean": 7.11,
+            "lo": 6.17,
+            "hi": 8.17
+          },
+          {
+            "date": "2026-01-16",
+            "mean": 7.0,
+            "lo": 6.09,
+            "hi": 8.06
+          },
+          {
+            "date": "2026-01-23",
+            "mean": 6.9,
+            "lo": 5.99,
+            "hi": 8.03
+          },
+          {
+            "date": "2026-01-30",
+            "mean": 6.81,
+            "lo": 5.87,
+            "hi": 7.92
+          },
+          {
+            "date": "2026-02-06",
+            "mean": 6.71,
+            "lo": 5.78,
+            "hi": 7.76
+          },
+          {
+            "date": "2026-02-13",
+            "mean": 6.63,
+            "lo": 5.65,
+            "hi": 7.65
+          },
+          {
+            "date": "2026-02-20",
+            "mean": 6.56,
+            "lo": 5.53,
+            "hi": 7.62
+          },
+          {
+            "date": "2026-02-27",
+            "mean": 6.49,
+            "lo": 5.43,
+            "hi": 7.57
+          },
+          {
+            "date": "2026-03-06",
+            "mean": 6.44,
+            "lo": 5.31,
+            "hi": 7.62
+          },
+          {
+            "date": "2026-03-13",
+            "mean": 6.4,
+            "lo": 5.18,
+            "hi": 7.69
+          },
+          {
+            "date": "2026-03-20",
+            "mean": 6.36,
+            "lo": 5.09,
+            "hi": 7.85
+          },
+          {
+            "date": "2026-03-27",
+            "mean": 6.34,
+            "lo": 4.99,
+            "hi": 7.94
+          },
+          {
+            "date": "2026-04-03",
+            "mean": 6.32,
+            "lo": 4.92,
+            "hi": 7.95
+          }
+        ],
+        "n_datapoints": 10,
+        "n_benchmarks": 2
+      }
+    },
+    "medians": {
+      "overall": 4.7,
+      "public": 4.3,
+      "private": 7.2
+    },
+    "parameters": {
+      "bandwidth_days": 60.0,
+      "step_days": 7,
+      "n_boot": 5000,
+      "ci": 0.9,
+      "min_ess": 2.0,
+      "seed": 0
+    },
+    "source": "open_closed_gap threshold-crossing methodology"
+  },
+  "last_updated": "2026-07-01T20:33:32.257731"
 }
