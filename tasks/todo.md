@@ -30,5 +30,10 @@ Plan: `docs/plans/2026-07-01-threshold-gap-integration.md`
 - Gemini review: 1 finding was a misread (dedup already selects the pair's
   highest overall threshold — proven by test), 2 were intentional methodology
   ports, 1 comment-clarity fix applied.
-- Follow-up (not in scope): frontend chart for the new `threshold_aggregate`
-  data; external-leaderboard fetchers (WeirdML, ARC-AGI, …) if desired.
+- Frontend chart shipped (2026-07-01): "Threshold-Crossing Gaps" section in both
+  index.html files + `renderThresholdChart` in script.js (Plotly scatter with
+  public/private trend lines + CI bands, benchmark-colored dots, star = private).
+  Hides gracefully when data.json lacks `threshold_aggregate`. Verified headlessly
+  in Node against live data (browser tools unavailable in session).
+- Follow-up (not in scope): external-leaderboard fetchers (WeirdML, ARC-AGI, …)
+  if desired; per-benchmark delay-timeline view (phase 2).

@@ -137,6 +137,22 @@
              <div id="trend-chart" style="width: 100%; height: 500px;"></div>
         </div>
 
+        <div id="threshold-section" class="hidden">
+            <div class="header">
+                <h1>Threshold-Crossing Gaps</h1>
+                <p class="subtitle">For each benchmark score threshold: how much later the first <span class="text-open">open</span> model reached it than the first <span class="text-closed">closed</span> model. Aggregated across benchmarks; trend lines compare public vs private (contamination-resistant) test sets.</p>
+            </div>
+            <div id="threshold-chart-container" style="position: relative; min-height: 520px; margin-bottom: 2rem;">
+                <div id="threshold-chart" style="width: 100%; height: 520px;"></div>
+                <p class="subtitle" id="threshold-note" style="text-align: center; margin-top: var(--spacing-sm);">
+                    <!-- Medians caption populated by script.js -->
+                </p>
+                <p class="subtitle" style="text-align: center;">
+                    <em>Each dot is one benchmark &times; threshold datapoint, deduplicated to one per (closed, open) model pair and filtered by a per-pair validity review. Methodology ported from <a href="https://github.com/htihle/open_closed_gap" target="_blank" rel="noopener">open_closed_gap</a> (H&aring;vard Ihle); bands are 90% bootstrap CIs of the Gaussian-kernel trend.</em>
+                </p>
+            </div>
+        </div>
+
         <details class="data-panel">
             <summary class="data-summary" id="data-summary">View Raw Data (All Models)</summary>
             <div class="table-container">
@@ -164,6 +180,6 @@
         </footer>
     </div>
 
-    <script src="static/script.js?v=25"></script>
+    <script src="static/script.js?v=26"></script>
 </body>
 </html>
