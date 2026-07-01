@@ -365,3 +365,20 @@ class TestBuildThresholdAggregate:
         for t in agg["trends"].values():
             assert t["points"]
         assert agg["parameters"]["bandwidth_days"] == 60.0
+
+
+class TestUpdateDataIntegration:
+    def test_compute_threshold_block_is_json_safe_and_fail_open(self):
+        from update_data import compute_threshold_block
+
+        df = _gpqa_like_df()
+        block = compute_threshold_block(df, "gpqa_diamond",
+                                        score_col="score", model_col="model")
+        assert block is not None
+        json.dumps(block, allow_nan=False)
+
+        # Fail-open: a broken frame degrades to None, never raises.
+        bad = pd.DataFrame({"weird": [1, 2]})
+        assert compute_threshold_block(bad, "gpqa_diamond",
+                                       score_col="score",
+                                       model_col="model") is None

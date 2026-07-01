@@ -98,6 +98,30 @@ except Exception as e:  # pragma: no cover - defensive
 # in at least this fraction of paired resamples (Epoch AI's 5% rule).
 CAUGHT_UP_PROB = 0.05
 
+# Threshold-crossing gap analysis (ported from open_closed_gap; see
+# docs/specs/2026-07-01-threshold-gap-integration-design.md).
+try:
+    from threshold_gap import build_threshold_analysis, build_threshold_aggregate
+    THRESHOLD_GAP_AVAILABLE = True
+except Exception as e:  # pragma: no cover - defensive
+    build_threshold_analysis = None
+    build_threshold_aggregate = None
+    THRESHOLD_GAP_AVAILABLE = False
+    print(f"Note: threshold gap module unavailable ({e})")
+
+
+def compute_threshold_block(df, benchmark_id: str, *, score_col: str,
+                            model_col: str) -> Optional[dict]:
+    """Fail-open wrapper: threshold analysis must never kill the pipeline."""
+    if not THRESHOLD_GAP_AVAILABLE:
+        return None
+    try:
+        return build_threshold_analysis(
+            df, benchmark_id, score_col=score_col, model_col=model_col)
+    except Exception as e:
+        logger.warning(f"Threshold analysis failed for {benchmark_id}: {e}")
+        return None
+
 def get_rank(
     df: pd.DataFrame,
     n: int | None = None,
@@ -1313,6 +1337,8 @@ def process_data() -> dict[str, Any]:
             "statistics": china_stats,
             "historical_gaps": china_historical,
         },
+        "threshold_analysis": compute_threshold_block(
+            df_combined, "eci", score_col="eci", model_col="Model"),
         "last_updated": datetime.now().isoformat(),
     }
 
@@ -1420,6 +1446,8 @@ def process_benchmark_data(benchmark_id: str, benchmark_data: dict) -> Optional[
         "statistics": stats,
         "trends": trends,
         "historical_gaps": historical_gaps,
+        "threshold_analysis": compute_threshold_block(
+            df_combined, benchmark_id, score_col="score", model_col="model"),
     }
 
 
@@ -1566,6 +1594,9 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
         "trends": trends,
         "historical_gaps": historical_gaps,
         "china_framing": china_framing,
+        "threshold_analysis": compute_threshold_block(
+            df_combined, "metr_time_horizon", score_col="score",
+            model_col="model"),
     }
 
 
@@ -1595,6 +1626,7 @@ def process_all_benchmarks() -> dict:
         "historical_gaps": eci_data["historical_gaps"],
         "frontier_matches": eci_data["frontier_matches"],
         "china_framing": eci_data["china_framing"],
+        "threshold_analysis": eci_data["threshold_analysis"],
     }
 
     # Process METR Time Horizon benchmark
@@ -1671,9 +1703,17 @@ def process_all_benchmarks() -> dict:
     else:
         logger.warning("No benchmark fetcher available - only ECI and METR will be processed")
 
+    threshold_aggregate = None
+    if THRESHOLD_GAP_AVAILABLE:
+        try:
+            threshold_aggregate = build_threshold_aggregate(benchmarks)
+        except Exception as e:
+            logger.warning(f"Threshold aggregate failed: {e}")
+
     return {
         "benchmarks": benchmarks,
         "default_benchmark": "eci",
+        "threshold_aggregate": threshold_aggregate,
         "last_updated": datetime.now().isoformat(),
     }
 
