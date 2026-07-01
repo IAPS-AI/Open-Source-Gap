@@ -21,6 +21,7 @@ This application visualizes how long it takes for open-source models to "match" 
 -   **Interactive Timeline:** Explore model releases and performance gaps over time.
 -   **Frontier Tracking:** Focuses on the "frontier" of AI capabilities.
 -   **Statistical Analysis:** Automatically calculates the average gap and confidence intervals.
+-   **Threshold-Crossing Analysis:** For each benchmark score threshold, how much later the first open model reached it than the first closed model (methodology ported from [open_closed_gap](https://github.com/htihle/open_closed_gap); published in `data.json` under `threshold_analysis` / `threshold_aggregate`).
 -   **Live Data:** Fetches the latest scores daily from Epoch AI.
 
 ## Setup
