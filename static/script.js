@@ -76,6 +76,8 @@ let appState = {
     gapMetric: 'average', // 'average' or 'current'
     framing: 'open', // 'open' or 'china'
     currentBenchmark: 'eci', // Current selected benchmark
+    tableSort: { key: 'date', dir: 'desc' }, // raw-data table sort state
+    tableData: null, // last-rendered table inputs, for re-sorting
 };
 
 /**
@@ -128,6 +130,9 @@ async function init() {
 
         // Set up toggle button handlers
         setupToggleHandlers();
+
+        // Column-sorting for the raw-data table
+        setupTableSorting();
 
         // Wire PNG download for gap-over-time chart
         setupHistoricalChartDownload();
@@ -666,7 +671,7 @@ function renderAll() {
     renderHistoricalChart(currentData);
     updateDisplay();
     updateLastUpdated(currentData.last_updated);
-    renderTable(currentData.trend_models || currentData.models);
+    renderTable(currentData.trend_models || currentData.models, currentData.gaps);
 }
 
 /**
@@ -2192,23 +2197,109 @@ document.addEventListener('DOMContentLoaded', init);
 /**
  * Render the raw data table
  */
-function renderTable(models) {
+function buildMatchInfo(gaps) {
+    // Two lookups from the per-benchmark gaps (framing-aware, since callers
+    // pass the current framing's gaps):
+    //   asReference — this model was first MATCHED BY the stored model
+    //   asMatcher   — this model was the first to MATCH the stored model
+    //                 (kept for its most recent catch, i.e. max reference date)
+    const asReference = new Map();
+    const asMatcher = new Map();
+    (gaps || []).forEach(g => {
+        if (!g.matched || !g.open_model) return;
+        const refDate = new Date(g.closed_date);
+        const days = Math.round((new Date(g.open_date) - refDate) / 86400000);
+        if (!asReference.has(g.closed_model)) {
+            asReference.set(g.closed_model, { model: g.open_model, days });
+        }
+        const prev = asMatcher.get(g.open_model);
+        if (!prev || refDate > prev.refDate) {
+            asMatcher.set(g.open_model, { model: g.closed_model, days, refDate });
+        }
+    });
+    return { asReference, asMatcher };
+}
+
+const TABLE_SORT_ACCESSORS = {
+    model: (r) => String(r.display_name || r.model || '').toLowerCase(),
+    date: (r) => new Date(r.date).getTime(),
+    score: (r) => r._score,
+    type: (r) => (r.is_open ? 1 : 0),
+    org: (r) => String(r.organization || '').toLowerCase(),
+    match: (r) => (r._match ? String(r._match.model).toLowerCase() : null),
+    days: (r) => (r._match ? r._match.days : null),
+};
+
+function setupTableSorting() {
+    document.querySelectorAll('#eci-table th[data-sort-key]').forEach(th => {
+        th.addEventListener('click', () => {
+            const key = th.dataset.sortKey;
+            if (appState.tableSort.key === key) {
+                appState.tableSort.dir = appState.tableSort.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                // Text columns start ascending; numeric/date columns descending.
+                const ascFirst = ['model', 'org', 'type', 'match'].includes(key);
+                appState.tableSort = { key, dir: ascFirst ? 'asc' : 'desc' };
+            }
+            if (appState.tableData) {
+                renderTable(appState.tableData.models, appState.tableData.gaps);
+            }
+        });
+    });
+}
+
+function updateSortIndicators() {
+    const { key, dir } = appState.tableSort;
+    document.querySelectorAll('#eci-table th[data-sort-key]').forEach(th => {
+        th.classList.toggle('sorted-asc', th.dataset.sortKey === key && dir === 'asc');
+        th.classList.toggle('sorted-desc', th.dataset.sortKey === key && dir === 'desc');
+    });
+}
+
+function renderTable(models, gaps) {
+    appState.tableData = { models, gaps };
     const tableBody = document.querySelector('#eci-table tbody');
     tableBody.innerHTML = '';
 
     // Get score field for current benchmark
     const scoreField = getScoreField();
+    const { asReference, asMatcher } = buildMatchInfo(gaps);
 
-    // Sort models by date descending
-    const sortedModels = [...models].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const rows = models.map(model => {
+        const score = model[scoreField] ?? model.eci ?? model.score;
+        const name = model.model;
+        const ref = asReference.get(name);
+        const matcher = ref ? null : asMatcher.get(name);
+        return {
+            ...model,
+            _score: score !== null && score !== undefined ? score : null,
+            _match: ref || matcher || null,
+            _matchRole: ref ? 'matched by' : (matcher ? 'matched' : null),
+        };
+    });
 
-    sortedModels.forEach(model => {
+    const { key, dir } = appState.tableSort;
+    const accessor = TABLE_SORT_ACCESSORS[key] || TABLE_SORT_ACCESSORS.date;
+    const sign = dir === 'asc' ? 1 : -1;
+    rows.sort((a, b) => {
+        const va = accessor(a);
+        const vb = accessor(b);
+        const aMissing = va === null || va === undefined || (typeof va === 'number' && isNaN(va));
+        const bMissing = vb === null || vb === undefined || (typeof vb === 'number' && isNaN(vb));
+        if (aMissing && bMissing) return 0;
+        if (aMissing) return 1;  // missing values always sort last
+        if (bMissing) return -1;
+        if (va < vb) return -sign;
+        if (va > vb) return sign;
+        return 0;
+    });
+
+    rows.forEach(model => {
         const row = document.createElement('tr');
 
         const typeClass = model.is_open ? 'type-open' : 'type-closed';
         const typeLabel = model.is_open ? 'Open' : 'Closed';
-        const score = model[scoreField] ?? model.eci ?? model.score;
-        const scoreValue = score !== null && score !== undefined ? score.toFixed(1) : '-';
+        const scoreValue = model._score !== null ? model._score.toFixed(1) : '-';
 
         // For METR, show additional info in the score cell
         let scoreDisplay = scoreValue;
@@ -2221,14 +2312,23 @@ function renderTable(models) {
             ? `${model.organization} <span style="color: #999; font-size: 0.85em;">(v${model.source_version})</span>`
             : model.organization;
 
+        const matchDisplay = model._match
+            ? `<span class="match-role">${model._matchRole}</span> ${model._match.model}`
+            : '—';
+        const daysDisplay = model._match ? model._match.days : '—';
+
         row.innerHTML = `
             <td>${model.display_name || model.model}</td>
             <td>${new Date(model.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</td>
             <td>${scoreDisplay}</td>
             <td><span class=\"model-type ${typeClass}\">${typeLabel}</span></td>
             <td>${orgDisplay}</td>
+            <td>${matchDisplay}</td>
+            <td>${daysDisplay}</td>
         `;
         tableBody.appendChild(row);
     });
+
+    updateSortIndicators();
 }
 

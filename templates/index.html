@@ -143,11 +143,13 @@
                 <table id="eci-table">
                     <thead>
                         <tr>
-                            <th>Model</th>
-                            <th>Release Date</th>
-                            <th id="score-header">Score</th>
-                            <th>Type</th>
-                            <th>Organization</th>
+                            <th class="sortable" data-sort-key="model">Model</th>
+                            <th class="sortable" data-sort-key="date">Release Date</th>
+                            <th class="sortable" data-sort-key="score" id="score-header">Score</th>
+                            <th class="sortable" data-sort-key="type">Type</th>
+                            <th class="sortable" data-sort-key="org">Organization</th>
+                            <th class="sortable" data-sort-key="match">First Matched With</th>
+                            <th class="sortable" data-sort-key="days">Days to Match</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -155,6 +157,9 @@
                     </tbody>
                 </table>
             </div>
+            <p class="subtitle" style="margin-top: var(--spacing-sm);">
+                <em>Click a column header to sort. "First Matched With": for reference (closed-side) models, the first open-side model to match their score; for matcher models, the most recent reference model whose score they were first to match. Only frontier models participate in matching.</em>
+            </p>
         </details>
 
         <footer class="footer">
@@ -164,6 +169,6 @@
         </footer>
     </div>
 
-    <script src="static/script.js?v=25"></script>
+    <script src="static/script.js?v=27"></script>
 </body>
 </html>

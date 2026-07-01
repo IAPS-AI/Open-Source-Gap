@@ -56,6 +56,44 @@ def test_legacy_inline_styles_removed(client):
     assert 'id="historical-chart" style=' not in html
 
 
+TABLE_SORT_ANCHORS = (
+    'data-sort-key="model"',
+    'data-sort-key="date"',
+    'data-sort-key="score"',
+    'data-sort-key="type"',
+    'data-sort-key="org"',
+    'data-sort-key="match"',
+    'data-sort-key="days"',
+)
+
+
+def test_table_sortable_headers_present(client):
+    """The raw-data table headers carry data-sort-key attributes the JS
+    sorting relies on, including the two new match columns."""
+    html = client.get("/").get_data(as_text=True)
+    for anchor in TABLE_SORT_ANCHORS:
+        assert anchor in html, f"Missing anchor: {anchor}"
+
+
+def test_table_sortable_headers_in_root_index():
+    root_html = (Path(__file__).parent.parent / "index.html").read_text(
+        encoding="utf-8"
+    )
+    for anchor in TABLE_SORT_ANCHORS:
+        assert anchor in root_html, f"Missing anchor in root index.html: {anchor}"
+
+
+def test_table_sorting_wired_in_js():
+    js = (Path(__file__).parent.parent / "static" / "script.js").read_text(
+        encoding="utf-8"
+    )
+    assert "function setupTableSorting" in js
+    assert "setupTableSorting()" in js
+    assert "tableSort" in js
+    # match-info lookup built from the per-benchmark gaps
+    assert "function buildMatchInfo" in js
+
+
 def test_root_static_index_matches_chart_structure():
     """GitHub Pages serves the root index.html (not the Flask template), so
     chart-structure changes must be mirrored there too. Drifting markup was

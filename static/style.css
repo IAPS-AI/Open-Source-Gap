@@ -545,6 +545,33 @@ details.explainer-panel[open] .explainer-summary::before {
     box-shadow: inset 0 -1px 0 var(--color-border);
 }
 
+#eci-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+#eci-table th.sortable:hover {
+    background-color: #eef2f7;
+}
+
+#eci-table th.sorted-asc::after {
+    content: ' \25B2';
+    font-size: 0.7em;
+    color: var(--color-text-muted);
+}
+
+#eci-table th.sorted-desc::after {
+    content: ' \25BC';
+    font-size: 0.7em;
+    color: var(--color-text-muted);
+}
+
+#eci-table td .match-role {
+    color: var(--color-text-muted);
+    font-size: 0.85em;
+}
+
 #eci-table thead::after {
     content: '';
     position: absolute;
