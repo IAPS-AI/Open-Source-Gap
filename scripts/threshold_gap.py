@@ -290,3 +290,158 @@ def gaussian_smooth_with_ci(
         lo = np.nanquantile(boot, alpha, axis=0)
         hi = np.nanquantile(boot, 1 - alpha, axis=0)
     return pd.Series(grid), pd.Series(central), pd.Series(lo), pd.Series(hi)
+
+
+def _iso(ts) -> str | None:
+    if ts is None or pd.isna(ts):
+        return None
+    return pd.Timestamp(ts).isoformat()
+
+
+def summarize_datapoints(datapoints: list[dict]) -> dict:
+    accepted = [r for r in datapoints if r["accepted"]]
+    med = (round(float(np.median([r["gap_months"] for r in accepted])), 1)
+           if accepted else None)
+    return {
+        "n_thresholds": len(datapoints),
+        "n_valid": sum(1 for r in datapoints if r["valid"]),
+        "n_accepted": len(accepted),
+        "n_still_open": sum(1 for r in datapoints if r["still_open"]),
+        "median_gap_months": med,
+    }
+
+
+def build_threshold_analysis(
+    df: pd.DataFrame,
+    benchmark_id: str,
+    *,
+    score_col: str = "score",
+    model_col: str = "model",
+    date_col: str = "date",
+    open_col: str = "Open",
+    as_of=None,
+) -> dict:
+    """JSON-ready `threshold_analysis` block for one benchmark."""
+    review = THRESHOLD_REVIEW.get(benchmark_id, {})
+    datapoints = compute_threshold_datapoints(
+        df,
+        score_col=score_col,
+        model_col=model_col,
+        date_col=date_col,
+        open_col=open_col,
+        thresholds=review.get("thresholds"),
+        accepted_thresholds=review.get("accepted_thresholds"),
+        validity_floor=review.get("validity_floor"),
+        as_of=as_of,
+    )
+    out_points = [
+        {
+            **r,
+            "first_closed_date": _iso(r["first_closed_date"]),
+            "first_open_date": _iso(r["first_open_date"]),
+        }
+        for r in datapoints
+    ]
+    floor = (out_points[0]["validity_floor"] if out_points
+             else review.get("validity_floor"))
+    accepted = review.get("accepted_thresholds")
+    config = {
+        "keep": bool(review.get("keep", False)),
+        "data_access": review.get("data_access"),
+        "validity_floor": floor,
+        "thresholds": ([float(x) for x in review["thresholds"]]
+                       if review.get("thresholds") else None),
+        "accepted_thresholds": ([float(x) for x in accepted]
+                                if accepted else None),
+        "source_review": review.get("source_review"),
+    }
+    return {
+        "config": config,
+        "datapoints": out_points,
+        "summary": summarize_datapoints(datapoints),
+    }
+
+
+def build_threshold_aggregate(benchmarks: dict) -> dict:
+    """Pool accepted datapoints from keep=True benchmarks; smooth the gap
+    over time (overall + public/private split), mirroring the source's
+    combined-by-access analysis. `benchmarks` maps benchmark id -> processed
+    benchmark dict (with `metadata` and `threshold_analysis`)."""
+    datapoints: list[dict] = []
+    for bid, bench in benchmarks.items():
+        ta = (bench or {}).get("threshold_analysis")
+        if not ta or not ta.get("config", {}).get("keep"):
+            continue
+        access = ta["config"].get("data_access")
+        name = (bench.get("metadata") or {}).get("name", bid)
+        for r in ta["datapoints"]:
+            if not r.get("accepted"):
+                continue
+            datapoints.append({
+                "benchmark_id": bid,
+                "benchmark_name": name,
+                "data_access": access,
+                "threshold": r["threshold"],
+                "first_closed_model": r["first_closed_model"],
+                "first_closed_date": r["first_closed_date"],
+                "first_open_model": r["first_open_model"],
+                "first_open_date": r["first_open_date"],
+                "gap_days": r["gap_days"],
+                "gap_months": r["gap_months"],
+            })
+    datapoints.sort(key=lambda p: (p["first_open_date"], p["benchmark_id"]))
+
+    def trend_for(points: list[dict]):
+        if len(points) < 2:
+            return None
+        grid, mean, lo, hi = gaussian_smooth_with_ci(
+            pd.Series([p["first_open_date"] for p in points]),
+            pd.Series([p["gap_months"] for p in points]),
+        )
+        out = []
+        for g, m, l, h in zip(grid, mean, lo, hi):
+            if not np.isfinite(m):
+                continue
+            out.append({
+                "date": pd.Timestamp(g).date().isoformat(),
+                "mean": round(float(m), 2),
+                "lo": round(float(l), 2) if np.isfinite(l) else None,
+                "hi": round(float(h), 2) if np.isfinite(h) else None,
+            })
+        if not out:
+            return None
+        return {
+            "points": out,
+            "n_datapoints": len(points),
+            "n_benchmarks": len({p["benchmark_id"] for p in points}),
+        }
+
+    groups = {
+        "overall": datapoints,
+        "public": [p for p in datapoints if p["data_access"] == "public"],
+        "private": [p for p in datapoints if p["data_access"] == "private"],
+    }
+    trends: dict = {}
+    medians: dict = {}
+    for key, pts in groups.items():
+        t = trend_for(pts)
+        if t is not None:
+            trends[key] = t
+        if pts:
+            medians[key] = round(
+                float(np.median([p["gap_months"] for p in pts])), 1)
+
+    return {
+        "datapoints": datapoints,
+        "trends": trends,
+        "medians": medians,
+        "parameters": {
+            "bandwidth_days": SMOOTH_BANDWIDTH_DAYS,
+            "step_days": SMOOTH_STEP_DAYS,
+            "n_boot": SMOOTH_N_BOOT,
+            "ci": SMOOTH_CI,
+            "min_ess": SMOOTH_MIN_ESS,
+            "seed": SMOOTH_SEED,
+        },
+        "source": "open_closed_gap threshold-crossing methodology",
+    }

@@ -250,3 +250,118 @@ class TestGaussianSmoother:
             pd.Series(dtype="datetime64[ns]"), pd.Series(dtype=float)
         )
         assert len(grid) == 0 and len(mean) == 0
+
+
+from threshold_gap import (  # noqa: E402
+    build_threshold_analysis,
+    build_threshold_aggregate,
+    summarize_datapoints,
+    THRESHOLD_REVIEW,
+)
+
+
+def _gpqa_like_df():
+    return make_df([
+        ("closed-1", "2023-01-01", 40.0, False),
+        ("closed-2", "2023-06-01", 60.0, False),
+        ("open-1", "2023-10-01", 45.0, True),
+        ("open-2", "2024-04-01", 62.0, True),
+    ])
+
+
+class TestBuildThresholdAnalysis:
+    def test_reviewed_benchmark_uses_review_config(self):
+        block = build_threshold_analysis(_gpqa_like_df(), "gpqa_diamond")
+        assert block["config"]["keep"] is True
+        assert block["config"]["data_access"] == "public"
+        assert block["config"]["validity_floor"] == 20.0
+        assert 35.0 in block["config"]["accepted_thresholds"]
+        assert block["config"]["source_review"] == "open_closed_gap"
+
+    def test_unreviewed_benchmark_defaults(self):
+        block = build_threshold_analysis(_gpqa_like_df(), "some_new_benchmark")
+        assert block["config"]["keep"] is False
+        assert block["config"]["accepted_thresholds"] is None
+        assert block["config"]["source_review"] is None
+
+    def test_dates_are_iso_strings_and_json_safe(self):
+        block = build_threshold_analysis(
+            _gpqa_like_df(), "gpqa_diamond", as_of="2024-06-01"
+        )
+        assert block["datapoints"], "expected datapoints"
+        for r in block["datapoints"]:
+            assert isinstance(r["first_closed_date"], str)
+        json.dumps(block, allow_nan=False)  # raises on NaN/NaT leakage
+
+    def test_summary_median_over_accepted(self):
+        block = build_threshold_analysis(_gpqa_like_df(), "gpqa_diamond")
+        s = block["summary"]
+        accepted = [r for r in block["datapoints"] if r["accepted"]]
+        assert s["n_accepted"] == len(accepted)
+        med = float(np.median([r["gap_months"] for r in accepted]))
+        assert s["median_gap_months"] == pytest.approx(round(med, 1))
+
+    def test_summary_empty(self):
+        s = summarize_datapoints([])
+        assert s["n_accepted"] == 0
+        assert s["median_gap_months"] is None
+
+
+class TestBuildThresholdAggregate:
+    def _benchmarks(self):
+        gpqa = {
+            "metadata": {"name": "GPQA Diamond"},
+            "threshold_analysis": build_threshold_analysis(
+                _gpqa_like_df(), "gpqa_diamond"
+            ),
+        }
+        # keep=False review entry: must be excluded from the aggregate
+        chess = {
+            "metadata": {"name": "Chess Puzzles"},
+            "threshold_analysis": build_threshold_analysis(
+                _gpqa_like_df(), "chess_puzzles"
+            ),
+        }
+        # private KEEP benchmark
+        fm_df = make_df([
+            ("closed-a", "2024-01-01", 12.0, False),
+            ("open-a", "2024-11-01", 13.0, True),
+        ])
+        fm = {
+            "metadata": {"name": "FrontierMath"},
+            "threshold_analysis": build_threshold_analysis(
+                fm_df, "frontiermath_public"
+            ),
+        }
+        return {"gpqa_diamond": gpqa, "chess_puzzles": chess,
+                "frontiermath_public": fm, "no_ta": {"metadata": {"name": "x"}}}
+
+    def test_only_keep_benchmarks_pooled(self):
+        agg = build_threshold_aggregate(self._benchmarks())
+        ids = {p["benchmark_id"] for p in agg["datapoints"]}
+        assert "chess_puzzles" not in ids
+        assert "gpqa_diamond" in ids and "frontiermath_public" in ids
+
+    def test_datapoints_are_accepted_only(self):
+        agg = build_threshold_aggregate(self._benchmarks())
+        assert all(p["gap_months"] is not None for p in agg["datapoints"])
+
+    def test_medians_and_access_split(self):
+        agg = build_threshold_aggregate(self._benchmarks())
+        assert "overall" in agg["medians"]
+        assert "public" in agg["medians"]
+        assert "private" in agg["medians"]
+
+    def test_json_safe(self):
+        json.dumps(build_threshold_aggregate(self._benchmarks()),
+                   allow_nan=False)
+
+    def test_trend_omitted_when_too_few_points(self):
+        benchmarks = {k: v for k, v in self._benchmarks().items()
+                      if k == "frontiermath_public"}
+        agg = build_threshold_aggregate(benchmarks)
+        # one accepted pair -> <2 datapoints on the private side is possible;
+        # whatever survives, trends must only contain entries with points
+        for t in agg["trends"].values():
+            assert t["points"]
+        assert agg["parameters"]["bandwidth_days"] == 60.0
