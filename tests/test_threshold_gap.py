@@ -128,3 +128,77 @@ class TestComputeDatapoints:
                            "score": 99.0, "Open": False}
         rows = compute_threshold_datapoints(df, thresholds=[75.0])
         assert rows[0]["first_closed_model"] == "c"
+
+
+class TestValidityAndDedup:
+    def _pair_df(self):
+        # closed C1 crosses 50/55/60 first at 2023-01-01 (score 62);
+        # open O1 crosses the same three at 2023-07-01 (score 63)
+        # => one pair spanning thresholds 50, 55, 60.
+        return make_df([
+            ("C1", "2023-01-01", 62.0, False),
+            ("O1", "2023-07-01", 63.0, True),
+        ])
+
+    def test_one_accepted_representative_at_highest_threshold(self):
+        rows = compute_threshold_datapoints(
+            self._pair_df(), thresholds=[50.0, 55.0, 60.0],
+            accepted_thresholds=[50.0, 55.0, 60.0],
+        )
+        accepted = [r for r in rows if r["accepted"]]
+        assert len(accepted) == 1
+        assert accepted[0]["threshold"] == 60.0
+        assert all(r["valid"] for r in rows)
+
+    def test_representative_can_sit_outside_allowlist(self):
+        # Only T=50 is review-accepted, but the pair spans up to 60:
+        # the representative datapoint moves to the pair's highest threshold.
+        rows = compute_threshold_datapoints(
+            self._pair_df(), thresholds=[50.0, 55.0, 60.0],
+            accepted_thresholds=[50.0],
+        )
+        accepted = [r for r in rows if r["accepted"]]
+        assert len(accepted) == 1
+        assert accepted[0]["threshold"] == 60.0
+        assert accepted[0]["valid"] is False  # not itself allowlisted
+
+    def test_allowlist_overrides_floor(self):
+        rows = compute_threshold_datapoints(
+            self._pair_df(), thresholds=[50.0, 55.0, 60.0],
+            accepted_thresholds=[55.0], validity_floor=0.0,
+        )
+        by_t = {r["threshold"]: r for r in rows}
+        assert by_t[50.0]["valid"] is False
+        assert by_t[55.0]["valid"] is True
+        assert by_t[60.0]["valid"] is False
+
+    def test_floor_validity_is_strictly_above(self):
+        rows = compute_threshold_datapoints(
+            self._pair_df(), thresholds=[50.0, 55.0], validity_floor=50.0,
+        )
+        by_t = {r["threshold"]: r for r in rows}
+        assert by_t[50.0]["valid"] is False  # t > floor required
+        assert by_t[55.0]["valid"] is True
+
+    def test_allowlist_membership_is_float_rounding_safe(self):
+        rows = compute_threshold_datapoints(
+            self._pair_df(), thresholds=[0.1 + 0.2],  # 0.30000000000000004
+            accepted_thresholds=[0.3],
+        )
+        assert rows[0]["valid"] is True
+
+    def test_two_distinct_pairs_two_representatives(self):
+        df = make_df([
+            ("C1", "2023-01-01", 55.0, False),   # first closed over 50
+            ("C2", "2023-03-01", 82.0, False),   # first closed over 80
+            ("O1", "2023-09-01", 57.0, True),    # first open over 50
+            ("O2", "2024-01-01", 85.0, True),    # first open over 80
+        ])
+        rows = compute_threshold_datapoints(
+            df, thresholds=[50.0, 80.0],
+            accepted_thresholds=[50.0, 80.0],
+        )
+        accepted = [r for r in rows if r["accepted"]]
+        assert len(accepted) == 2
+        assert {(r["first_closed_model"], r["first_open_model"])
+                for r in accepted} == {("C1", "O1"), ("C2", "O2")}
