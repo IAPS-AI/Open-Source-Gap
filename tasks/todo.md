@@ -30,5 +30,14 @@ Plan: `docs/plans/2026-07-01-threshold-gap-integration.md`
 - Gemini review: 1 finding was a misread (dedup already selects the pair's
   highest overall threshold — proven by test), 2 were intentional methodology
   ports, 1 comment-clarity fix applied.
-- Follow-up (not in scope): frontend chart for the new `threshold_aggregate`
-  data; external-leaderboard fetchers (WeirdML, ARC-AGI, …) if desired.
+- Frontend chart was shipped 2026-07-01 then removed the same day at user
+  request (commit 9449aa4, reverted). The calculation pipeline and data.json
+  sections remain; the chart code is recoverable from history if wanted.
+- Follow-up (not in scope): external-leaderboard fetchers (WeirdML, ARC-AGI, …)
+  if desired.
+
+# Calculation-Logic Audit vs open_closed_gap (2026-07-01)
+
+- [ ] Compare update_data.py / app.py / threshold_gap.py against source analysis.py
+- [ ] Write audit report with findings + recommendations
+- [ ] Implement clear correctness improvements (if any)
