@@ -32,6 +32,9 @@ SMOOTH_SEED = 0
 # horizons are minutes in both). keep=False benchmarks still get per-benchmark
 # datapoints but are excluded from the cross-benchmark aggregate (source
 # DISCARD verdicts; ECI excluded as a composite index).
+# Key roles: `thresholds` is the evaluation GRID (when absent, auto-derived
+# from the data; grid rungs above both frontiers surface as still-open rows),
+# while `accepted_thresholds` is the review ALLOWLIST deciding validity.
 THRESHOLD_REVIEW: dict[str, dict] = {
     "gpqa_diamond": {
         "accepted_thresholds": [35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0,
