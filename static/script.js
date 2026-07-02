@@ -1477,21 +1477,21 @@ function getHistoricalLabels(framing) {
         return {
             laggard: 'Chinese',
             leader: 'US',
-            laggardModel: 'Chinese release',
-            leaderModelMatched: 'First US model to reach this score',
-            yAxisTitle: 'Months China lagged the US frontier at each Chinese release',
-            xAxisTitle: 'Chinese frontier release date',
-            behindHeader: 'months behind US frontier',
+            referenceModel: 'US release',
+            matcherModel: 'First Chinese model to match',
+            yAxisTitle: 'Months until each US frontier model was matched by a Chinese model',
+            xAxisTitle: 'US frontier release date',
+            behindHeader: 'months until a Chinese model matched it',
         };
     }
     return {
         laggard: 'Open',
         leader: 'Closed',
-        laggardModel: 'Open release',
-        leaderModelMatched: 'First closed model to reach this score',
-        yAxisTitle: 'Months open-source lagged the closed frontier at each open release',
-        xAxisTitle: 'Open-source frontier release date',
-        behindHeader: 'months behind closed frontier',
+        referenceModel: 'Closed release',
+        matcherModel: 'First open model to match',
+        yAxisTitle: 'Months until each closed frontier model was matched by an open model',
+        xAxisTitle: 'Closed frontier release date',
+        behindHeader: 'months until an open model matched it',
     };
 }
 
@@ -1543,15 +1543,6 @@ function renderHistoricalChart(data) {
     root.innerHTML = '';
     if (tooltipEl) tooltipEl.hidden = true;
 
-    const historicalGaps = (data.historical_gaps || []).slice()
-        .filter(g => g && g.date != null && g.gap_months != null);
-
-    if (historicalGaps.length === 0) {
-        root.innerHTML =
-            '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">No historical data available.</p>';
-        return;
-    }
-
     const framing = appState.framing;
     const labels = getHistoricalLabels(framing);
     const accent = getLaggardAccent(framing);
@@ -1566,35 +1557,43 @@ function renderHistoricalChart(data) {
     const isCurrentGapMode = appState.gapMetric === 'current';
     const currentEstimate = isCurrentGapMode ? (stats.current_gap_estimate || null) : null;
 
-    // ---- derive frontier events ----
+    // ---- datapoints: the server-computed per-reference-model matches ----
+    // One dot per matched reference (leader-side) frontier model, from the
+    // current framing's `gaps`: gap = months until the first laggard-side
+    // model plausibly caught up (Epoch's bootstrap criterion for ECI, the
+    // score threshold for other benchmarks). X = the reference release date.
     const benchmark = appState.data?.benchmarks?.[appState.currentBenchmark];
     const allModels = benchmark?.models || [];
-    let { laggard: laggardFrontierRaw, leader: leaderFrontier } =
-        buildFrontierEvents(allModels, framing, null);
+    // Laggard-side frontier releases still provide the bottom timeline ticks.
+    const { laggard: matcherTimeline } = buildFrontierEvents(allModels, framing, null);
 
-    // Match the same way the main chart does (Python's
-    // calculate_historical_gaps): the matched closed model is the FIRST
-    // closed (by date) whose score >= laggard.score - threshold. The gap
-    // is the months between the matched closed release and the laggard
-    // release. Releases with no matched closed, or where the matched
-    // closed is later than the laggard, are dropped.
-    const DAYS_PER_MONTH = 365.25 / 12;
-    const matchThreshold = Number(data.metadata?.threshold) || 0;
-    function firstLeaderToReach(score) {
-        for (const ld of leaderFrontier) {
-            if (ld.score >= score - matchThreshold) return ld;
-        }
-        return null;
-    }
-
-    // ECI ships a server-computed bootstrap match map; other benchmarks match
-    // client-side via the threshold above. Map framing -> server key.
-    const fkey = framing === 'china' ? 'china' : 'default';
-    const serverMatches = benchmark?.frontier_matches?.[fkey] || null;
+    const getGapClosedScore = (g) => g.closed_eci ?? g.closed_score;
+    const getGapOpenScore = (g) => g.open_eci ?? g.open_score;
+    const gapPoints = (data.gaps || [])
+        .filter(g => g && g.matched && g.open_model && g.closed_date && g.open_date
+                     && g.gap_months != null)
+        .map(g => ({
+            model: g.closed_model,
+            display: g.closed_model,
+            _d: parseUTCDate(g.closed_date),
+            score: getGapClosedScore(g),
+            gap: g.gap_months,
+            matcher: {
+                model: g.open_model,
+                display: g.open_model,
+                _d: parseUTCDate(g.open_date),
+                score: getGapOpenScore(g),
+            },
+        }))
+        .sort((a, b) => a._d - b._d);
+    gapPoints.forEach((ev, i) => {
+        ev.prevGap = i > 0 ? gapPoints[i - 1].gap : null;
+    });
 
     // Idempotent methodology note for the bootstrap-matched (ECI) view.
+    const usesBootstrap = (data.gaps || []).some(g => g.match_type === 'bootstrap');
     let methodNote = document.getElementById('historical-method-note');
-    if (serverMatches) {
+    if (usesBootstrap) {
         if (!methodNote && container) {
             methodNote = document.createElement('p');
             methodNote.id = 'historical-method-note';
@@ -1613,40 +1612,9 @@ function renderHistoricalChart(data) {
         methodNote.hidden = true;
     }
 
-    // For ECI, use the server's bootstrap match; otherwise the JS threshold.
-    // Named distinctly from the tooltip helper matchedLeaderFor(lag) defined
-    // later: function declarations hoist, so a duplicate name would override
-    // this one and the loop would silently call the wrong function.
-    function pickMatchedLeader(ev) {
-        if (serverMatches && Object.prototype.hasOwnProperty.call(serverMatches, ev.model)) {
-            const lm = serverMatches[ev.model];
-            if (lm === null) return null;               // server: no leader caught up
-            const found = leaderFrontier.find(l => l.model === lm);
-            if (found) return found;
-            // Server named a leader not present in this frontier view: degrade
-            // gracefully to the threshold match rather than dropping the laggard.
-            return firstLeaderToReach(ev.score);
-        }
-        return firstLeaderToReach(ev.score);
-    }
-
-    const laggardFrontier = [];
-    for (const ev of laggardFrontierRaw) {
-        const ld = pickMatchedLeader(ev);
-        if (!ld) continue;
-        const gapMonths = (ev._d - ld._d) / (1000 * 60 * 60 * 24) / DAYS_PER_MONTH;
-        if (gapMonths < 0) continue;
-        ev.gap = gapMonths;
-        ev.matchedLeader = ld;
-        laggardFrontier.push(ev);
-    }
-    laggardFrontier.forEach((ev, i) => {
-        ev.prevGap = i > 0 ? laggardFrontier[i - 1].gap : null;
-    });
-
-    if (laggardFrontier.length === 0) {
+    if (gapPoints.length === 0) {
         root.innerHTML =
-            '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">Not enough laggard-frontier releases to render chart.</p>';
+            '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">No matched reference models to chart yet.</p>';
         return;
     }
 
@@ -1663,11 +1631,11 @@ function renderHistoricalChart(data) {
     // X range: first → last laggard release (or today in current mode).
     // We give the chart a small horizontal pad on each side so the first/last
     // dots don't sit flush against the plot edges.
-    const firstLaggardDate = laggardFrontier[0]._d;
-    const lastLaggardDate = laggardFrontier[laggardFrontier.length - 1]._d;
+    const firstPointDate = gapPoints[0]._d;
+    const lastPointDate = gapPoints[gapPoints.length - 1]._d;
     const today = new Date();
-    const rawMin = firstLaggardDate;
-    const rawMax = isCurrentGapMode && currentEstimate ? today : lastLaggardDate;
+    const rawMin = firstPointDate;
+    const rawMax = isCurrentGapMode && currentEstimate ? today : lastPointDate;
     if (rawMax <= rawMin) {
         root.innerHTML =
             '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">Not enough data to render chart.</p>';
@@ -1678,7 +1646,7 @@ function renderHistoricalChart(data) {
     const xMax = new Date(rawMax.getTime() + pad);
 
     // Y range
-    const yValues = laggardFrontier.map(p => p.gap);
+    const yValues = gapPoints.map(p => p.gap);
     if (currentEstimate) yValues.push(currentEstimate.estimated_current_gap, currentEstimate.min_current_gap);
     const yMaxRaw = Math.max(...yValues, 1);
     const yMax = Math.ceil(yMaxRaw / 3) * 3 + 1;
@@ -1753,30 +1721,28 @@ function renderHistoricalChart(data) {
     svg.appendChild(xTitle);
 
     // ---- gap area + line (step function) ----
-    // The gap is constant between consecutive laggard releases (since the
-    // matched leader doesn't change until the next laggard release advances
-    // the frontier), so the line is a step function: horizontal at the
-    // previous gap until the next release, then a vertical step to the new
-    // gap. Each dot still anchors a vertex. The final segment extends flat
-    // to xMax (today, or last release + pad in average mode).
+    // Between consecutive reference releases the plotted gap holds at the
+    // previous reference model's time-to-match, then steps to the new value
+    // at the next release. Each dot anchors a vertex. The final segment
+    // extends flat to xMax (today, or last release + pad in average mode).
     const stepXY = [];
-    for (let i = 0; i < laggardFrontier.length; i++) {
-        const ev = laggardFrontier[i];
+    for (let i = 0; i < gapPoints.length; i++) {
+        const ev = gapPoints[i];
         if (i === 0) {
             stepXY.push([x(ev._d), y(ev.gap)]);
         } else {
-            const prev = laggardFrontier[i - 1];
+            const prev = gapPoints[i - 1];
             stepXY.push([x(ev._d), y(prev.gap)]);
             stepXY.push([x(ev._d), y(ev.gap)]);
         }
     }
-    const lastEv = laggardFrontier[laggardFrontier.length - 1];
+    const lastEv = gapPoints[gapPoints.length - 1];
     if (xMax > lastEv._d) {
         stepXY.push([x(xMax), y(lastEv.gap)]);
     }
     const linePts = stepXY.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
-    if (laggardFrontier.length >= 1) {
-        const leftX = x(laggardFrontier[0]._d);
+    if (gapPoints.length >= 1) {
+        const leftX = x(gapPoints[0]._d);
         const rightX = stepXY[stepXY.length - 1][0];
         const areaPts =
             `${leftX.toFixed(1)},${y(0).toFixed(1)} ` +
@@ -1787,8 +1753,8 @@ function renderHistoricalChart(data) {
     }
 
     // ---- current-gap projection (only in current mode) ----
-    if (currentEstimate && laggardFrontier.length) {
-        const last = laggardFrontier[laggardFrontier.length - 1];
+    if (currentEstimate && gapPoints.length) {
+        const last = gapPoints[gapPoints.length - 1];
         const minBound = currentEstimate.min_current_gap;
         const est = currentEstimate.estimated_current_gap;
         // Soft wedge: from last release at minBound up to today at est, back along baseline to last
@@ -1818,7 +1784,7 @@ function renderHistoricalChart(data) {
     const TICK_BOTTOM = tickTopY + 36;
     const LEADER_LABEL_Y = tickTopY + 42;
     let leaderRightX = -Infinity;
-    for (const ev of leaderFrontier) {
+    for (const ev of matcherTimeline) {
         const xp = x(ev._d);
         if (xp < M.left || xp > W - M.right) continue;
         const labelText = shortenModelName(ev.display);
@@ -1858,7 +1824,7 @@ function renderHistoricalChart(data) {
         { y: M.top - 28, rightX: -Infinity }, // lower (preferred)
     ];
     const placed = [];
-    for (const p of laggardFrontier) {
+    for (const p of gapPoints) {
         const xp = x(p._d);
         if (xp < M.left || xp > W - M.right) continue;
         const labelText = shortenModelName(p.display);
@@ -1919,17 +1885,16 @@ function renderHistoricalChart(data) {
     });
     svg.appendChild(hoverArea);
 
-    // Each laggard frontier event already carries the matched leader from
-    // the catch-up computation above.
-    function matchedLeaderFor(lag) {
-        return lag.matchedLeader || null;
+    // Each gap point already carries its first matcher from the server data.
+    function matcherFor(pt) {
+        return pt.matcher || null;
     }
 
     function nearestLaggard(d) {
-        if (laggardFrontier.length === 0) return null;
-        let best = laggardFrontier[0];
+        if (gapPoints.length === 0) return null;
+        let best = gapPoints[0];
         let bd = Math.abs(d - best._d);
-        for (const ev of laggardFrontier) {
+        for (const ev of gapPoints) {
             const diff = Math.abs(d - ev._d);
             if (diff < bd) { best = ev; bd = diff; }
         }
@@ -1955,7 +1920,7 @@ function renderHistoricalChart(data) {
         hoverDot.setAttribute('cx', xp);
         hoverDot.setAttribute('cy', yp);
         hoverDot.classList.add('is-active');
-        const ld = matchedLeaderFor(lag);
+        const ld = matcherFor(lag);
         tooltipEl.innerHTML = buildTooltipHTML(lag, ld, labels);
         // Position tooltip in container coords
         const rect = svg.getBoundingClientRect();
@@ -1966,29 +1931,30 @@ function renderHistoricalChart(data) {
         tooltipEl.hidden = false;
     }
 
-    function buildTooltipHTML(lag, ld, lbls) {
-        const lagSwatch = framing === 'china' ? 'cn' : 'cn'; // both use --c-cn token
-        const leaderRow = ld ? `
+    function buildTooltipHTML(pt, matcher, lbls) {
+        const scoreLabel = appState.currentBenchmark === 'eci' ? 'ECI' : 'Score';
+        const scoreMeta = (v) => (v != null && Number.isFinite(v) ? ` · ${scoreLabel} ${v.toFixed(1)}` : '');
+        const matcherRow = matcher ? `
             <div class="tt-row">
                 <span class="tt-swatch us"></span>
                 <div>
-                    <div class="tt-label">${escapeHTML(lbls.leaderModelMatched)}</div>
-                    <div class="tt-name">${escapeHTML(shortenModelName(ld.display))}</div>
-                    <div class="tt-meta">${escapeHTML(fmtDayLong(ld._d))} · ${escapeHTML(lbls.leader === 'US' ? 'ECI' : 'Score')} ${ld.score.toFixed(1)}</div>
+                    <div class="tt-label">${escapeHTML(lbls.matcherModel)}</div>
+                    <div class="tt-name">${escapeHTML(shortenModelName(matcher.display))}</div>
+                    <div class="tt-meta">${escapeHTML(fmtDayLong(matcher._d))}${escapeHTML(scoreMeta(matcher.score))}</div>
                 </div>
             </div>` : '';
         return `
-            <div class="tt-head">${lag.gap.toFixed(1)} ${escapeHTML(lbls.behindHeader)}</div>
-            <div class="tt-date">at ${escapeHTML(shortenModelName(lag.display))}'s release</div>
+            <div class="tt-head">${pt.gap.toFixed(1)} ${escapeHTML(lbls.behindHeader)}</div>
+            <div class="tt-date">${escapeHTML(shortenModelName(pt.display))}</div>
             <div class="tt-row">
-                <span class="tt-swatch ${lagSwatch}"></span>
+                <span class="tt-swatch cn"></span>
                 <div>
-                    <div class="tt-label">${escapeHTML(lbls.laggardModel)}</div>
-                    <div class="tt-name">${escapeHTML(shortenModelName(lag.display))}</div>
-                    <div class="tt-meta">${escapeHTML(fmtDayLong(lag._d))} · ${escapeHTML(lbls.leader === 'US' ? 'ECI' : 'Score')} ${lag.score.toFixed(1)}</div>
+                    <div class="tt-label">${escapeHTML(lbls.referenceModel)}</div>
+                    <div class="tt-name">${escapeHTML(shortenModelName(pt.display))}</div>
+                    <div class="tt-meta">${escapeHTML(fmtDayLong(pt._d))}${escapeHTML(scoreMeta(pt.score))}</div>
                 </div>
             </div>
-            ${leaderRow}
+            ${matcherRow}
         `;
     }
 
