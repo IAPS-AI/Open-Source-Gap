@@ -62,8 +62,6 @@ TABLE_SORT_ANCHORS = (
     'data-sort-key="score"',
     'data-sort-key="type"',
     'data-sort-key="org"',
-    'data-sort-key="match"',
-    'data-sort-key="days"',
 )
 
 
@@ -90,8 +88,6 @@ def test_table_sorting_wired_in_js():
     assert "function setupTableSorting" in js
     assert "setupTableSorting()" in js
     assert "tableSort" in js
-    # match-info lookup built from the per-benchmark gaps
-    assert "function buildMatchInfo" in js
 
 
 def test_root_static_index_matches_chart_structure():

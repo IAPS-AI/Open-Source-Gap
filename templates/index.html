@@ -148,8 +148,6 @@
                             <th class="sortable" data-sort-key="score" id="score-header">Score</th>
                             <th class="sortable" data-sort-key="type">Type</th>
                             <th class="sortable" data-sort-key="org">Organization</th>
-                            <th class="sortable" data-sort-key="match">First Matched With</th>
-                            <th class="sortable" data-sort-key="days">Days to Match</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -158,7 +156,7 @@
                 </table>
             </div>
             <p class="subtitle" style="margin-top: var(--spacing-sm);">
-                <em>Click a column header to sort. "First Matched With": for reference (closed-side) models, the first open-side model to match their score; for matcher models, the most recent reference model whose score they were first to match. Only frontier models participate in matching.</em>
+                <em>Click a column header to sort; click again to reverse.</em>
             </p>
         </details>
 
@@ -169,6 +167,6 @@
         </footer>
     </div>
 
-    <script src="static/script.js?v=27"></script>
+    <script src="static/script.js?v=28"></script>
 </body>
 </html>
