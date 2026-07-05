@@ -2261,7 +2261,7 @@
           "closed_date": "2025-12-11T00:00:00",
           "open_model": null,
           "open_date": null,
-          "gap_months": 6.7,
+          "gap_months": 6.8,
           "matched": false,
           "closed_eci": 154.6650039140592,
           "open_eci": null
@@ -2315,11 +2315,11 @@
         "total_matched": 12,
         "total_unmatched": 4,
         "current_gap_estimate": {
-          "estimated_current_gap": 10.0,
-          "min_current_gap": 6.7,
+          "estimated_current_gap": 10.1,
+          "min_current_gap": 6.8,
           "confidence": "high",
           "unmatched_ages": [
-            6.7,
+            6.8,
             4.9,
             4.0,
             2.4
@@ -4864,7 +4864,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 6.7,
+          "gap_months": 6.8,
           "matched": false
         },
         {
@@ -4915,7 +4915,7 @@
             10.9,
             7.5,
             7.3,
-            6.7,
+            6.8,
             4.9,
             2.9
           ],
@@ -5383,7 +5383,7 @@
             "open_model": null,
             "open_date": null,
             "open_score": null,
-            "gap_months": 6.7,
+            "gap_months": 6.8,
             "matched": false
           },
           {
@@ -5434,7 +5434,7 @@
               10.9,
               7.5,
               7.3,
-              6.7,
+              6.8,
               4.9,
               2.9
             ],
@@ -13824,7 +13824,7 @@
             "first_open_date": null,
             "gap_days": null,
             "gap_months": null,
-            "gap_months_so_far": 6.7,
+            "gap_months_so_far": 6.8,
             "valid": false,
             "accepted": false,
             "still_open": true,
@@ -14655,7 +14655,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.4,
+          "gap_months": 4.5,
           "matched": false
         }
       ],
@@ -14677,13 +14677,13 @@
         "total_matched": 5,
         "total_unmatched": 3,
         "current_gap_estimate": {
-          "estimated_current_gap": 13.7,
+          "estimated_current_gap": 13.8,
           "min_current_gap": 9.3,
           "confidence": "medium",
           "unmatched_ages": [
             9.3,
             7.5,
-            4.4
+            4.5
           ],
           "method": "survival_analysis_mle",
           "prior_from_first_match": false,
@@ -15081,7 +15081,7 @@
             "first_open_date": null,
             "gap_days": null,
             "gap_months": null,
-            "gap_months_so_far": 4.4,
+            "gap_months_so_far": 4.5,
             "valid": false,
             "accepted": false,
             "still_open": true,
@@ -15772,7 +15772,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 6.7,
+          "gap_months": 6.8,
           "matched": false
         },
         {
@@ -15782,7 +15782,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 4.4,
+          "gap_months": 4.5,
           "matched": false
         },
         {
@@ -15829,8 +15829,8 @@
           "confidence": "low",
           "unmatched_ages": [
             10.9,
-            6.7,
-            4.4,
+            6.8,
+            4.5,
             4.0,
             2.4
           ],
@@ -16123,7 +16123,7 @@
             "first_open_date": null,
             "gap_days": null,
             "gap_months": null,
-            "gap_months_so_far": 6.7,
+            "gap_months_so_far": 6.8,
             "valid": false,
             "accepted": false,
             "still_open": true,
@@ -16137,7 +16137,7 @@
             "first_open_date": null,
             "gap_days": null,
             "gap_months": null,
-            "gap_months_so_far": 6.7,
+            "gap_months_so_far": 6.8,
             "valid": false,
             "accepted": false,
             "still_open": true,
@@ -16151,7 +16151,7 @@
             "first_open_date": null,
             "gap_days": null,
             "gap_months": null,
-            "gap_months_so_far": 4.4,
+            "gap_months_so_far": 4.5,
             "valid": false,
             "accepted": false,
             "still_open": true,
@@ -16165,7 +16165,7 @@
             "first_open_date": null,
             "gap_days": null,
             "gap_months": null,
-            "gap_months_so_far": 4.4,
+            "gap_months_so_far": 4.5,
             "valid": false,
             "accepted": false,
             "still_open": true,
@@ -21117,5 +21117,5 @@
     },
     "source": "open_closed_gap threshold-crossing methodology"
   },
-  "last_updated": "2026-07-04T02:18:02.147160"
+  "last_updated": "2026-07-05T02:34:19.766297"
 }
