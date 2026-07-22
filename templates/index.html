@@ -93,7 +93,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="stat-ci">--</div>
-                <div class="stat-label">90% CI</div>
+                <div class="stat-label">90% Range (Daily Gap)</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="stat-matched">--</div>
@@ -109,6 +109,20 @@
             <summary class="explainer-summary">How is the current gap estimated?</summary>
             <div class="explainer-content">
                 <!-- Populated dynamically by script.js -->
+            </div>
+        </details>
+
+        <details id="caveats-panel" class="explainer-panel">
+            <summary class="explainer-summary">What this number does and does not measure</summary>
+            <div class="explainer-content">
+                <ul>
+                    <li><strong>Backward-looking by default.</strong> Published gaps measure how long ago the closed frontier reached the open frontier's current level. Catch-up projections from trend extrapolation are forecasts with wider, assumption-laden uncertainty, and are labeled as such.</li>
+                    <li><strong>Benchmark composition shapes the answer.</strong> Capabilities are domain-dependent: a model family can close the gap on coding while lagging in mathematics or in aggregate. The cross-benchmark threshold aggregate here leans on math/science benchmarks; check per-benchmark views before generalizing.</li>
+                    <li><strong>Matched-on-score is not matched-in-practice.</strong> Model size, token/reasoning efficiency, and serving cost are not factored in; a model can match a score while being far more expensive to run.</li>
+                    <li><strong>Release dates embed safety-testing lag.</strong> Closed frontier models typically undergo longer pre-release evaluation, so release-date gaps understate the underlying development gap.</li>
+                    <li><strong>Distillation can inflate apparent catch-up.</strong> Open-weight models may train against closed-model outputs, so a short measured gap does not by itself imply independent capability parity.</li>
+                    <li><strong>Benchmarks under-represent real-world tasks</strong> and rarely elicit maximum performance, for cost and time reasons.</li>
+                </ul>
             </div>
         </details>
 
@@ -167,6 +181,6 @@
         </footer>
     </div>
 
-    <script src="static/script.js?v=29"></script>
+    <script src="static/script.js?v=30"></script>
 </body>
 </html>

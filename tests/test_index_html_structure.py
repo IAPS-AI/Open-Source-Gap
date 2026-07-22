@@ -90,6 +90,23 @@ def test_table_sorting_wired_in_js():
     assert "tableSort" in js
 
 
+CAVEATS_ANCHOR = 'id="caveats-panel"'
+
+
+def test_caveats_panel_present(client):
+    """The standing 'what this measures' caveats panel must exist in the
+    served template."""
+    html = client.get("/").get_data(as_text=True)
+    assert CAVEATS_ANCHOR in html
+
+
+def test_caveats_panel_in_root_index():
+    root_html = (Path(__file__).parent.parent / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert CAVEATS_ANCHOR in root_html
+
+
 def test_root_static_index_matches_chart_structure():
     """GitHub Pages serves the root index.html (not the Flask template), so
     chart-structure changes must be mirrored there too. Drifting markup was

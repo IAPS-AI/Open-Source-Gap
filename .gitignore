@@ -5,3 +5,5 @@ __pycache__/
 
 # Cached ECI bootstrap draws (regenerated from eci_benchmarks.csv)
 data/eci_bootstrap_cache.npz
+# Local reference documents (never publish PDFs from the working tree)
+*.pdf

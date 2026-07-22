@@ -385,6 +385,7 @@ function getCurrentData() {
         gaps: benchmarkData.gaps,
         statistics: benchmarkData.statistics,
         trends: benchmarkData.trends,
+        trend_gap: benchmarkData.trend_gap || null,
         historical_gaps: benchmarkData.historical_gaps,
         metadata: benchmarkData.metadata,
         last_updated: data.last_updated,
@@ -397,6 +398,17 @@ function getCurrentData() {
             gaps: benchmarkData.china_framing.gaps || result.gaps,
             statistics: benchmarkData.china_framing.statistics || result.statistics,
             historical_gaps: benchmarkData.china_framing.historical_gaps || result.historical_gaps,
+            // No fallback to the open-vs-closed trend gap: showing the other
+            // framing's numbers would be worse than showing none.
+            trend_gap: benchmarkData.china_framing.trend_gap || null,
+        };
+    } else if (appState.framing === 'china') {
+        // Benchmark ships no China framing data at all: never present the
+        // open-vs-closed bracket/trend gap under China-vs-US labels.
+        result = {
+            ...result,
+            statistics: { ...result.statistics, current_lag_bracket: null },
+            trend_gap: null,
         };
     }
 
@@ -425,6 +437,75 @@ function updateDisplay() {
 
     // Re-render historical chart to reflect gap metric mode
     renderHistoricalChart(currentData);
+}
+
+/**
+ * Build the release-lag-bracket + trend-gap section of the explainer.
+ * Backward-looking numbers are measurements; the catch-up projection is a
+ * trend-conditional forecast and is labeled as such.
+ */
+function buildGapEstimatorsHtml(stats, trendGap) {
+    const labels = getFramingLabels();
+    // Backend dates are date-only or ISO-without-Z; parse and format as UTC
+    // so months don't shift for viewers west of UTC.
+    const fmtDate = (s) => parseUTCDate(s).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+    let html = '';
+
+    const bracket = stats.current_lag_bracket;
+    if (bracket && !bracket.laggard_leads && bracket.under_months !== null) {
+        const above = bracket.above_model;
+        const below = bracket.below_model;
+        const asOf = bracket.as_of ? ` as of ${fmtDate(bracket.as_of)}` : '';
+        if (below && bracket.over_months !== null) {
+            html += `
+            <p><strong>Release-lag bracket (backward-looking):</strong> the best ${labels.open} model
+            (<strong>${escapeHTML(bracket.laggard_model)}</strong>) sits between
+            <strong>${escapeHTML(below.model)}</strong> (${fmtDate(below.date)}) and
+            <strong>${escapeHTML(above.model)}</strong> (${fmtDate(above.date)}) on the ${labels.closed} frontier.
+            That brackets the gap${asOf} at <strong>${bracket.under_months} &ndash; ${bracket.over_months} months</strong>,
+            with an interpolated central estimate of <strong>${bracket.central_months} months</strong>.</p>`;
+        } else if (bracket.censored) {
+            html += `
+            <p><strong>Release-lag bracket (backward-looking):</strong> the ${labels.closed} frontier was already above the best
+            ${labels.open} model's level at the start of observed history, so the gap${asOf} is at least
+            <strong>${bracket.under_months} months</strong> (upper end unknown).</p>`;
+        }
+    } else if (bracket && bracket.laggard_leads) {
+        html += `
+        <p><strong>Release-lag bracket:</strong> the best ${labels.open} model currently tops every
+        ${labels.closed} release &mdash; no lag at the frontier.</p>`;
+    }
+
+    if (trendGap && trendGap.backward_gap_months !== null && trendGap.backward_gap_months !== undefined) {
+        const dir = trendGap.gap_change_months_per_year < 0 ? 'shrinking' : 'growing';
+        const rate = Math.abs(trendGap.gap_change_months_per_year).toFixed(1);
+        const asOf = trendGap.as_of ? ` as of ${fmtDate(trendGap.as_of)}` : '';
+        const ci = trendGap.backward_gap_ci_90
+            ? ` (90% CI ${trendGap.backward_gap_ci_90[0]}&ndash;${trendGap.backward_gap_ci_90[1]})`
+            : '';
+        html += `
+        <p><strong>Trend-based gap (backward-looking):</strong> fitting one trend line per group's frontier
+        puts the gap${asOf} at <strong>${trendGap.backward_gap_months} months</strong>${ci},
+        <strong>${dir} at ${rate} months/year</strong>.</p>`;
+
+        if (trendGap.forward_gap_months > 0 && trendGap.projected_catchup_date) {
+            const cci = trendGap.projected_catchup_ci_90
+                ? ` (90% CI ${fmtDate(trendGap.projected_catchup_ci_90[0])} &ndash; ${fmtDate(trendGap.projected_catchup_ci_90[1])})`
+                : '';
+            html += `
+            <p><strong>Forward-looking projection (a forecast, not a measurement):</strong> if both trends hold,
+            the ${labels.open} frontier reaches <strong>${escapeHTML(trendGap.leader_current_best.model)}</strong>'s current score
+            around <strong>${fmtDate(trendGap.projected_catchup_date)}</strong>${cci},
+            i.e. about ${trendGap.forward_gap_months} months after the trend evaluation date. Forward-looking estimates carry wider,
+            assumption-laden uncertainty than the backward-looking measurements above.</p>`;
+        } else if (trendGap.forward_gap_months !== null && trendGap.forward_gap_months !== undefined && trendGap.forward_gap_months <= 0) {
+            html += `
+            <p><strong>Forward-looking projection:</strong> the fitted ${labels.open} trend line has already reached the
+            ${labels.closed} frontier's current best score${asOf} &mdash; no future crossing to project.</p>`;
+        }
+    }
+
+    return html ? `<hr>${html}` : '';
 }
 
 /**
@@ -508,6 +589,10 @@ function showExplainer(stats, gaps) {
             </div>
         `;
     }
+
+    // Release-lag bracket + trend gap + forward projection (article-style
+    // estimator family), appended for every method branch.
+    content.innerHTML += buildGapEstimatorsHtml(stats, (getCurrentData() || {}).trend_gap);
 
     explainer.classList.remove('hidden');
 
@@ -920,6 +1005,50 @@ function renderTrendChart(data) {
         }
     ] : [];
 
+    // Trend-gap summary box: horizontal offset between the two fitted
+    // frontier trend lines (backward-looking), its velocity, and the
+    // trend-conditional catch-up projection (a forecast).
+    const trendGap = (getCurrentData() || {}).trend_gap;
+    if (trendGap && trendGap.backward_gap_months !== null && trendGap.backward_gap_months !== undefined) {
+        const dir = trendGap.gap_change_months_per_year < 0 ? 'shrinking' : 'growing';
+        const rate = Math.abs(trendGap.gap_change_months_per_year).toFixed(1);
+        const fmtD = (s) => parseUTCDate(s).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+        let boxText = `<b>Trend gap:</b> ${trendGap.backward_gap_months.toFixed(1)} mo`;
+        if (trendGap.backward_gap_ci_90) {
+            boxText += ` (90% CI ${trendGap.backward_gap_ci_90[0]}–${trendGap.backward_gap_ci_90[1]})`;
+        }
+        boxText += `<br>${dir} at ${rate} mo/yr`;
+        if (trendGap.as_of) {
+            boxText += ` · as of ${fmtD(trendGap.as_of)}`;
+        }
+        if (trendGap.forward_gap_months > 0 && trendGap.projected_catchup_date) {
+            boxText += `<br><b>Projected catch-up (forecast):</b> ${fmtD(trendGap.projected_catchup_date)}`;
+            if (trendGap.projected_catchup_ci_90) {
+                boxText += `<br>90% CI ${fmtD(trendGap.projected_catchup_ci_90[0])} – ${fmtD(trendGap.projected_catchup_ci_90[1])}`;
+            }
+        }
+        // The drawn dotted lines are client-side raw-space fits over ALL
+        // models; this box quantifies the frontier-only fit in transform
+        // space, so say so.
+        boxText += `<br><i>frontier-model fit, ${trendGap.transform} space</i>`;
+        annotations.push({
+            x: 0.02,
+            y: 0.98,
+            xref: 'paper',
+            yref: 'paper',
+            xanchor: 'left',
+            yanchor: 'top',
+            text: boxText,
+            showarrow: false,
+            align: 'left',
+            bgcolor: 'rgba(255, 255, 255, 0.92)',
+            bordercolor: '#94a3b8',
+            borderwidth: 1,
+            borderpad: 6,
+            font: { size: 11, color: '#333' },
+        });
+    }
+
     const layout = {
         title: { text: '', font: { size: 16 } },
         margin: { l: 60, r: 60, t: 40, b: 60 },
@@ -1117,7 +1246,7 @@ function renderChart(data) {
             const expectedLow = addMonths(releaseDate, statistics.ci_90_low);
             const expectedHigh = addMonths(releaseDate, statistics.ci_90_high);
             const formatDate = (d) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-            return `<b>${name}</b><br>${scoreName}: ${score?.toFixed(1) || 'N/A'}<br>Released: ${new Date(m.date).toLocaleDateString()}<br><i>Not yet matched</i><br><br><b>Expected catch-up (90% CI):</b><br>${formatDate(expectedLow)} – ${formatDate(expectedHigh)}`;
+            return `<b>${name}</b><br>${scoreName}: ${score?.toFixed(1) || 'N/A'}<br>Released: ${new Date(m.date).toLocaleDateString()}<br><i>Not yet matched</i><br><br><b>Catch-up if the historical gap range holds:</b><br>${formatDate(expectedLow)} – ${formatDate(expectedHigh)}<br><i>(range of past daily gaps, not a forecast interval)</i>`;
         });
 
         traces.push({
@@ -2109,9 +2238,11 @@ function updateStats(stats) {
     document.getElementById('stat-unmatched').textContent =
         stats.total_unmatched;
 
-    // Update stat labels for average gap view
+    // Update stat labels for average gap view. The interval is the 5th-95th
+    // percentile spread of the day-by-day gap series (dispersion), not a
+    // confidence interval for the average -- label it honestly.
     document.querySelector('#stat-avg-gap').closest('.stat-card').querySelector('.stat-label').textContent = 'Average Gap';
-    document.querySelector('#stat-ci').closest('.stat-card').querySelector('.stat-label').textContent = '90% CI';
+    document.querySelector('#stat-ci').closest('.stat-card').querySelector('.stat-label').textContent = '90% Range (Daily Gap)';
 }
 
 /**
@@ -2119,19 +2250,31 @@ function updateStats(stats) {
  */
 function updateStatsCurrentGap(stats) {
     const estimate = stats.current_gap_estimate || {};
+    const bracket = stats.current_lag_bracket || null;
 
     document.getElementById('stat-avg-gap').textContent =
         `${estimate.estimated_current_gap || '--'} mo`;
-    document.getElementById('stat-ci').textContent =
-        `≥ ${estimate.min_current_gap || '--'} mo`;
+
+    // Prefer the adjacent-release lag bracket [under, over] when available:
+    // it bounds the instantaneous gap between the two leader releases that
+    // flank the laggard's current level.
+    const ciEl = document.getElementById('stat-ci');
+    const ciLabel = ciEl.closest('.stat-card').querySelector('.stat-label');
+    if (bracket && bracket.under_months !== null && bracket.over_months !== null) {
+        ciEl.textContent = `${bracket.under_months} – ${bracket.over_months} mo`;
+        ciLabel.textContent = 'Release-Lag Bracket';
+    } else {
+        ciEl.textContent = `≥ ${estimate.min_current_gap || '--'} mo`;
+        ciLabel.textContent = 'Minimum Bound';
+    }
+
     document.getElementById('stat-matched').textContent =
         stats.total_matched;
     document.getElementById('stat-unmatched').textContent =
         stats.total_unmatched;
 
-    // Update stat labels for current gap view
+    // Update stat label for current gap view
     document.querySelector('#stat-avg-gap').closest('.stat-card').querySelector('.stat-label').textContent = 'Est. Current Gap';
-    document.querySelector('#stat-ci').closest('.stat-card').querySelector('.stat-label').textContent = 'Minimum Bound';
 }
 
 /**

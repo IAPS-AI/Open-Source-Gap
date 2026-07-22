@@ -94,6 +94,38 @@ except Exception as e:  # pragma: no cover - defensive
     THRESHOLD_GAP_AVAILABLE = False
     print(f"Note: threshold gap module unavailable ({e})")
 
+# Release-lag bracket + trend-regression gap estimators (adjacent-model
+# under/over/central bracket, trendline gap with velocity and forward-looking
+# catch-up projection); see scripts/gap_estimators.py.
+try:
+    from gap_estimators import current_lag_bracket, compute_trend_gap
+    GAP_ESTIMATORS_AVAILABLE = True
+except Exception as e:  # pragma: no cover - defensive
+    current_lag_bracket = None
+    compute_trend_gap = None
+    GAP_ESTIMATORS_AVAILABLE = False
+    print(f"Note: gap estimators module unavailable ({e})")
+
+
+def compute_gap_estimators(df, *, score_col: str, model_col: str,
+                           transform: str) -> tuple:
+    """Fail-open wrapper: these optional estimators must never kill the
+    pipeline (same convention as compute_threshold_block). Returns
+    (current_lag_bracket, trend_gap), either of which may be None."""
+    bracket = trend = None
+    if GAP_ESTIMATORS_AVAILABLE:
+        try:
+            bracket = current_lag_bracket(
+                df, score_col=score_col, model_col=model_col, transform=transform)
+        except Exception as e:  # pragma: no cover - defensive
+            logger.warning(f"current_lag_bracket failed ({transform}): {e}")
+        try:
+            trend = compute_trend_gap(
+                df, score_col=score_col, model_col=model_col, transform=transform)
+        except Exception as e:  # pragma: no cover - defensive
+            logger.warning(f"compute_trend_gap failed ({transform}): {e}")
+    return bracket, trend
+
 
 def compute_threshold_block(df, benchmark_id: str, *, score_col: str,
                             model_col: str) -> Optional[dict]:
@@ -368,7 +400,7 @@ def calculate_horizontal_gaps(
 
     return gaps
 
-def calculate_trends(df: pd.DataFrame, score_col: str = "eci", use_apr_2024_split: bool = False) -> dict:
+def calculate_trends(df: pd.DataFrame, score_col: str = "eci", use_apr_2024_split: bool = False, bounded: bool = False) -> dict:
     """
     Calculate trends dynamically based on the data's date range.
 
@@ -379,6 +411,11 @@ def calculate_trends(df: pd.DataFrame, score_col: str = "eci", use_apr_2024_spli
         df: DataFrame with 'date' and score columns
         score_col: Name of the score column
         use_apr_2024_split: If True, use April 2024 as split point (for ECI specifically)
+        bounded: If True, the score is a 0-100 percentage. Exponential growth
+            stats (percentage growth / multiples / doubling time) are
+            suppressed -- ln(score) of a bounded percentage is distorted by
+            the ceiling and "doubling" a 60% score is impossible -- and a
+            logit-space slope is reported instead (logit_growth_per_year).
     """
     trends = {}
 
@@ -410,32 +447,44 @@ def calculate_trends(df: pd.DataFrame, score_col: str = "eci", use_apr_2024_spli
         lin_start_score = lin_slope * start_date_ord + lin_intercept
         lin_end_score = lin_slope * end_date_ord + lin_intercept
 
-        valid_indices = scores > 0
-        if not np.any(valid_indices):
-            return None
-
-        log_scores = np.log(scores[valid_indices])
-        log_dates = dates_ordinal[valid_indices]
-
-        # Check if we have enough unique dates for exponential regression
-        if len(set(log_dates)) < 2:
-            # Can't compute exponential growth, use defaults
-            pct_growth = 0
-            multiples_per_year = 1
-            doubling_time_years = None  # Use None instead of inf for JSON compatibility
+        logit_growth_per_year = None
+        if bounded:
+            # Bounded 0-100 percentage: fit the trend in logit space, where
+            # progress is not compressed near the floor/ceiling.
+            p = np.clip(scores.astype(float), 0.1, 99.9)
+            logit_slope, _, _, _, _ = linregress(dates_ordinal, np.log(p / (100.0 - p)))
+            logit_growth_per_year = logit_slope * 365.25
+            pct_growth = None
+            multiples_per_year = None
+            doubling_time_years = None
         else:
-            exp_slope, _, _, _, _ = linregress(log_dates, log_scores)
-            k_annual = exp_slope * 365.25
-            pct_growth = (np.exp(k_annual) - 1) * 100
-            multiples_per_year = np.exp(k_annual)
-            doubling_time_years = np.log(2) / k_annual if k_annual > 0 else None
+            valid_indices = scores > 0
+            if not np.any(valid_indices):
+                return None
+
+            log_scores = np.log(scores[valid_indices])
+            log_dates = dates_ordinal[valid_indices]
+
+            # Check if we have enough unique dates for exponential regression
+            if len(set(log_dates)) < 2:
+                # Can't compute exponential growth, use defaults
+                pct_growth = 0
+                multiples_per_year = 1
+                doubling_time_years = None  # Use None instead of inf for JSON compatibility
+            else:
+                exp_slope, _, _, _, _ = linregress(log_dates, log_scores)
+                k_annual = exp_slope * 365.25
+                pct_growth = (np.exp(k_annual) - 1) * 100
+                multiples_per_year = np.exp(k_annual)
+                doubling_time_years = np.log(2) / k_annual if k_annual > 0 else None
 
         return {
             "name": name,
             "absolute_growth_per_year": round(yearly_absolute_growth, 2),
-            "percentage_growth_annualized": round(pct_growth, 1),
-            "multiples_per_year": round(multiples_per_year, 2),
+            "percentage_growth_annualized": round(pct_growth, 1) if pct_growth is not None else None,
+            "multiples_per_year": round(multiples_per_year, 2) if multiples_per_year is not None else None,
             "doubling_time_years": round(doubling_time_years, 2) if doubling_time_years is not None else None,
+            "logit_growth_per_year": round(logit_growth_per_year, 3) if logit_growth_per_year is not None else None,
             "start_point": {
                 "date": datetime.fromordinal(int(start_date_ord)).isoformat(),
                 "eci": lin_start_score  # Keep as "eci" for frontend compatibility
@@ -1265,6 +1314,14 @@ def process_data() -> dict[str, Any]:
     stats = calculate_statistics(df_frontier, gaps, score_col="eci", bootstrap=bootstrap)
     trends = calculate_trends(df_all_valid, use_apr_2024_split=True)  # ECI uses April 2024 split
 
+    # Release-lag bracket (instantaneous under/over/central) and
+    # trend-regression gap (backward trend gap, velocity, forward-looking
+    # projection). ECI is unbounded -> linear fit space.
+    bracket, trend_gap = compute_gap_estimators(
+        df_frontier, score_col="eci", model_col="Model", transform="linear")
+    if bracket is not None:
+        stats["current_lag_bracket"] = bracket
+
     # Calculate historical gaps for the timeline chart
     historical_gaps = calculate_historical_gaps(df_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model", bootstrap=bootstrap)
     # Rename score fields to eci for backward compatibility
@@ -1293,6 +1350,11 @@ def process_data() -> dict[str, Any]:
 
         china_stats = calculate_statistics(df_china_us_frontier, china_gaps, score_col="eci", bootstrap=bootstrap)
 
+        china_bracket, china_trend_gap = compute_gap_estimators(
+            df_china_us_frontier, score_col="eci", model_col="Model", transform="linear")
+        if china_bracket is not None:
+            china_stats["current_lag_bracket"] = china_bracket
+
         china_historical = calculate_historical_gaps(df_china_us_frontier, score_col="eci", threshold=ECI_MATCH_THRESHOLD, model_col="Model", bootstrap=bootstrap)
         for hg in china_historical:
             hg["reference_eci"] = hg.pop("reference_score")
@@ -1301,6 +1363,7 @@ def process_data() -> dict[str, Any]:
         china_gaps = []
         china_stats = {}
         china_historical = []
+        china_trend_gap = None
 
     # Per-laggard matched-leader maps for the Gap Over Time chart (one per
     # framing). The frontend uses these for ECI instead of recomputing matches
@@ -1321,12 +1384,14 @@ def process_data() -> dict[str, Any]:
         "gaps": gaps,
         "statistics": stats,
         "trends": trends,
+        "trend_gap": trend_gap,
         "historical_gaps": historical_gaps,
         "frontier_matches": frontier_matches,
         "china_framing": {
             "gaps": china_gaps,
             "statistics": china_stats,
             "historical_gaps": china_historical,
+            "trend_gap": china_trend_gap,
         },
         "threshold_analysis": compute_threshold_block(
             df_combined, "eci", score_col="eci", model_col="Model"),
@@ -1402,6 +1467,16 @@ def process_benchmark_data(benchmark_id: str, benchmark_data: dict) -> Optional[
     # Calculate statistics
     stats = calculate_statistics(df_frontier, gaps, score_col="score", threshold=threshold)
 
+    # Percentage benchmarks (scale == 100) are bounded at 0-100: fit and
+    # interpolate in logit space so ceiling compression does not distort the
+    # bracket's central estimate or the trend gap.
+    bounded = metadata.get("scale") == 100
+    transform = "logit" if bounded else "linear"
+    bracket, trend_gap = compute_gap_estimators(
+        df_frontier, score_col="score", model_col="model", transform=transform)
+    if bracket is not None:
+        stats["current_lag_bracket"] = bracket
+
     # Calculate historical gaps
     historical_gaps = calculate_historical_gaps(
         df_frontier,
@@ -1427,7 +1502,7 @@ def process_benchmark_data(benchmark_id: str, benchmark_data: dict) -> Optional[
         })
 
     # Calculate trends
-    trends = calculate_trends(df_combined.rename(columns={"score": "eci"}))
+    trends = calculate_trends(df_combined.rename(columns={"score": "eci"}), bounded=bounded)
 
     return {
         "metadata": metadata,
@@ -1436,6 +1511,7 @@ def process_benchmark_data(benchmark_id: str, benchmark_data: dict) -> Optional[
         "gaps": gaps,
         "statistics": stats,
         "trends": trends,
+        "trend_gap": trend_gap,
         "historical_gaps": historical_gaps,
         "threshold_analysis": compute_threshold_block(
             df_combined, benchmark_id, score_col="score", model_col="model"),
@@ -1540,6 +1616,12 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
 
     stats = calculate_statistics(df_frontier, gaps, score_col="score", use_survival_analysis=False, threshold=0)
 
+    # Horizons grow exponentially -> fit/interpolate in log space.
+    bracket, trend_gap = compute_gap_estimators(
+        df_frontier, score_col="score", model_col="model", transform="log")
+    if bracket is not None:
+        stats["current_lag_bracket"] = bracket
+
     historical_gaps = calculate_historical_gaps(
         df_frontier,
         score_col="score",
@@ -1557,7 +1639,7 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
     df_china_us = df[df["is_china"] | df["is_us"]].copy()
     df_china_us["Open"] = df_china_us["is_china"]
 
-    china_framing = {"gaps": [], "statistics": {}, "historical_gaps": []}
+    china_framing = {"gaps": [], "statistics": {}, "historical_gaps": [], "trend_gap": None}
     df_china_models = df_china_us[df_china_us["Open"]].copy()
     df_us_models = df_china_us[~df_china_us["Open"]].copy()
 
@@ -1570,10 +1652,15 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
         china_gaps = calculate_horizontal_gaps(df_cu_frontier, score_col="score", threshold=0, model_col="model")
         china_stats = calculate_statistics(df_cu_frontier, china_gaps, score_col="score", use_survival_analysis=False, threshold=0)
         china_historical = calculate_historical_gaps(df_cu_frontier, score_col="score", threshold=0, model_col="model")
+        china_bracket, china_trend_gap = compute_gap_estimators(
+            df_cu_frontier, score_col="score", model_col="model", transform="log")
+        if china_bracket is not None:
+            china_stats["current_lag_bracket"] = china_bracket
         china_framing = {
             "gaps": china_gaps,
             "statistics": china_stats,
             "historical_gaps": china_historical,
+            "trend_gap": china_trend_gap,
         }
 
     return {
@@ -1583,6 +1670,7 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
         "gaps": gaps,
         "statistics": stats,
         "trends": trends,
+        "trend_gap": trend_gap,
         "historical_gaps": historical_gaps,
         "china_framing": china_framing,
         "threshold_analysis": compute_threshold_block(
@@ -1614,6 +1702,7 @@ def process_all_benchmarks() -> dict:
         "gaps": eci_data["gaps"],
         "statistics": eci_data["statistics"],
         "trends": eci_data["trends"],
+        "trend_gap": eci_data["trend_gap"],
         "historical_gaps": eci_data["historical_gaps"],
         "frontier_matches": eci_data["frontier_matches"],
         "china_framing": eci_data["china_framing"],

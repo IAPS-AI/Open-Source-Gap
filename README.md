@@ -22,7 +22,19 @@ This application visualizes how long it takes for open-source models to "match" 
 -   **Frontier Tracking:** Focuses on the "frontier" of AI capabilities.
 -   **Statistical Analysis:** Automatically calculates the average gap and confidence intervals.
 -   **Threshold-Crossing Analysis:** For each benchmark score threshold, how much later the first open model reached it than the first closed model (methodology ported from [open_closed_gap](https://github.com/htihle/open_closed_gap); published in `data.json` under `threshold_analysis` / `threshold_aggregate`).
+-   **Release-Lag Bracket:** The instantaneous gap bracketed by the two closed-frontier releases flanking the open frontier's current level — under-estimate, over-estimate, and an interpolated central estimate (`statistics.current_lag_bracket`).
+-   **Trend Gap & Catch-Up Projection:** Per-group frontier trend lines yield a backward-looking trend gap, its velocity (months of gap gained/lost per year), and a clearly labeled forward-looking catch-up projection, each with bootstrap 90% CIs (`trend_gap`).
 -   **Live Data:** Fetches the latest scores daily from Epoch AI.
+
+## Methodology Notes
+
+Model releases are discrete, so "the gap" silently picks an estimator; this project publishes three complementary ones in `data.json` (estimator family follows the July 2026 analysis *"Have Chinese AI Models Caught Up to the US Frontier?"*):
+
+1.  **Matching-based (day-by-day):** months since the most recent closed SOTA model the best open model has plausibly caught up to, using Epoch's paired-bootstrap / CI criterion. This drives the headline average.
+2.  **Release-lag bracket:** the current gap bracketed by the closed frontier releases just below (over-estimate) and just above (under-estimate) the open frontier's level, with a central estimate interpolated between them.
+3.  **Trend-regression gap:** the horizontal offset between per-group frontier trend lines, plus the gap's velocity (shrinking or growing) and a forward-looking catch-up projection. Backward-looking numbers are measurements; the projection is a trend-conditional forecast and is labeled as such.
+
+Bounded 0–100 benchmark scores are fitted and interpolated in **logit space** (raw-space fits compress progress near the floor and ceiling); METR time horizons use log space; ECI is unbounded and fitted linearly. The "90% Range (Daily Gap)" statistic is the 5th–95th percentile spread of the day-by-day gap series — dispersion, not a confidence interval of the mean.
 
 ## Setup
 
