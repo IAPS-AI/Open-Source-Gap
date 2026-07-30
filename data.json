@@ -1664,7 +1664,7 @@
         },
         {
           "model": "Claude Sonnet 4.5",
-          "display_name": "Claude Sonnet 4.5 (no thinking)",
+          "display_name": "Claude Sonnet 4.5 (48k thinking)",
           "eci": 146.76,
           "eci_std": 0.984802431610945,
           "date": "2025-09-29T00:00:00",
@@ -1744,7 +1744,7 @@
         },
         {
           "model": "Claude Opus 4.5",
-          "display_name": "Claude Opus 4.5 (128k thinking)",
+          "display_name": "Claude Opus 4.5 (48k thinking)",
           "eci": 149.55,
           "eci_std": 1.3708206686930064,
           "date": "2025-11-24T00:00:00",
@@ -1884,7 +1884,7 @@
         },
         {
           "model": "Gemini 3.1 Pro",
-          "display_name": "Gemini 3.1 Pro Preview",
+          "display_name": "Gemini 3.1 Pro Preview (high)",
           "eci": 154.9,
           "eci_std": 1.3586626139817626,
           "date": "2026-02-19T00:00:00",
@@ -1924,7 +1924,7 @@
         },
         {
           "model": "GPT-5.4",
-          "display_name": "GPT-5.4 (medium)",
+          "display_name": "GPT-5.4 (xhigh)",
           "eci": 156.1,
           "eci_std": 1.1185410334346526,
           "date": "2026-03-05T00:00:00",
@@ -2014,7 +2014,7 @@
         },
         {
           "model": "Claude Opus 4.7",
-          "display_name": "Claude Opus 4.7 (low)",
+          "display_name": "Claude Opus 4.7 (max)",
           "eci": 156.07,
           "eci_std": 1.3191489361702138,
           "date": "2026-04-16T00:00:00",
@@ -2064,7 +2064,7 @@
         },
         {
           "model": "GPT-5.5",
-          "display_name": "GPT-5.5 (xhigh)",
+          "display_name": "GPT-5.5 (high)",
           "eci": 158.46,
           "eci_std": 1.3890577507598763,
           "date": "2026-04-23T00:00:00",
@@ -2104,7 +2104,7 @@
         },
         {
           "model": "Gemini 3.5 Flash",
-          "display_name": "Gemini 3.5 Flash (minimal)",
+          "display_name": "Gemini 3.5 Flash (high)",
           "eci": 154.63,
           "eci_std": 1.3586626139817626,
           "date": "2026-05-19T00:00:00",
@@ -2164,7 +2164,7 @@
         },
         {
           "model": "Claude Sonnet 5",
-          "display_name": "Claude Sonnet 5 (xhigh)",
+          "display_name": "Claude Sonnet 5 (max)",
           "eci": 153.47,
           "eci_std": 1.2826747720364824,
           "date": "2026-06-30T00:00:00",
@@ -2194,7 +2194,7 @@
         },
         {
           "model": "GPT-5.6 Sol",
-          "display_name": "GPT-5.6 Sol (pro, max)",
+          "display_name": "GPT-5.6 Sol (max)",
           "eci": 161.72,
           "eci_std": 1.8814589665653487,
           "date": "2026-07-09T00:00:00",
@@ -2224,7 +2224,7 @@
         },
         {
           "model": "Claude Opus 5",
-          "display_name": "Claude Opus 5",
+          "display_name": "Claude Opus 5 (max)",
           "eci": 159.38,
           "eci_std": 1.5075987841945313,
           "date": "2026-07-24T00:00:00",
@@ -15657,7 +15657,7 @@
           "open_model": null,
           "open_date": null,
           "open_score": null,
-          "gap_months": 10.1,
+          "gap_months": 10.2,
           "matched": false
         },
         {
@@ -15699,11 +15699,11 @@
         "total_matched": 6,
         "total_unmatched": 3,
         "current_gap_estimate": {
-          "estimated_current_gap": 14.0,
-          "min_current_gap": 10.1,
+          "estimated_current_gap": 14.1,
+          "min_current_gap": 10.2,
           "confidence": "medium",
           "unmatched_ages": [
-            10.1,
+            10.2,
             8.3,
             5.3
           ],
@@ -16116,7 +16116,7 @@
             "first_open_date": null,
             "gap_days": null,
             "gap_months": null,
-            "gap_months_so_far": 10.1,
+            "gap_months_so_far": 10.2,
             "valid": false,
             "accepted": false,
             "still_open": true,
@@ -16130,7 +16130,7 @@
             "first_open_date": null,
             "gap_days": null,
             "gap_months": null,
-            "gap_months_so_far": 10.1,
+            "gap_months_so_far": 10.2,
             "valid": false,
             "accepted": false,
             "still_open": true,
@@ -23135,5 +23135,5 @@
     },
     "source": "open_closed_gap threshold-crossing methodology"
   },
-  "last_updated": "2026-07-29T02:02:39.637650"
+  "last_updated": "2026-07-30T01:59:03.377333"
 }
