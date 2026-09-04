@@ -107,6 +107,87 @@ except Exception as e:  # pragma: no cover - defensive
     print(f"Note: gap estimators module unavailable ({e})")
 
 
+# Gap-by-date timeline: publishes the day-by-day "months behind" series that
+# the headline average is the mean of, plus context stats (last time the gap
+# was this large, peak, trough, ...); see scripts/gap_timeline.py.
+try:
+    from gap_timeline import build_gap_timeline, build_score_gap_timeline
+    GAP_TIMELINE_AVAILABLE = True
+except Exception as e:  # pragma: no cover - defensive
+    build_gap_timeline = None
+    build_score_gap_timeline = None
+    GAP_TIMELINE_AVAILABLE = False
+    print(f"Note: gap timeline module unavailable ({e})")
+
+
+# One build date for every gap_timeline block in a run, so the 18 blocks
+# (9 benchmarks x 2 framings) cannot straddle midnight and disagree.
+BUILD_AS_OF = pd.Timestamp(datetime.now()).normalize()
+
+
+def compute_gap_timeline(df, *, score_col: str, model_col: str,
+                         threshold: float, bootstrap=None,
+                         laggard_col: str = "Open", as_of=None,
+                         use_survival_analysis: bool = True,
+                         prior_from_first_match: bool = False,
+                         expected_every_days: int = 7) -> Optional[dict]:
+    """Fail-open wrapper around :func:`gap_timeline.build_gap_timeline`.
+
+    Wires the pipeline's ``_open_caught_up`` predicate (threshold, and the ECI
+    paired bootstrap when available) so the published series uses exactly the
+    criterion behind the headline average, and the survival-analysis
+    current-gap estimate (same flags as ``calculate_statistics`` for the
+    benchmark) recomputed as of each sample date for the expected-lead
+    series. Never raises."""
+    if not GAP_TIMELINE_AVAILABLE:
+        return None
+    try:
+        def caught_up(open_score, open_std, sota_score, sota_std, open_name, sota_name):
+            return _open_caught_up(
+                open_score, open_std, sota_score, sota_std, threshold,
+                open_name=open_name, sota_name=sota_name, bootstrap=bootstrap)
+
+        base = df.dropna(subset=["date", score_col]).copy()
+        base["date"] = pd.to_datetime(base["date"])
+        if laggard_col != "Open":
+            base["Open"] = base[laggard_col].astype(bool)
+
+        def expected_fn(t):
+            sub = base[base["date"] <= t]
+            if sub["Open"].sum() == 0 or (~sub["Open"].astype(bool)).sum() == 0:
+                return None
+            gaps_t = calculate_horizontal_gaps(
+                sub, score_col=score_col, threshold=threshold, model_col=model_col,
+                bootstrap=bootstrap, as_of=t)
+            matched = [g["gap_months"] for g in gaps_t if g["matched"]]
+            est = estimate_current_gap(
+                gaps_t, matched, use_survival_analysis=use_survival_analysis,
+                prior_from_first_match=prior_from_first_match)
+            return est.get("estimated_current_gap")
+
+        return build_gap_timeline(
+            df, score_col=score_col, model_col=model_col, caught_up=caught_up,
+            as_of=BUILD_AS_OF if as_of is None else as_of, laggard_col=laggard_col,
+            expected_fn=expected_fn, expected_every_days=expected_every_days)
+    except Exception as e:  # pragma: no cover - defensive
+        logger.warning(f"gap timeline failed ({score_col}): {e}")
+        return None
+
+
+def compute_score_gap_timeline(df, *, score_col: str, model_col: str,
+                               laggard_col: str = "Open", as_of=None) -> Optional[dict]:
+    """Fail-open wrapper around :func:`gap_timeline.build_score_gap_timeline`."""
+    if not GAP_TIMELINE_AVAILABLE:
+        return None
+    try:
+        return build_score_gap_timeline(
+            df, score_col=score_col, model_col=model_col,
+            as_of=BUILD_AS_OF if as_of is None else as_of, laggard_col=laggard_col)
+    except Exception as e:  # pragma: no cover - defensive
+        logger.warning(f"score gap timeline failed ({score_col}): {e}")
+        return None
+
+
 def compute_gap_estimators(df, *, score_col: str, model_col: str,
                            transform: str) -> tuple:
     """Fail-open wrapper: these optional estimators must never kill the
@@ -315,6 +396,7 @@ def calculate_horizontal_gaps(
     threshold: float = ECI_MATCH_THRESHOLD,
     model_col: str = "Model",
     bootstrap=None,
+    as_of=None,
 ) -> list[dict]:
     """
     Calculate horizontal gaps between closed and open models.
@@ -324,9 +406,13 @@ def calculate_horizontal_gaps(
         score_col: Column name for the score/metric
         threshold: Gap matching threshold (additive: score >= closed - threshold)
         model_col: Column name for model identifier
+        as_of: Reference date for the age of unmatched closed models
+            (default: now). Pass a past date, with ``df`` filtered to models
+            released on or before it, to reproduce the gaps as they stood then.
     """
     if len(df) == 0:
         return []
+    now = datetime.now() if as_of is None else pd.Timestamp(as_of).to_pydatetime().replace(tzinfo=None)
 
     df_open = df[df["Open"]].sort_values("date")
     df_closed = df[~df["Open"]].sort_values("date")
@@ -383,7 +469,6 @@ def calculate_horizontal_gaps(
                 "match_type": match_type,
             })
         else:
-            now = datetime.now()
             gap_days = (now - closed_date.to_pydatetime().replace(tzinfo=None)).days
             gap_months = gap_days / DAYS_PER_MONTH
 
@@ -1329,6 +1414,14 @@ def process_data() -> dict[str, Any]:
         hg["reference_eci"] = hg.pop("reference_score")
         hg["open_frontier_eci"] = hg.pop("open_frontier_score")
 
+    # Gap-by-date series (the one the headline average is the mean of) and
+    # the score-gap series (best closed minus best open ECI on each day).
+    gap_timeline = compute_gap_timeline(
+        df_frontier, score_col="eci", model_col="Model",
+        threshold=ECI_MATCH_THRESHOLD, bootstrap=bootstrap)
+    score_gap_timeline = compute_score_gap_timeline(
+        df_frontier, score_col="eci", model_col="Model")
+
     # Also calculate gaps using China vs US framing
     # Filter to only China and US models
     df_china_us = df[df["is_china"] | df["is_us"]].copy()
@@ -1359,11 +1452,19 @@ def process_data() -> dict[str, Any]:
         for hg in china_historical:
             hg["reference_eci"] = hg.pop("reference_score")
             hg["open_frontier_eci"] = hg.pop("open_frontier_score")
+        # Same China-vs-US universe as the headline China statistics.
+        china_gap_timeline = compute_gap_timeline(
+            df_china_us_frontier, score_col="eci", model_col="Model",
+            threshold=ECI_MATCH_THRESHOLD, bootstrap=bootstrap)
+        china_score_gap_timeline = compute_score_gap_timeline(
+            df_china_us_frontier, score_col="eci", model_col="Model")
     else:
         china_gaps = []
         china_stats = {}
         china_historical = []
         china_trend_gap = None
+        china_gap_timeline = None
+        china_score_gap_timeline = None
 
     # Per-laggard matched-leader maps for the Gap Over Time chart (one per
     # framing). The frontend uses these for ECI instead of recomputing matches
@@ -1386,12 +1487,16 @@ def process_data() -> dict[str, Any]:
         "trends": trends,
         "trend_gap": trend_gap,
         "historical_gaps": historical_gaps,
+        "gap_timeline": gap_timeline,
+        "score_gap_timeline": score_gap_timeline,
         "frontier_matches": frontier_matches,
         "china_framing": {
             "gaps": china_gaps,
             "statistics": china_stats,
             "historical_gaps": china_historical,
             "trend_gap": china_trend_gap,
+            "gap_timeline": china_gap_timeline,
+            "score_gap_timeline": china_score_gap_timeline,
         },
         "threshold_analysis": compute_threshold_block(
             df_combined, "eci", score_col="eci", model_col="Model"),
@@ -1485,6 +1590,11 @@ def process_benchmark_data(benchmark_id: str, benchmark_data: dict) -> Optional[
         model_col="model"
     )
 
+    gap_timeline = compute_gap_timeline(
+        df_frontier, score_col="score", model_col="model", threshold=threshold)
+    score_gap_timeline = compute_score_gap_timeline(
+        df_frontier, score_col="score", model_col="model")
+
     # Build trend models (all models, not just frontier)
     trend_models = []
     for _, row in df_combined.iterrows():
@@ -1513,6 +1623,8 @@ def process_benchmark_data(benchmark_id: str, benchmark_data: dict) -> Optional[
         "trends": trends,
         "trend_gap": trend_gap,
         "historical_gaps": historical_gaps,
+        "gap_timeline": gap_timeline,
+        "score_gap_timeline": score_gap_timeline,
         "threshold_analysis": compute_threshold_block(
             df_combined, benchmark_id, score_col="score", model_col="model"),
     }
@@ -1629,6 +1741,14 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
         model_col="model"
     )
 
+    # METR statistics use the oldest-unmatched rule rather than survival
+    # analysis (no CIs ship with horizons); mirror that in the expected series.
+    gap_timeline = compute_gap_timeline(
+        df_frontier, score_col="score", model_col="model", threshold=0,
+        use_survival_analysis=False)
+    score_gap_timeline = compute_score_gap_timeline(
+        df_frontier, score_col="score", model_col="model")
+
     # Calculate trends using log scale for horizon (exponential growth)
     trends = calculate_trends(
         df_combined.rename(columns={"score": "eci"}),
@@ -1639,7 +1759,8 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
     df_china_us = df[df["is_china"] | df["is_us"]].copy()
     df_china_us["Open"] = df_china_us["is_china"]
 
-    china_framing = {"gaps": [], "statistics": {}, "historical_gaps": [], "trend_gap": None}
+    china_framing = {"gaps": [], "statistics": {}, "historical_gaps": [], "trend_gap": None,
+                     "gap_timeline": None, "score_gap_timeline": None}
     df_china_models = df_china_us[df_china_us["Open"]].copy()
     df_us_models = df_china_us[~df_china_us["Open"]].copy()
 
@@ -1661,6 +1782,11 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
             "statistics": china_stats,
             "historical_gaps": china_historical,
             "trend_gap": china_trend_gap,
+            "gap_timeline": compute_gap_timeline(
+                df_cu_frontier, score_col="score", model_col="model", threshold=0,
+                use_survival_analysis=False),
+            "score_gap_timeline": compute_score_gap_timeline(
+                df_cu_frontier, score_col="score", model_col="model"),
         }
 
     return {
@@ -1672,6 +1798,8 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
         "trends": trends,
         "trend_gap": trend_gap,
         "historical_gaps": historical_gaps,
+        "gap_timeline": gap_timeline,
+        "score_gap_timeline": score_gap_timeline,
         "china_framing": china_framing,
         "threshold_analysis": compute_threshold_block(
             df_combined, "metr_time_horizon", score_col="score",
@@ -1704,6 +1832,8 @@ def process_all_benchmarks() -> dict:
         "trends": eci_data["trends"],
         "trend_gap": eci_data["trend_gap"],
         "historical_gaps": eci_data["historical_gaps"],
+        "gap_timeline": eci_data.get("gap_timeline"),
+        "score_gap_timeline": eci_data.get("score_gap_timeline"),
         "frontier_matches": eci_data["frontier_matches"],
         "china_framing": eci_data["china_framing"],
         "threshold_analysis": eci_data["threshold_analysis"],

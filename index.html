@@ -132,9 +132,19 @@
 
         <div class="header">
             <h1>Gap Over Time</h1>
-            <p class="subtitle">How the performance gap has evolved historically.</p>
+            <p class="subtitle" id="historical-subtitle">How the performance gap has evolved historically.</p>
         </div>
         <div class="chart-card" id="historical-chart-card">
+            <div class="chart-card__head">
+                <span class="chart-card__title" id="historical-view-title">Gap on each date</span>
+                <div class="toggle-buttons" id="historical-view-toggle" role="group" aria-label="Gap Over Time view" hidden>
+                    <button type="button" class="toggle-btn active" data-value="timeline">Months behind</button>
+                    <button type="button" class="toggle-btn" data-value="score">Score gap</button>
+                    <button type="button" class="toggle-btn" data-value="matches">Time to match each release</button>
+                </div>
+            </div>
+            <div id="gap-context" class="gap-context" hidden></div>
+            <div id="historical-legend" class="gap-legend" hidden></div>
             <div id="historical-chart-container">
                 <div id="historical-chart"></div>
                 <div id="historical-tooltip" class="gap-tooltip" hidden></div>
@@ -185,6 +195,6 @@
         </footer>
     </div>
 
-    <script src="static/script.js?v=30"></script>
+    <script src="static/script.js?v=31"></script>
 </body>
 </html>

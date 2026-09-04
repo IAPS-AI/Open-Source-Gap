@@ -75,6 +75,9 @@ let appState = {
     data: null,
     gapMetric: 'average', // 'average' or 'current'
     framing: 'open', // 'open' or 'china'
+    // Gap Over Time view: 'timeline' = months behind on each date (default),
+    // 'matches' = months until each leader release was matched.
+    historicalView: 'timeline',
     currentBenchmark: 'eci', // Current selected benchmark
     tableSort: { key: 'date', dir: 'desc' }, // raw-data table sort state
     tableData: null, // last-rendered table inputs, for re-sorting
@@ -310,6 +313,15 @@ function setupToggleHandlers() {
             renderAll();
         });
     });
+
+    // Gap Over Time view toggle (gap by date vs time-to-match per release)
+    document.querySelectorAll('#historical-view-toggle .toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            appState.historicalView = this.dataset.value;
+            const currentData = getCurrentData();
+            if (currentData) renderHistoricalChart(currentData);
+        });
+    });
 }
 
 /**
@@ -387,6 +399,8 @@ function getCurrentData() {
         trends: benchmarkData.trends,
         trend_gap: benchmarkData.trend_gap || null,
         historical_gaps: benchmarkData.historical_gaps,
+        gap_timeline: benchmarkData.gap_timeline || null,
+        score_gap_timeline: benchmarkData.score_gap_timeline || null,
         metadata: benchmarkData.metadata,
         last_updated: data.last_updated,
     };
@@ -398,17 +412,21 @@ function getCurrentData() {
             gaps: benchmarkData.china_framing.gaps || result.gaps,
             statistics: benchmarkData.china_framing.statistics || result.statistics,
             historical_gaps: benchmarkData.china_framing.historical_gaps || result.historical_gaps,
-            // No fallback to the open-vs-closed trend gap: showing the other
-            // framing's numbers would be worse than showing none.
+            // No fallback to the open-vs-closed trend gap or timeline: showing
+            // the other framing's numbers would be worse than showing none.
             trend_gap: benchmarkData.china_framing.trend_gap || null,
+            gap_timeline: benchmarkData.china_framing.gap_timeline || null,
+            score_gap_timeline: benchmarkData.china_framing.score_gap_timeline || null,
         };
     } else if (appState.framing === 'china') {
         // Benchmark ships no China framing data at all: never present the
-        // open-vs-closed bracket/trend gap under China-vs-US labels.
+        // open-vs-closed bracket/trend gap/timeline under China-vs-US labels.
         result = {
             ...result,
             statistics: { ...result.statistics, current_lag_bracket: null },
             trend_gap: null,
+            gap_timeline: null,
+            score_gap_timeline: null,
         };
     }
 
@@ -1664,7 +1682,1236 @@ function buildFrontierEvents(models, framing, parityStart) {
     return { laggard, leader };
 }
 
+/* ---------- helpers shared by both Gap Over Time views ---------- */
+
+const DAYS_PER_MONTH = 365.25 / 12; // matches scripts/update_data.py
+// Beyond this many days without a newly scored release, the timeline's tail
+// is labelled as data staleness rather than measured progress.
+const STALE_AFTER_DAYS = 60;
+
+function daysBetween(later, earlier) {
+    return Math.round((later - earlier) / 86400000);
+}
+
+function monthsSince(t, ref) {
+    return daysBetween(t, ref) / DAYS_PER_MONTH;
+}
+
+function fmtMonthYear(d, long) {
+    return d.toLocaleDateString('en-US', { month: long ? 'long' : 'short', year: 'numeric', timeZone: 'UTC' });
+}
+
+/** Snap a timestamp to the start of its UTC day. */
+function toUTCDay(t) {
+    return new Date(Math.floor(t.getTime() / 86400000) * 86400000);
+}
+
+/**
+ * Draw y tick labels, quarterly x tick labels and the two axis titles.
+ * Shared by both Gap Over Time views so they stay visually identical.
+ */
+function drawGapChartAxes(svg, g, titles) {
+    const { M, innerW, innerH, W, H, x, y, xMin, xMax, yMax } = g;
+    const yMin = g.yMin ?? 0;
+    const yStep = g.yStep ?? 3;
+
+    // y tick labels (no gridlines)
+    for (let v = yMin; v <= yMax + 1e-9; v += yStep) {
+        const t = svgEl('text', { class: 'axis-label', x: M.left - 8, y: y(v) + 3.5, 'text-anchor': 'end' });
+        t.appendChild(document.createTextNode(Number.isInteger(yStep) ? Math.round(v) : v.toFixed(1)));
+        svg.appendChild(t);
+    }
+
+    // x tick labels (quarterly, no gridlines)
+    const xTicks = [];
+    let cursor = new Date(Date.UTC(xMin.getUTCFullYear(), Math.floor(xMin.getUTCMonth() / 3) * 3, 1));
+    while (cursor <= xMax) {
+        if (cursor >= xMin) xTicks.push(new Date(cursor));
+        cursor = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 3, 1));
+    }
+    for (const d of xTicks) {
+        const xp = x(d);
+        const isJan = d.getUTCMonth() === 0;
+        const t = svgEl('text', {
+            class: 'axis-label',
+            x: xp,
+            y: M.top + innerH + 16,
+            'text-anchor': 'middle',
+            'font-weight': isJan ? '600' : '400',
+        });
+        t.appendChild(document.createTextNode(isJan ? fmtYear(d) : fmtMonthShort(d)));
+        svg.appendChild(t);
+    }
+
+    // axis titles
+    const yTitleX = 24;
+    const yTitleY = M.top + innerH / 2;
+    const yTitle = svgEl('text', {
+        class: 'axis-title',
+        x: yTitleX,
+        y: yTitleY,
+        'text-anchor': 'middle',
+        transform: `rotate(-90 ${yTitleX} ${yTitleY})`,
+    });
+    yTitle.appendChild(document.createTextNode(titles.yAxisTitle));
+    svg.appendChild(yTitle);
+
+    const xTitle = svgEl('text', {
+        class: 'axis-title',
+        x: M.left + innerW / 2,
+        y: H - 22,
+        'text-anchor': 'middle',
+    });
+    xTitle.appendChild(document.createTextNode(titles.xAxisTitle));
+    svg.appendChild(xTitle);
+}
+
+/**
+ * Rotated release ticks + labels below the plot. Every release in range
+ * gets a tick (so release density stays visible); labels are greedily
+ * culled left to right so they never overlap. `events` carry `_d` (Date)
+ * and `display`.
+ */
+function drawReleaseTicks(svg, events, g) {
+    const { M, innerH, W, x } = g;
+    const tickTopY = M.top + innerH;
+    const ROT_DEG = 40;
+    const ROT_COS = Math.cos((ROT_DEG * Math.PI) / 180);
+    const TICK_TOP = tickTopY + 28;
+    const TICK_BOTTOM = tickTopY + 36;
+    const LABEL_Y = tickTopY + 42;
+    let rightX = -Infinity;
+    for (const ev of events) {
+        const xp = x(ev._d);
+        if (xp < M.left || xp > W - M.right) continue;
+        svg.appendChild(svgEl('line', {
+            class: 'us-tick',
+            x1: xp, x2: xp, y1: TICK_TOP, y2: TICK_BOTTOM,
+        }));
+        // The bottom margin fits ~23 rotated characters before the label
+        // reaches the x-axis title; verbose names are truncated.
+        const fullText = shortenModelName(ev.display);
+        const labelText = fullText.length > 22 ? `${fullText.slice(0, 21)}…` : fullText;
+        const estW = labelText.length * 6.6 * ROT_COS + 8;
+        // Drop the label (keep the tick) if it would clip past the chart's
+        // right edge or overlap the previous label.
+        if (xp + estW > W - 6) continue;
+        if (xp < rightX + 6) continue;
+        rightX = xp + estW;
+        const labelW = labelText.length * 6.6 + 4;
+        svg.appendChild(svgEl('rect', {
+            class: 'label-us-box',
+            x: xp - 2,
+            y: LABEL_Y - 10,
+            width: labelW,
+            height: 14,
+            transform: `rotate(${ROT_DEG} ${xp} ${LABEL_Y})`,
+        }));
+        const t = svgEl('text', {
+            class: 'label-us',
+            x: xp,
+            y: LABEL_Y,
+            'text-anchor': 'start',
+            transform: `rotate(${ROT_DEG} ${xp} ${LABEL_Y})`,
+        });
+        t.appendChild(document.createTextNode(labelText));
+        svg.appendChild(t);
+    }
+}
+
+/**
+ * Two-row collision-aware label band above the plot. Items carry `xp`,
+ * `labelText` and `gapText`; returns them with `labelY` (null = dropped).
+ * Prefers the lower row, falls back to the upper row, drops only if
+ * neither fits (the marker is still drawn by the caller).
+ */
+function placeLabelBand(items, M) {
+    const ROWS = [
+        { y: M.top - 60, rightX: -Infinity }, // upper
+        { y: M.top - 28, rightX: -Infinity }, // lower (preferred)
+    ];
+    const placed = [];
+    for (const it of items) {
+        const halfW = Math.max(it.labelText.length * 3.4, it.gapText.length * 3.1) + 6;
+        let rowIdx = 1;
+        if (it.xp - halfW < ROWS[1].rightX + 4) rowIdx = 0;
+        if (rowIdx === 0 && it.xp - halfW < ROWS[0].rightX + 4) {
+            placed.push({ ...it, labelY: null });
+            continue;
+        }
+        ROWS[rowIdx].rightX = it.xp + halfW;
+        placed.push({ ...it, labelY: ROWS[rowIdx].y });
+    }
+    return { placed, upperRowY: ROWS[0].y };
+}
+
+/**
+ * Draw the label band: stub line, marker and two text rows per placed item.
+ * `markerClass` may be overridden per item via `it.markerClass`.
+ */
+function drawLabelBand(svg, placed, upperRowY, M, defaultMarkerClass) {
+    for (const it of placed) {
+        if (it.labelY != null) {
+            const stubY1 = it.labelY === upperRowY ? M.top - 4 : it.labelY + 18;
+            svg.appendChild(svgEl('line', { class: 'label-stub', x1: it.xp, x2: it.xp, y1: stubY1, y2: it.yp - 6 }));
+        }
+        svg.appendChild(svgEl('circle', { class: it.markerClass || defaultMarkerClass, cx: it.xp, cy: it.yp, r: 4 }));
+        if (it.labelY != null) {
+            const nameEl = svgEl('text', { class: 'label-cn', x: it.xp, y: it.labelY, 'text-anchor': 'middle' });
+            nameEl.appendChild(document.createTextNode(it.labelText));
+            svg.appendChild(nameEl);
+            const gapEl = svgEl('text', { class: 'label-cn-gap', x: it.xp, y: it.labelY + 14, 'text-anchor': 'middle' });
+            gapEl.appendChild(document.createTextNode(it.gapText));
+            svg.appendChild(gapEl);
+        }
+    }
+}
+
+/** Create, update or hide the methodology note under the chart. */
+function setHistoricalMethodNote(text) {
+    const container = document.getElementById('historical-chart-container');
+    let note = document.getElementById('historical-method-note');
+    if (!text) {
+        if (note) note.hidden = true;
+        return;
+    }
+    if (!note) {
+        if (!container) return;
+        note = document.createElement('p');
+        note.id = 'historical-method-note';
+        note.className = 'subtitle';
+        note.style.textAlign = 'center';
+        note.style.marginTop = 'var(--spacing-sm)';
+        container.appendChild(note);
+    }
+    note.textContent = text;
+    note.hidden = false;
+}
+
+/** Units for the score-gap view, from the benchmark metadata. */
+function scoreUnitLabels() {
+    const meta = getBenchmarkMetadata() || {};
+    if (appState.currentBenchmark === 'eci') return { long: 'ECI points', short: 'ECI pts' };
+    if (meta.scale === 100) return { long: 'percentage points', short: 'pp' };
+    const u = meta.unit || 'points';
+    return { long: u, short: u };
+}
+
+function getTimelineLabels(framing) {
+    const unit = scoreUnitLabels();
+    if (framing === 'china') {
+        return {
+            leader: 'US',
+            laggard: 'Chinese',
+            leadPhrase: 'The US lead over China',
+            leadNoun: 'US lead',
+            yAxisTitle: 'Months the Chinese frontier trailed the US frontier',
+            xAxisTitle: 'Date (ticks mark US frontier releases)',
+            behindHeader: 'months behind the US frontier',
+            laggardRow: 'Best Chinese model that day',
+            referenceRow: 'Most recent US model it had caught up to',
+            referenceRowUnmatched: 'Earliest US model (none matched yet)',
+            nextLeaderRow: 'Oldest US model not yet matched',
+            subtitle: 'How far the Chinese frontier trailed the US frontier on each date, and how that lead has changed.',
+            matchesSubtitle: 'How long each US frontier release took to be matched by a Chinese model.',
+            matchesButton: 'Time to match each US release',
+            scoreSubtitle: `How far the best US model scored above the best Chinese model on each date (${unit.long}).`,
+            scoreLeadPhrase: 'The US frontier leads the Chinese frontier by',
+            scoreLeadPhraseInverted: 'The Chinese frontier leads the US frontier by',
+            scoreYAxisTitle: `Score gap in ${unit.long}: best US model minus best Chinese model`,
+            leaderRow: 'Best US model that day',
+            laggardRowScore: 'Best Chinese model that day',
+            unit,
+        };
+    }
+    return {
+        leader: 'closed',
+        laggard: 'open',
+        leadPhrase: 'The closed-model lead over open models',
+        leadNoun: 'closed-model lead',
+        yAxisTitle: 'Months the open frontier trailed the closed frontier',
+        xAxisTitle: 'Date (ticks mark closed frontier releases)',
+        behindHeader: 'months behind the closed frontier',
+        laggardRow: 'Best open model that day',
+        referenceRow: 'Most recent closed model it had caught up to',
+        referenceRowUnmatched: 'Earliest closed model (none matched yet)',
+        nextLeaderRow: 'Oldest closed model not yet matched',
+        subtitle: 'How far the open frontier trailed the closed frontier on each date, and how that lead has changed.',
+        matchesSubtitle: 'How long each closed frontier release took to be matched by an open model.',
+        matchesButton: 'Time to match each closed release',
+        scoreSubtitle: `How far the best closed model scored above the best open model on each date (${unit.long}).`,
+        scoreLeadPhrase: 'The closed frontier leads the open frontier by',
+        scoreLeadPhraseInverted: 'The open frontier leads the closed frontier by',
+        scoreYAxisTitle: `Score gap in ${unit.long}: best closed model minus best open model`,
+        leaderRow: 'Best closed model that day',
+        laggardRowScore: 'Best open model that day',
+        unit,
+    };
+}
+
+/**
+ * Gap Over Time entry point: picks the view. The gap-by-date timeline is
+ * the default whenever the server published one for this benchmark and
+ * framing; otherwise the per-release "time to match" chart is shown and
+ * the view toggle is hidden.
+ */
 function renderHistoricalChart(data) {
+    const timeline = data && data.gap_timeline;
+    const scoreTl = data && data.score_gap_timeline;
+    const hasTimeline = !!(timeline && Array.isArray(timeline.segments) && timeline.segments.length);
+    const hasScore = !!(scoreTl && Array.isArray(scoreTl.steps) && scoreTl.steps.length);
+    let view = appState.historicalView;
+    if (view === 'timeline' && !hasTimeline) view = 'matches';
+    if (view === 'score' && !hasScore) view = 'matches';
+    const labels = getTimelineLabels(appState.framing);
+
+    // The toggle stays visible so a benchmark/framing without a published
+    // series does not silently swap chart semantics under one heading; the
+    // unavailable view is disabled and explains why.
+    const unavailable = 'No series is published for this benchmark and framing yet.';
+    const toggle = document.getElementById('historical-view-toggle');
+    if (toggle) {
+        toggle.hidden = false;
+        toggle.querySelectorAll('.toggle-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.value === view);
+            if (b.dataset.value === 'matches') b.textContent = labels.matchesButton;
+            if (b.dataset.value === 'timeline') {
+                b.disabled = !hasTimeline;
+                b.title = hasTimeline ? '' : unavailable;
+            }
+            if (b.dataset.value === 'score') {
+                b.disabled = !hasScore;
+                b.title = hasScore ? '' : unavailable;
+            }
+        });
+    }
+    const subtitles = { timeline: labels.subtitle, score: labels.scoreSubtitle, matches: labels.matchesSubtitle };
+    const titles = { timeline: 'Months behind, on each date', score: 'Score gap, on each date', matches: 'Time to match each release' };
+    const subtitle = document.getElementById('historical-subtitle');
+    if (subtitle) subtitle.textContent = subtitles[view];
+    const title = document.getElementById('historical-view-title');
+    if (title) title.textContent = titles[view];
+    const legend = document.getElementById('historical-legend');
+    if (legend && view === 'matches') { legend.hidden = true; legend.innerHTML = ''; }
+
+    if (view === 'timeline') {
+        renderGapContext(timeline, data, 'time');
+        renderGapTimelineChart(data, timeline);
+    } else if (view === 'score') {
+        renderGapContext(scoreTl, data, 'score');
+        renderScoreGapChart(data, scoreTl);
+    } else {
+        renderGapContext(null, data, 'time');
+        renderHistoricalMatchesChart(data);
+    }
+}
+
+/**
+ * Context strip above the timeline: the lead sentence ("the last time the
+ * US lead over China was this large was ...") and a row of stat tiles.
+ * All numbers come from the server's gap_timeline.context block, which is
+ * computed on the same daily series the chart draws.
+ */
+function renderGapContext(tl, data, mode) {
+    const el = document.getElementById('gap-context');
+    if (!el) return;
+    const c = tl && tl.context;
+    const isScore = mode === 'score';
+    const vk = isScore ? 'gap_points' : 'gap_months';
+    const ck = isScore ? 'change_points' : 'change_months';
+    if (!c || c[`current_${vk}`] == null) {
+        el.hidden = true;
+        el.innerHTML = '';
+        return;
+    }
+    const labels = getTimelineLabels(appState.framing);
+    const unitLong = isScore ? labels.unit.long : 'months';
+    const unitShort = isScore ? labels.unit.short : 'mo';
+    const cur = Number(c[`current_${vk}`]);
+    const fmtV = (v) => `${Number(v).toFixed(1)} ${unitLong}`;
+    const fmtS = (v) => `${Number(v).toFixed(1)} ${unitShort}`;
+    const curText = fmtV(cur);
+    const my = (s) => fmtMonthYear(parseUTCDate(s), true);
+    const mys = (s) => fmtMonthYear(parseUTCDate(s), false);
+    const day = (s) => fmtDayLong(parseUTCDate(s));
+    const ago = (m) => (m < 1 ? 'less than a month ago' : `${Number(m).toFixed(1)} months ago`);
+    const name = (s) => escapeHTML(shortenModelName(s || ''));
+    const pair = (o) => (isScore
+        ? `${name(o.leader_model)} vs ${name(o.laggard_model)}`
+        : `${name(o.laggard_model)} vs ${name(o.reference_model)}`);
+    const stats = (data && data.statistics) || {};
+    const nUnmatched = Number(stats.total_unmatched || 0);
+    const est = stats.current_gap_estimate || null;
+    const estVal = est && Number.isFinite(Number(est.estimated_current_gap)) ? Number(est.estimated_current_gap) : null;
+
+    // ---- Sentence 1: the current value, named for what it measures ----
+    let lead = '';
+    const isZero = !isScore && cur < 0.05; // displays as 0.0: the laggard has matched the newest leader release
+    if (isScore) {
+        const phrase = cur < 0 ? labels.scoreLeadPhraseInverted : labels.scoreLeadPhrase;
+        lead = `<strong>${escapeHTML(phrase)} ${fmtV(Math.abs(cur))}</strong> as of ${escapeHTML(day(tl.as_of))}: ` +
+            `${name(c.current_leader_model)} (${Number(c.current_leader_score).toFixed(1)}, ${escapeHTML(mys(c.current_leader_date))}) ` +
+            `vs ${name(c.current_laggard_model)} (${Number(c.current_laggard_score).toFixed(1)}, ${escapeHTML(mys(c.current_laggard_date))}).`;
+    } else if (isZero) {
+        lead = `<strong>${escapeHTML(labels.leadPhrase)} is ${curText}</strong> as of ${escapeHTML(day(tl.as_of))}: the best ` +
+            `${escapeHTML(labels.laggard)} model (${name(c.current_laggard_model)}, ${escapeHTML(mys(c.current_laggard_date))}) ` +
+            `has caught up to the ${escapeHTML(labels.leader)} frontier model ${name(c.current_reference_model)}, ` +
+            `released ${escapeHTML(day(c.current_reference_date))}.`;
+    } else {
+        const lower = c.current_lower_months != null ? Number(c.current_lower_months) : null;
+        const hasRange = lower != null && c.current_next_leader_model && lower < cur - 0.05;
+        if (hasRange) {
+            lead = `<strong>${escapeHTML(labels.leadPhrase)} is between ${lower.toFixed(1)} and ${cur.toFixed(1)} months</strong> ` +
+                `as of ${escapeHTML(day(tl.as_of))}: the best ${escapeHTML(labels.laggard)} model ` +
+                `(${name(c.current_laggard_model)}, ${escapeHTML(mys(c.current_laggard_date))}) has caught up to ` +
+                `${name(c.current_reference_model)} (${escapeHTML(mys(c.current_reference_date))}) but not ` +
+                `${name(c.current_next_leader_model)} (${escapeHTML(mys(c.current_next_leader_date))}).`;
+        } else if (c.current_reference_matched) {
+            lead = `<strong>${escapeHTML(labels.leadPhrase)} is ${curText}</strong> as of ${escapeHTML(day(tl.as_of))}, ` +
+                `measured as the time since the most recent ${escapeHTML(labels.leader)} frontier model that the best ` +
+                `${escapeHTML(labels.laggard)} model (${name(c.current_laggard_model)}, ${escapeHTML(mys(c.current_laggard_date))}) ` +
+                `has caught up to (${name(c.current_reference_model)}, ${escapeHTML(mys(c.current_reference_date))}).`;
+        } else {
+            lead = `<strong>${escapeHTML(labels.leadPhrase)} is ${curText}</strong> as of ${escapeHTML(day(tl.as_of))}, ` +
+                `measured from the earliest ${escapeHTML(labels.leader)} frontier model ` +
+                `(${name(c.current_reference_model)}, ${escapeHTML(mys(c.current_reference_date))}) because the best ` +
+                `${escapeHTML(labels.laggard)} model (${name(c.current_laggard_model)}, ${escapeHTML(mys(c.current_laggard_date))}) ` +
+                `has not yet caught up to any of them.`;
+        }
+        if (estVal != null && nUnmatched > 0) {
+            lead += ` Counting the ${nUnmatched} unmatched ${escapeHTML(labels.leader)} frontier model${nUnmatched === 1 ? '' : 's'} ` +
+                `by age, the expected eventual lead is <strong>${estVal.toFixed(1)} months</strong> (survival analysis, a forecast).`;
+        }
+    }
+
+    // ---- Data staleness ----
+    let staleNote = '';
+    const lastScored = tl.last_model_date ? parseUTCDate(tl.last_model_date) : null;
+    const staleDays = lastScored ? Math.max(0, daysBetween(parseUTCDate(tl.as_of), lastScored)) : 0;
+    if (staleDays > STALE_AFTER_DAYS) {
+        const benchName = (getBenchmarkMetadata() || {}).name || 'this benchmark';
+        staleNote = `No newly scored ${escapeHTML(benchName)} release since <strong>${escapeHTML(fmtDayLong(lastScored))}</strong> ` +
+            `(${(staleDays / DAYS_PER_MONTH).toFixed(1)} months): ` +
+            (isScore
+                ? 'the score gap has been flat since then for lack of new scores, not because progress stopped.'
+                : 'the rise in the lead after that date reflects missing scores, not measured progress.');
+    }
+
+    // ---- Sentence 2: the last time it was this large (the headline datapoint) ----
+    const al = c.last_at_least || {};
+    const subject = isScore ? 'the score gap' : 'the matched lead';
+    const noun = isScore ? `${escapeHTML(labels.leader)} score lead` : escapeHTML(labels.leadNoun);
+    let large = '';
+    if (isZero) {
+        large = '';
+    } else if (c.is_record_high) {
+        large = `This is the <strong>largest ${noun} in the tracked period</strong> (since ${escapeHTML(mys(tl.start))}).`;
+    } else if (al.run_since) {
+        large = `It has been at least this large since ${escapeHTML(day(al.run_since))}`;
+        large += al.date
+            ? `; before that, the last time ${subject} was this large was <strong>${escapeHTML(my(al.date))}</strong>, <strong>${escapeHTML(ago(al.months_ago))}</strong>.`
+            : `, and had never been this large before then.`;
+    } else if (al.date) {
+        large = `The last time ${subject} was this large was <strong>${escapeHTML(my(al.date))}</strong>, <strong>${escapeHTML(ago(al.months_ago))}</strong>.`;
+    }
+
+    // ---- Sentence 3 (muted): the last time it was this small ----
+    const am = c.last_at_most || {};
+    const median = c[`median_${vk}`];
+    const belowMedian = median != null && cur < Number(median);
+    let small = '';
+    if (!belowMedian && !c.is_record_low) {
+        small = '';
+    } else if (c.is_record_low) {
+        small = `This is the smallest ${noun} in the tracked period.`;
+    } else if (am.run_since && am.date) {
+        small = `It has stayed at or below ${curText} since ${escapeHTML(day(am.run_since))}; before that, the last time it was this small was ${escapeHTML(my(am.date))}, ${escapeHTML(ago(am.months_ago))}.`;
+    } else if (am.run_since) {
+        small = `It has stayed at or below ${curText} since ${escapeHTML(day(am.run_since))}, and had never been this small before then.`;
+    } else if (am.date) {
+        small = `The last time it was this small was ${escapeHTML(my(am.date))}, ${escapeHTML(ago(am.months_ago))}.`;
+    }
+
+    // ---- Tiles ----
+    const tiles = [];
+    if (isScore) {
+        tiles.push({
+            label: 'Current score gap',
+            value: fmtS(cur),
+            sub: `${name(c.current_leader_model)} vs ${name(c.current_laggard_model)} · since ${escapeHTML(mys(c.current_since))}`,
+        });
+    } else {
+        tiles.push({
+            label: 'Matched lead',
+            value: fmtS(cur),
+            sub: staleDays > STALE_AFTER_DAYS
+                ? `scores through ${escapeHTML(mys(tl.last_model_date))}`
+                : `rising since ${escapeHTML(mys(c.current_since))}`,
+        });
+        if (c.current_lower_months != null) {
+            const lower = Number(c.current_lower_months);
+            tiles.push({
+                label: 'Measured range',
+                value: c.current_next_leader_model ? `${lower.toFixed(1)} to ${cur.toFixed(1)} mo` : `${cur.toFixed(1)} mo`,
+                sub: c.current_next_leader_model
+                    ? `oldest unmatched: ${name(c.current_next_leader_model)} (${escapeHTML(mys(c.current_next_leader_date))})`
+                    : `every ${escapeHTML(labels.leader)} frontier model has been matched`,
+            });
+        }
+        if (estVal != null) {
+            tiles.push({
+                label: 'Expected lead',
+                value: `${estVal.toFixed(1)} mo`,
+                sub: nUnmatched > 0
+                    ? `survival analysis · counts ${nUnmatched} unmatched ${escapeHTML(labels.leader)} model${nUnmatched === 1 ? '' : 's'}`
+                    : 'survival analysis · no unmatched models',
+            });
+        }
+    }
+    if (isZero) {
+        // no "last this large" tile at zero
+    } else if (c.is_record_high) {
+        tiles.push({ label: 'Last this large', value: 'Never', sub: `largest since tracking began (${escapeHTML(mys(tl.start))})` });
+    } else if (al.date && !al.run_since) {
+        tiles.push({ label: 'Last this large', value: escapeHTML(mys(al.date)), sub: `${escapeHTML(ago(al.months_ago))} · ${fmtS(al[vk])} then` });
+    } else if (al.run_since && al.date) {
+        tiles.push({
+            label: 'Last this large',
+            value: escapeHTML(mys(al.date)),
+            sub: `${escapeHTML(ago(al.months_ago))} · at or above this level since ${escapeHTML(mys(al.run_since))}`,
+        });
+    } else if (al.run_since) {
+        tiles.push({ label: 'Last this large', value: 'Never', sub: `at least this large since ${escapeHTML(mys(al.run_since))}, never before` });
+    }
+    if (c.peak) {
+        tiles.push({ label: 'Peak', value: fmtS(c.peak[vk]), sub: `${escapeHTML(mys(c.peak.date))} · ${pair(c.peak)}` });
+    }
+    if (c.trough) {
+        tiles.push({ label: 'Low', value: fmtS(c.trough[vk]), sub: `${escapeHTML(mys(c.trough.date))} · ${pair(c.trough)}` });
+    }
+    const t12 = c.trailing_12m;
+    if (t12 && t12[`mean_${vk}`] != null) {
+        let sub = 'first full year of data';
+        if (t12[ck] != null) {
+            const ch = Number(t12[ck]);
+            const sign = ch > 0 ? '+' : (ch < 0 ? '−' : '±');
+            sub = `${sign}${Math.abs(ch).toFixed(1)} ${unitShort} vs. the 12 months before (${fmtS(t12[`prior_mean_${vk}`])})`;
+        }
+        tiles.push({ label: 'Last 12 months, average', value: fmtS(t12[`mean_${vk}`]), sub });
+    }
+    if (median != null) {
+        tiles.push({
+            label: 'Median since tracking began',
+            value: fmtS(median),
+            sub: `today is at or above ${escapeHTML(String(c.percentile_of_current))}% of tracked days`,
+        });
+    }
+
+    el.innerHTML = `
+        <p class="gap-context__lead">${lead} ${large}</p>
+        ${staleNote ? `<p class="gap-context__note is-warning">${staleNote}</p>` : ''}
+        ${small ? `<p class="gap-context__note">${small}</p>` : ''}
+        <div class="gap-context__tiles">
+            ${tiles.map(t => `
+                <div class="gap-tile">
+                    <div class="gap-tile__label">${t.label}</div>
+                    <div class="gap-tile__value">${t.value}</div>
+                    <div class="gap-tile__sub">${t.sub}</div>
+                </div>`).join('')}
+        </div>`;
+    el.hidden = false;
+}
+
+/**
+ * Gap-by-date timeline (default view): the day-by-day "months behind"
+ * series behind the headline average, drawn as a sawtooth. Drops are
+ * annotated with the release that caused them; leader releases are ticks
+ * below the plot; the current value is marked at today, together with the
+ * last date the gap was at least this large.
+ */
+function renderGapTimelineChart(data, tl) {
+    const root = document.getElementById('historical-chart');
+    const tooltipEl = document.getElementById('historical-tooltip');
+    const container = document.getElementById('historical-chart-container');
+    if (!root) return;
+    root.innerHTML = '';
+    if (tooltipEl) tooltipEl.hidden = true;
+
+    const framing = appState.framing;
+    const labels = getTimelineLabels(framing);
+    const accent = getLaggardAccent(framing);
+    if (container) {
+        container.style.setProperty('--c-cn', accent.dot);
+        container.style.setProperty('--c-cn-soft', accent.area);
+    }
+
+    const stats = data.statistics || {};
+    const currentEstimate = appState.gapMetric === 'current' ? (stats.current_gap_estimate || null) : null;
+    const ctx = tl.context || {};
+    const asOf = parseUTCDate(tl.as_of);
+    const startDate = parseUTCDate(tl.start);
+
+    // Recompute exact daily values from the reference dates: the JSON
+    // rounds gap_start/gap_end to 0.1 months, and hover needs any day.
+    const segs = tl.segments.map(s => {
+        const start = parseUTCDate(s.start);
+        const end = parseUTCDate(s.end);
+        const ref = parseUTCDate(s.reference_date);
+        const nxt = s.next_leader_date ? parseUTCDate(s.next_leader_date) : null;
+        return {
+            ...s,
+            _start: start,
+            _end: end,
+            _ref: ref,
+            _nxt: nxt,
+            _lagDate: s.laggard_date ? parseUTCDate(s.laggard_date) : null,
+            gapStart: monthsSince(start, ref),
+            gapEnd: monthsSince(end, ref),
+            // Lower bound of the measured range: months since the oldest
+            // unmatched leader model (0 when the laggard has matched the newest).
+            lowerStart: nxt ? monthsSince(start, nxt) : 0,
+            lowerEnd: nxt ? monthsSince(end, nxt) : 0,
+        };
+    });
+    const expectedPts = ((tl.expected_lead && tl.expected_lead.points) || [])
+        .map(p => ({ _d: parseUTCDate(p.date), v: Number(p.months) }))
+        .filter(p => Number.isFinite(p.v))
+        .sort((a, b) => a._d - b._d);
+    if (!segs.length || !(asOf > startDate)) {
+        root.innerHTML =
+            '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">Not enough data to render chart.</p>';
+        setHistoricalMethodNote('');
+        return;
+    }
+    function segmentAt(t) {
+        let seg = segs[0];
+        for (const s of segs) {
+            if (s._start <= t) seg = s;
+            else break;
+        }
+        return seg;
+    }
+    function valueAt(t) {
+        const seg = segmentAt(t);
+        const tt = t < seg._start ? seg._start : (t > seg._end ? seg._end : t);
+        return monthsSince(tt, seg._ref);
+    }
+    function lowerAt(t) {
+        const seg = segmentAt(t);
+        if (!seg._nxt) return 0;
+        const tt = t < seg._start ? seg._start : (t > seg._end ? seg._end : t);
+        return monthsSince(tt, seg._nxt);
+    }
+    const cur = segs[segs.length - 1].gapEnd;
+    const curLower = segs[segs.length - 1].lowerEnd;
+
+    const usesBootstrap = (data.gaps || []).some(g => g.match_type === 'bootstrap');
+    setHistoricalMethodNote(
+        `Gap on each date: months since the most recent ${labels.leader} frontier model that the best ${labels.laggard} model ` +
+        `available that day had plausibly caught up to (Epoch AI's day-by-day method` +
+        `${usesBootstrap ? '; paired-bootstrap criterion for ECI' : ''}). The headline average gap is the mean of this line. ` +
+        `It counts only ${labels.leader} models the ${labels.laggard} frontier has already matched, so it can sit below the ` +
+        `survival-analysis current-gap estimate after a run of unmatched ${labels.leader} releases. ` +
+        `Drops mark ${labels.laggard} releases that matched a newer ${labels.leader} model, or ${labels.leader} releases ` +
+        `the ${labels.laggard} frontier had already matched.`);
+
+    // ---- legend (HTML, above the plot) ----
+    const legendEl = document.getElementById('historical-legend');
+    const hasReversal = (tl.events || []).some(ev => ev.reversal);
+    if (legendEl) {
+        const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+        const items = [
+            ['is-dot', `${cap(labels.laggard)} release that matched a newer ${labels.leader} model`],
+            ['is-ring', `${cap(labels.leader)} release the ${labels.laggard} frontier had already matched (gap resets to 0)`],
+        ];
+        if (hasReversal) items.push(['is-reversal', `Criterion reversal: new ${labels.laggard} record not significantly ahead of a model the previous one had matched`]);
+        items.push(['is-band', `Measured range: from the age of the oldest unmatched ${labels.leader} model up to the matched lead`]);
+        if (expectedPts.length) items.push(['is-expected', `Expected lead: survival analysis counting unmatched ${labels.leader} models by age (a forecast)`]);
+        items.push(['is-tick', `${cap(labels.leader)} frontier release`]);
+        items.push(['is-lookback', "Last date the matched lead was at least today's"]);
+        // Only worth a legend entry once the dashed tail is visible (~2 weeks).
+        if (tl.last_model_date && daysBetween(asOf, parseUTCDate(tl.last_model_date)) >= 14) {
+            items.push(['is-stale', 'Dashed: after the last scored release (accrues by the calendar, no new scores)']);
+        }
+        legendEl.innerHTML = items.map(([cls, text]) =>
+            `<span class="gap-legend__item"><span class="gap-legend__swatch ${cls}" aria-hidden="true"></span>${escapeHTML(text)}</span>`).join('');
+        legendEl.hidden = false;
+    }
+
+    // ---- geometry (same conventions as the per-release view, plus a
+    // caption line at the top so the PNG export carries the numbers) ----
+    const W = 1200;
+    const H = 680;
+    // Wider right margin than the per-release view: the today block
+    // carries up to three short lines of text.
+    const M = { top: 100, right: 132, bottom: 175, left: 84 };
+    const innerW = W - M.left - M.right;
+    const innerH = H - M.top - M.bottom;
+    const pad = (asOf - startDate) * 0.03;
+    const xMin = new Date(startDate.getTime() - pad);
+    const xMax = new Date(asOf.getTime() + pad);
+    const yValues = segs.flatMap(s => [s.gapStart, s.gapEnd]);
+    if (currentEstimate && Number.isFinite(currentEstimate.estimated_current_gap)) {
+        yValues.push(currentEstimate.estimated_current_gap);
+    }
+    for (const p of expectedPts) yValues.push(p.v);
+    const yMax = Math.ceil(Math.max(...yValues, 1) / 3) * 3 + 1;
+    const yMin = 0;
+    const x = (d) => M.left + (innerW * (d - xMin)) / (xMax - xMin);
+    const y = (v) => M.top + innerH - (innerH * (v - yMin)) / (yMax - yMin);
+    const geom = { M, innerW, innerH, W, H, x, y, xMin, xMax, yMax };
+
+    const svg = svgEl('svg', {
+        class: 'gap-chart',
+        viewBox: `0 0 ${W} ${H}`,
+        width: W,
+        height: H,
+        preserveAspectRatio: 'xMidYMid meet',
+        role: 'img',
+        'aria-label': `Months the ${labels.laggard} frontier trailed the ${labels.leader} frontier, by date`,
+    });
+    svg.dataset.view = 'timeline';
+
+    // Caption + <title>: the exported PNG and screen readers get the
+    // framing, benchmark, date and headline numbers without the page.
+    const benchName = (getBenchmarkMetadata() || {}).name || appState.currentBenchmark;
+    const framingName = framing === 'china' ? 'China vs US' : 'Open vs closed';
+    const al0 = ctx.last_at_least || {};
+    let captionTail = '';
+    if (ctx.is_record_high) captionTail = ' · largest lead in tracked period';
+    else if (al0.date && !al0.run_since && cur >= 0.05) captionTail = ` · last ≥ this: ${fmtMonthYear(parseUTCDate(al0.date), false)} (${Number(al0.months_ago).toFixed(1)} mo ago)`;
+    const captionText = `${framingName} · ${benchName} · matched lead ${cur.toFixed(1)} mo as of ${fmtDayLong(asOf)}${captionTail}`;
+    const titleEl = svgEl('title');
+    titleEl.appendChild(document.createTextNode(captionText));
+    svg.appendChild(titleEl);
+    const caption = svgEl('text', { class: 'chart-caption', x: M.left, y: 22, 'text-anchor': 'start' });
+    caption.appendChild(document.createTextNode(captionText));
+    svg.appendChild(caption);
+
+    drawGapChartAxes(svg, geom, labels);
+
+    // ---- area + sawtooth line ----
+    // Each segment is a straight rise from (start, gapStart) to (end,
+    // gapEnd); consecutive segments share an x, so drops are vertical.
+    // The tail after the last scored release (which always falls inside
+    // the last segment) is drawn dashed and lighter: it accrues by the
+    // calendar, not from new scores.
+    const lastModelDate = tl.last_model_date ? parseUTCDate(tl.last_model_date) : null;
+    const staleDays = lastModelDate ? Math.max(0, daysBetween(asOf, lastModelDate)) : 0;
+    const splitDate = staleDays > 0 && lastModelDate > startDate ? lastModelDate : null;
+    const fmt = (p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`;
+    const solid = [];
+    const stale = [];
+    for (const s of segs) {
+        if (splitDate && s._end > splitDate) {
+            const cut = s._start > splitDate ? s._start : splitDate;
+            if (s._start <= splitDate) {
+                solid.push([x(s._start), y(s.gapStart)]);
+                solid.push([x(cut), y(monthsSince(cut, s._ref))]);
+            }
+            stale.push([x(cut), y(monthsSince(cut, s._ref))]);
+            stale.push([x(s._end), y(s.gapEnd)]);
+        } else {
+            solid.push([x(s._start), y(s.gapStart)]);
+            solid.push([x(s._end), y(s.gapEnd)]);
+        }
+    }
+    const solidStr = solid.map(fmt).join(' ');
+    const solidEndX = solid.length ? solid[solid.length - 1][0] : x(startDate);
+    svg.appendChild(svgEl('polygon', {
+        class: 'gap-area',
+        points: `${x(startDate).toFixed(1)},${y(0).toFixed(1)} ${solidStr} ${solidEndX.toFixed(1)},${y(0).toFixed(1)}`,
+    }));
+    svg.appendChild(svgEl('polyline', { class: 'gap-line', points: solidStr }));
+    if (stale.length) {
+        const staleStr = stale.map(fmt).join(' ');
+        svg.appendChild(svgEl('polygon', {
+            class: 'gap-area is-stale',
+            points: `${stale[0][0].toFixed(1)},${y(0).toFixed(1)} ${staleStr} ${x(asOf).toFixed(1)},${y(0).toFixed(1)}`,
+        }));
+        svg.appendChild(svgEl('polyline', { class: 'gap-line is-stale', points: staleStr }));
+        if (staleDays > STALE_AFTER_DAYS) {
+            const xs = x(splitDate);
+            svg.appendChild(svgEl('line', { class: 'stale-marker', x1: xs, x2: xs, y1: M.top, y2: M.top + innerH }));
+            const t = svgEl('text', { class: 'axis-label', x: xs + 5, y: M.top + 14, 'text-anchor': 'start' });
+            t.appendChild(document.createTextNode(`last scored release: ${fmtMonthYear(splitDate, false)}`));
+            svg.appendChild(t);
+        }
+    }
+
+    // ---- measured range band: lower bound (oldest unmatched leader) ----
+    // Drawn over the area so the band reads darker than the rest.
+    const upperPts = [];
+    const lowerPts = [];
+    for (const s of segs) {
+        upperPts.push([x(s._start), y(s.gapStart)], [x(s._end), y(s.gapEnd)]);
+        lowerPts.push([x(s._start), y(s.lowerStart)], [x(s._end), y(s.lowerEnd)]);
+    }
+    svg.appendChild(svgEl('polygon', {
+        class: 'gap-band',
+        points: [...upperPts, ...lowerPts.slice().reverse()].map(fmt).join(' '),
+    }));
+    svg.appendChild(svgEl('polyline', { class: 'gap-line is-lower', points: lowerPts.map(fmt).join(' ') }));
+
+    // ---- expected lead: survival estimate recomputed over time ----
+    if (expectedPts.length >= 2) {
+        svg.appendChild(svgEl('polyline', {
+            class: 'expected-line',
+            points: expectedPts.map(p => fmt([x(p._d), y(p.v)])).join(' '),
+        }));
+    }
+
+    // ---- lookback: last date the gap was at least this large ----
+    // Ring on the line at that date, dotted guide at today's level across
+    // to the today marker; the text lives in the today block (right
+    // margin) where nothing else is drawn, so it cannot collide with the
+    // sawtooth or the label stubs.
+    const al = ctx.last_at_least || {};
+    const isZero = cur < 0.05; // displays as 0.0: "at least this large" is every day
+    let lookbackText = null;
+    if (al.date && !al.run_since && !ctx.is_record_high && !isZero) {
+        const d = parseUTCDate(al.date);
+        const xp = x(d);
+        const yp = y(valueAt(d));
+        svg.appendChild(svgEl('line', {
+            class: 'lookback-guide',
+            x1: xp, x2: x(asOf), y1: y(cur), y2: y(cur),
+        }));
+        svg.appendChild(svgEl('circle', { class: 'lookback-ring', cx: xp, cy: yp, r: 6 }));
+        lookbackText = `last ≥ this: ${fmtMonthYear(d, false)}`;
+    }
+
+    // ---- leader frontier releases as rotated bottom ticks ----
+    const leaderEvents = (tl.leader_frontier || [])
+        .map(r => ({ _d: parseUTCDate(r.date), display: r.model }))
+        .sort((a, b) => a._d - b._d);
+    drawReleaseTicks(svg, leaderEvents, geom);
+
+    // ---- drop events: dots + 2-row labels ----
+    const items = (tl.events || [])
+        .map(ev => {
+            const d = parseUTCDate(ev.date);
+            return {
+                ev,
+                _d: d,
+                xp: x(d),
+                yp: y(valueAt(d)),
+                labelText: shortenModelName(ev.model),
+                gapText: `${Number(ev.gap_before).toFixed(1)} → ${Number(ev.gap_after).toFixed(1)} mo${ev.reversal ? ' · reversal' : ''}`,
+                markerClass: ev.reversal ? 'cn-dot is-reversal' : (ev.kind === 'leader_release' ? 'cn-dot is-leader' : 'cn-dot'),
+            };
+        })
+        .filter(it => it.xp >= M.left && it.xp <= W - M.right)
+        .sort((a, b) => a.xp - b.xp);
+    const { placed, upperRowY } = placeLabelBand(items, M);
+    drawLabelBand(svg, placed, upperRowY, M, 'cn-dot');
+
+    // ---- today marker + text block in the right margin ----
+    // The block hangs from the marker; near the x-axis it is lifted so its
+    // last line stays inside the plot instead of colliding with the ticks.
+    const xToday = x(asOf);
+    const yToday = y(cur);
+    const rangeText = curLower < cur - 0.05 ? `range ${curLower.toFixed(1)} to ${cur.toFixed(1)}` : null;
+    const blockTexts = [
+        ctx.is_record_high ? 'matched lead · record high' : (ctx.is_record_low ? 'matched lead · record low' : 'matched lead today'),
+        rangeText,
+        lookbackText,
+    ].filter(Boolean);
+    const blockLines = 1 + blockTexts.length;
+    const blockBottom = yToday + 4 + 13 * (blockLines - 1) + 1;
+    const blockTop = yToday + 4 - Math.max(0, blockBottom - (M.top + innerH - 2));
+    svg.appendChild(svgEl('circle', { class: 'today-dot', cx: xToday, cy: yToday, r: 5 }));
+    const todayLabel = svgEl('text', { class: 'today-label', x: xToday + 10, y: blockTop, 'text-anchor': 'start' });
+    todayLabel.appendChild(document.createTextNode(`${cur.toFixed(1)} mo`));
+    svg.appendChild(todayLabel);
+    blockTexts.forEach((text, i) => {
+        const t = svgEl('text', { class: 'today-sub', x: xToday + 10, y: blockTop + 14 + 13 * i, 'text-anchor': 'start' });
+        t.appendChild(document.createTextNode(text));
+        svg.appendChild(t);
+    });
+
+    // ---- expected lead endpoint (or the survival star as a fallback) ----
+    // A different estimator (it also counts unmatched leader models), so it
+    // is named as such, never as "the gap".
+    const estFromSeries = expectedPts.length ? expectedPts[expectedPts.length - 1].v : null;
+    const estFallback = currentEstimate && Number.isFinite(currentEstimate.estimated_current_gap)
+        ? currentEstimate.estimated_current_gap : null;
+    const est = estFromSeries != null ? estFromSeries : estFallback;
+    if (est != null) {
+        const yEst = y(est);
+        if (estFromSeries != null) {
+            svg.appendChild(svgEl('circle', { class: 'expected-dot', cx: xToday, cy: yEst, r: 4.5 }));
+        } else {
+            svg.appendChild(svgEl('polygon', { class: 'current-star', points: starPoints(xToday, yEst, 9, 4.2, 5) }));
+        }
+        // Keep the two-line label clear of the today block.
+        const blockH = 13 * blockLines + 4;
+        const collides = yEst + 4 > blockTop - 16 && yEst - 12 < blockTop + blockH;
+        const above = yEst <= yToday;
+        const ly = collides ? (above ? blockTop - 30 : blockTop + blockH + 12) : yEst + 4;
+        const estLabel = svgEl('text', { class: 'est-label', x: xToday + 12, y: ly, 'text-anchor': 'start' });
+        estLabel.appendChild(document.createTextNode(`Exp. ${Number(est).toFixed(1)} mo`));
+        svg.appendChild(estLabel);
+        const estSub = svgEl('text', { class: 'today-sub', x: xToday + 12, y: ly + 13, 'text-anchor': 'start' });
+        estSub.appendChild(document.createTextNode('survival forecast'));
+        svg.appendChild(estSub);
+    }
+
+    // ---- hover machinery: continuous crosshair, snapped to the day ----
+    const hoverLine = svgEl('line', { class: 'hover-line', x1: 0, x2: 0, y1: M.top, y2: M.top + innerH });
+    svg.appendChild(hoverLine);
+    const hoverDot = svgEl('circle', { class: 'hover-dot', cx: 0, cy: 0, r: 4 });
+    svg.appendChild(hoverDot);
+    const hoverArea = svgEl('rect', { class: 'hover-target', x: M.left, y: M.top, width: innerW, height: innerH });
+    svg.appendChild(hoverArea);
+
+    const scoreLabel = appState.currentBenchmark === 'eci' ? 'ECI' : 'Score';
+    const scoreMeta = (v) => (v != null && Number.isFinite(Number(v)) ? ` · ${scoreLabel} ${Number(v).toFixed(1)}` : '');
+
+    function showTooltipAt(svgX) {
+        if (!tooltipEl) return;
+        const tMs = xMin.getTime() + ((svgX - M.left) / innerW) * (xMax - xMin);
+        let t = toUTCDay(new Date(tMs));
+        if (t < startDate) t = startDate;
+        if (t > asOf) t = asOf;
+        const seg = segmentAt(t);
+        const v = valueAt(t);
+        const lo = lowerAt(t);
+        const xp = x(t);
+        const yp = y(v);
+        hoverLine.setAttribute('x1', xp);
+        hoverLine.setAttribute('x2', xp);
+        hoverLine.classList.add('is-active');
+        hoverDot.setAttribute('cx', xp);
+        hoverDot.setAttribute('cy', yp);
+        hoverDot.classList.add('is-active');
+        const rangeRow = seg._nxt ? `
+            <div class="tt-row">
+                <span class="tt-swatch us"></span>
+                <div>
+                    <div class="tt-label">${escapeHTML(labels.nextLeaderRow)}</div>
+                    <div class="tt-name">${escapeHTML(shortenModelName(seg.next_leader_model))}</div>
+                    <div class="tt-meta">${escapeHTML(fmtDayLong(seg._nxt))}${escapeHTML(scoreMeta(seg.next_leader_score))} · measured range ${lo.toFixed(1)} to ${v.toFixed(1)} months</div>
+                </div>
+            </div>` : '';
+        tooltipEl.innerHTML = `
+            <div class="tt-head">${v.toFixed(1)} ${escapeHTML(labels.behindHeader)}</div>
+            <div class="tt-date">${escapeHTML(fmtDayLong(t))}</div>
+            ${rangeRow}
+            <div class="tt-row">
+                <span class="tt-swatch cn"></span>
+                <div>
+                    <div class="tt-label">${escapeHTML(labels.laggardRow)}</div>
+                    <div class="tt-name">${escapeHTML(shortenModelName(seg.laggard_model))}</div>
+                    <div class="tt-meta">${seg._lagDate ? escapeHTML(fmtDayLong(seg._lagDate)) : ''}${escapeHTML(scoreMeta(seg.laggard_score))}</div>
+                </div>
+            </div>
+            <div class="tt-row">
+                <span class="tt-swatch us"></span>
+                <div>
+                    <div class="tt-label">${escapeHTML(seg.reference_matched ? labels.referenceRow : labels.referenceRowUnmatched)}</div>
+                    <div class="tt-name">${escapeHTML(shortenModelName(seg.reference_model))}</div>
+                    <div class="tt-meta">${escapeHTML(fmtDayLong(seg._ref))}${escapeHTML(scoreMeta(seg.reference_score))}</div>
+                </div>
+            </div>`;
+        const rect = svg.getBoundingClientRect();
+        tooltipEl.style.left = `${xp * (rect.width / W)}px`;
+        tooltipEl.style.top = `${yp * (rect.height / H)}px`;
+        tooltipEl.hidden = false;
+    }
+
+    hoverArea.addEventListener('mousemove', (ev) => {
+        const rect = svg.getBoundingClientRect();
+        const sx = ((ev.clientX - rect.left) * W) / rect.width;
+        if (sx < M.left || sx > W - M.right) return;
+        showTooltipAt(sx);
+    });
+    hoverArea.addEventListener('mouseleave', () => {
+        if (tooltipEl) tooltipEl.hidden = true;
+        hoverLine.classList.remove('is-active');
+        hoverDot.classList.remove('is-active');
+    });
+
+    root.appendChild(svg);
+    root.dataset.viewbox = `0 0 ${W} ${H}`;
+}
+
+/**
+ * Score-gap view: best leader score minus best laggard score on each date,
+ * in the benchmark's own units. A step chart: it rises the day the leader
+ * releases a stronger model and falls the day the laggard does, so it
+ * accounts for unmatched leader models directly.
+ */
+function renderScoreGapChart(data, sg) {
+    const root = document.getElementById('historical-chart');
+    const tooltipEl = document.getElementById('historical-tooltip');
+    const container = document.getElementById('historical-chart-container');
+    if (!root) return;
+    root.innerHTML = '';
+    if (tooltipEl) tooltipEl.hidden = true;
+
+    const framing = appState.framing;
+    const labels = getTimelineLabels(framing);
+    const accent = getLaggardAccent(framing);
+    if (container) {
+        container.style.setProperty('--c-cn', accent.dot);
+        container.style.setProperty('--c-cn-soft', accent.area);
+    }
+    const ctx = sg.context || {};
+    const asOf = parseUTCDate(sg.as_of);
+    const startDate = parseUTCDate(sg.start);
+    const unit = labels.unit;
+
+    const steps = sg.steps.map(s => ({
+        ...s,
+        _start: parseUTCDate(s.start),
+        _end: parseUTCDate(s.end),
+        _ledDate: s.leader_date ? parseUTCDate(s.leader_date) : null,
+        _lagDate: s.laggard_date ? parseUTCDate(s.laggard_date) : null,
+        gap: Number(s.gap),
+    }));
+    if (!steps.length || !(asOf > startDate)) {
+        root.innerHTML =
+            '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">Not enough data to render chart.</p>';
+        setHistoricalMethodNote('');
+        return;
+    }
+    function stepAt(t) {
+        let st = steps[0];
+        for (const s of steps) {
+            if (s._start <= t) st = s;
+            else break;
+        }
+        return st;
+    }
+    const valueAt = (t) => stepAt(t).gap;
+    const cur = steps[steps.length - 1].gap;
+
+    setHistoricalMethodNote(
+        `Score gap on each date: the best ${labels.leader} frontier score minus the best ${labels.laggard} frontier score ` +
+        `available that day, in ${unit.long}. It rises the day the ${labels.leader} side releases a stronger model and falls ` +
+        `the day the ${labels.laggard} side does, so unmatched ${labels.leader} models count immediately. Unlike the ` +
+        `months-behind view it needs no matching criterion, but it is not a time gap.`);
+
+    // ---- legend ----
+    const legendEl = document.getElementById('historical-legend');
+    if (legendEl) {
+        const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+        const items = [
+            ['is-dot', `${cap(labels.laggard)} release that narrowed the score gap`],
+            ['is-rise', `${cap(labels.leader)} release that widened it`],
+            ['is-tick', `${cap(labels.leader)} frontier release`],
+            ['is-lookback', "Last date the score gap was at least today's"],
+        ];
+        legendEl.innerHTML = items.map(([cls, text]) =>
+            `<span class="gap-legend__item"><span class="gap-legend__swatch ${cls}" aria-hidden="true"></span>${escapeHTML(text)}</span>`).join('');
+        legendEl.hidden = false;
+    }
+
+    // ---- geometry ----
+    const W = 1200;
+    const H = 680;
+    const M = { top: 100, right: 132, bottom: 175, left: 84 };
+    const innerW = W - M.left - M.right;
+    const innerH = H - M.top - M.bottom;
+    const pad = (asOf - startDate) * 0.03;
+    const xMin = new Date(startDate.getTime() - pad);
+    const xMax = new Date(asOf.getTime() + pad);
+    const gaps = steps.map(s => s.gap);
+    const rawMax = Math.max(...gaps, 0);
+    const rawMin = Math.min(...gaps, 0);
+    // Nice tick step: ~6 ticks over the range.
+    const span = Math.max(rawMax - rawMin, 1e-9);
+    const candidates = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
+    const yStep = candidates.find(s => span / s <= 7) || candidates[candidates.length - 1];
+    const yMax = Math.ceil(rawMax / yStep) * yStep + (rawMax === Math.ceil(rawMax / yStep) * yStep ? yStep : 0);
+    const yMin = rawMin < 0 ? Math.floor(rawMin / yStep) * yStep : 0;
+    const x = (d) => M.left + (innerW * (d - xMin)) / (xMax - xMin);
+    const y = (v) => M.top + innerH - (innerH * (v - yMin)) / (yMax - yMin);
+    const geom = { M, innerW, innerH, W, H, x, y, xMin, xMax, yMax, yMin, yStep };
+
+    const svg = svgEl('svg', {
+        class: 'gap-chart',
+        viewBox: `0 0 ${W} ${H}`,
+        width: W,
+        height: H,
+        preserveAspectRatio: 'xMidYMid meet',
+        role: 'img',
+        'aria-label': `Score gap between the ${labels.leader} and ${labels.laggard} frontiers, by date`,
+    });
+    svg.dataset.view = 'score';
+
+    const benchName = (getBenchmarkMetadata() || {}).name || appState.currentBenchmark;
+    const framingName = framing === 'china' ? 'China vs US' : 'Open vs closed';
+    const al0 = ctx.last_at_least || {};
+    let captionTail = '';
+    if (ctx.is_record_high) captionTail = ' · largest score gap in tracked period';
+    else if (al0.date) captionTail = ` · last ≥ this: ${fmtMonthYear(parseUTCDate(al0.date), false)} (${Number(al0.months_ago).toFixed(1)} mo ago)`;
+    const captionText = `${framingName} · ${benchName} · score gap ${cur.toFixed(1)} ${unit.short} as of ${fmtDayLong(asOf)}${captionTail}`;
+    const titleEl = svgEl('title');
+    titleEl.appendChild(document.createTextNode(captionText));
+    svg.appendChild(titleEl);
+    const caption = svgEl('text', { class: 'chart-caption', x: M.left, y: 22, 'text-anchor': 'start' });
+    caption.appendChild(document.createTextNode(captionText));
+    svg.appendChild(caption);
+
+    drawGapChartAxes(svg, geom, { yAxisTitle: labels.scoreYAxisTitle, xAxisTitle: labels.xAxisTitle });
+
+    // ---- zero line when the range includes negatives ----
+    if (yMin < 0) {
+        svg.appendChild(svgEl('line', { class: 'grid-line', x1: M.left, x2: W - M.right, y1: y(0), y2: y(0) }));
+    }
+
+    // ---- step area + line ----
+    const fmt = (p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`;
+    const pts = [];
+    for (const s of steps) {
+        pts.push([x(s._start), y(s.gap)]);
+        pts.push([x(s._end), y(s.gap)]);
+    }
+    const lineStr = pts.map(fmt).join(' ');
+    svg.appendChild(svgEl('polygon', {
+        class: 'gap-area',
+        points: `${x(startDate).toFixed(1)},${y(0).toFixed(1)} ${lineStr} ${x(asOf).toFixed(1)},${y(0).toFixed(1)}`,
+    }));
+    svg.appendChild(svgEl('polyline', { class: 'gap-line', points: lineStr }));
+
+    // ---- lookback ----
+    // A step series usually reaches today's level on a release day and
+    // stays there, so the "current run" is short and the informative date
+    // is the one before it; draw it whenever an earlier date exists.
+    const al = ctx.last_at_least || {};
+    let lookbackText = null;
+    if (al.date && !ctx.is_record_high) {
+        const d = parseUTCDate(al.date);
+        svg.appendChild(svgEl('line', { class: 'lookback-guide', x1: x(d), x2: x(asOf), y1: y(cur), y2: y(cur) }));
+        svg.appendChild(svgEl('circle', { class: 'lookback-ring', cx: x(d), cy: y(valueAt(d)), r: 6 }));
+        lookbackText = `last ≥ this: ${fmtMonthYear(d, false)}`;
+    }
+
+    // ---- leader release ticks ----
+    const leaderEvents = (sg.leader_frontier || [])
+        .map(r => ({ _d: parseUTCDate(r.date), display: r.model }))
+        .sort((a, b) => a._d - b._d);
+    drawReleaseTicks(svg, leaderEvents, geom);
+
+    // ---- events: every release moves the step; label the largest moves ----
+    const allEvents = (sg.events || []).map(ev => {
+        const d = parseUTCDate(ev.date);
+        const delta = Number(ev.gap_after) - Number(ev.gap_before);
+        return {
+            ev, _d: d, xp: x(d), yp: y(Number(ev.gap_after)), delta,
+            labelText: shortenModelName(ev.model),
+            gapText: `${Number(ev.gap_before).toFixed(1)} → ${Number(ev.gap_after).toFixed(1)} ${unit.short}`,
+            markerClass: ev.kind === 'leader_release' ? 'cn-dot is-rise' : 'cn-dot',
+        };
+    }).filter(it => it.xp >= M.left && it.xp <= W - M.right);
+    const MAX_LABELS = 14;
+    const labelled = new Set([...allEvents]
+        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+        .slice(0, MAX_LABELS));
+    if (allEvents.length) labelled.add(allEvents[allEvents.length - 1]);
+    const labelItems = allEvents.filter(it => labelled.has(it)).sort((a, b) => a.xp - b.xp);
+    const { placed, upperRowY } = placeLabelBand(labelItems, M);
+    drawLabelBand(svg, placed, upperRowY, M, 'cn-dot');
+    for (const it of allEvents) {
+        if (labelled.has(it)) continue;
+        svg.appendChild(svgEl('circle', { class: it.markerClass, cx: it.xp, cy: it.yp, r: 3 }));
+    }
+
+    // ---- today block ----
+    const xToday = x(asOf);
+    const yToday = y(cur);
+    const blockLines = 2 + (lookbackText ? 1 : 0);
+    const blockBottom = yToday + 4 + 13 * (blockLines - 1) + 1;
+    const blockTop = yToday + 4 - Math.max(0, blockBottom - (M.top + innerH - 2));
+    svg.appendChild(svgEl('circle', { class: 'today-dot', cx: xToday, cy: yToday, r: 5 }));
+    const todayLabel = svgEl('text', { class: 'today-label', x: xToday + 10, y: blockTop, 'text-anchor': 'start' });
+    todayLabel.appendChild(document.createTextNode(`${cur.toFixed(1)} ${unit.short}`));
+    svg.appendChild(todayLabel);
+    const todaySub = svgEl('text', { class: 'today-sub', x: xToday + 10, y: blockTop + 14, 'text-anchor': 'start' });
+    todaySub.appendChild(document.createTextNode(
+        ctx.is_record_high ? 'score gap · record high' : (ctx.is_record_low ? 'score gap · record low' : 'score gap today')));
+    svg.appendChild(todaySub);
+    if (lookbackText) {
+        const lb = svgEl('text', { class: 'today-sub', x: xToday + 10, y: blockTop + 27, 'text-anchor': 'start' });
+        lb.appendChild(document.createTextNode(lookbackText));
+        svg.appendChild(lb);
+    }
+
+    // ---- hover ----
+    const hoverLine = svgEl('line', { class: 'hover-line', x1: 0, x2: 0, y1: M.top, y2: M.top + innerH });
+    svg.appendChild(hoverLine);
+    const hoverDot = svgEl('circle', { class: 'hover-dot', cx: 0, cy: 0, r: 4 });
+    svg.appendChild(hoverDot);
+    const hoverArea = svgEl('rect', { class: 'hover-target', x: M.left, y: M.top, width: innerW, height: innerH });
+    svg.appendChild(hoverArea);
+    const scoreMeta = (v) => (v != null && Number.isFinite(Number(v)) ? ` · ${Number(v).toFixed(1)}` : '');
+
+    function showTooltipAt(svgX) {
+        if (!tooltipEl) return;
+        const tMs = xMin.getTime() + ((svgX - M.left) / innerW) * (xMax - xMin);
+        let t = toUTCDay(new Date(tMs));
+        if (t < startDate) t = startDate;
+        if (t > asOf) t = asOf;
+        const st = stepAt(t);
+        const v = st.gap;
+        const xp = x(t);
+        const yp = y(v);
+        hoverLine.setAttribute('x1', xp);
+        hoverLine.setAttribute('x2', xp);
+        hoverLine.classList.add('is-active');
+        hoverDot.setAttribute('cx', xp);
+        hoverDot.setAttribute('cy', yp);
+        hoverDot.classList.add('is-active');
+        const head = v >= 0
+            ? `${v.toFixed(1)} ${escapeHTML(unit.long)} ahead: ${escapeHTML(labels.leader)} frontier`
+            : `${Math.abs(v).toFixed(1)} ${escapeHTML(unit.long)} ahead: ${escapeHTML(labels.laggard)} frontier`;
+        tooltipEl.innerHTML = `
+            <div class="tt-head">${head}</div>
+            <div class="tt-date">${escapeHTML(fmtDayLong(t))}</div>
+            <div class="tt-row">
+                <span class="tt-swatch us"></span>
+                <div>
+                    <div class="tt-label">${escapeHTML(labels.leaderRow)}</div>
+                    <div class="tt-name">${escapeHTML(shortenModelName(st.leader_model))}</div>
+                    <div class="tt-meta">${st._ledDate ? escapeHTML(fmtDayLong(st._ledDate)) : ''}${escapeHTML(scoreMeta(st.leader_score))}</div>
+                </div>
+            </div>
+            <div class="tt-row">
+                <span class="tt-swatch cn"></span>
+                <div>
+                    <div class="tt-label">${escapeHTML(labels.laggardRowScore)}</div>
+                    <div class="tt-name">${escapeHTML(shortenModelName(st.laggard_model))}</div>
+                    <div class="tt-meta">${st._lagDate ? escapeHTML(fmtDayLong(st._lagDate)) : ''}${escapeHTML(scoreMeta(st.laggard_score))}</div>
+                </div>
+            </div>`;
+        const rect = svg.getBoundingClientRect();
+        tooltipEl.style.left = `${xp * (rect.width / W)}px`;
+        tooltipEl.style.top = `${yp * (rect.height / H)}px`;
+        tooltipEl.hidden = false;
+    }
+    hoverArea.addEventListener('mousemove', (ev) => {
+        const rect = svg.getBoundingClientRect();
+        const sx = ((ev.clientX - rect.left) * W) / rect.width;
+        if (sx < M.left || sx > W - M.right) return;
+        showTooltipAt(sx);
+    });
+    hoverArea.addEventListener('mouseleave', () => {
+        if (tooltipEl) tooltipEl.hidden = true;
+        hoverLine.classList.remove('is-active');
+        hoverDot.classList.remove('is-active');
+    });
+
+    root.appendChild(svg);
+    root.dataset.viewbox = `0 0 ${W} ${H}`;
+}
+
+/**
+ * Per-release view: one dot per matched leader-side frontier model at its
+ * release date, y = months until the first laggard-side model matched it.
+ */
+function renderHistoricalMatchesChart(data) {
     const root = document.getElementById('historical-chart');
     const tooltipEl = document.getElementById('historical-tooltip');
     const container = document.getElementById('historical-chart-container');
@@ -1719,27 +2966,12 @@ function renderHistoricalChart(data) {
         ev.prevGap = i > 0 ? gapPoints[i - 1].gap : null;
     });
 
-    // Idempotent methodology note for the bootstrap-matched (ECI) view.
+    // Methodology note for the bootstrap-matched (ECI) view.
     const usesBootstrap = (data.gaps || []).some(g => g.match_type === 'bootstrap');
-    let methodNote = document.getElementById('historical-method-note');
-    if (usesBootstrap) {
-        if (!methodNote && container) {
-            methodNote = document.createElement('p');
-            methodNote.id = 'historical-method-note';
-            methodNote.className = 'subtitle';
-            methodNote.style.textAlign = 'center';
-            methodNote.style.marginTop = 'var(--spacing-sm)';
-            container.appendChild(methodNote);
-        }
-        if (methodNote) {
-            methodNote.textContent =
-                "Matches use Epoch AI's paired bootstrap (open model ahead in at least 5% of resamples). " +
-                "Plotted scores are Epoch's published ECI point estimates.";
-            methodNote.hidden = false;
-        }
-    } else if (methodNote) {
-        methodNote.hidden = true;
-    }
+    setHistoricalMethodNote(usesBootstrap
+        ? "Matches use Epoch AI's paired bootstrap (open model ahead in at least 5% of resamples). " +
+          "Plotted scores are Epoch's published ECI point estimates."
+        : '');
 
     if (gapPoints.length === 0) {
         root.innerHTML =
@@ -1798,56 +3030,8 @@ function renderHistoricalChart(data) {
         role: 'img',
         'aria-label': `Gap in months between ${labels.leader} and ${labels.laggard} frontier models over time`,
     });
-
-    // y tick labels (no gridlines)
-    for (let v = 0; v <= yMax; v += 3) {
-        const t = svgEl('text', { class: 'axis-label', x: M.left - 8, y: y(v) + 3.5, 'text-anchor': 'end' });
-        t.appendChild(document.createTextNode(v));
-        svg.appendChild(t);
-    }
-
-    // x tick labels (quarterly, no gridlines)
-    const xTicks = [];
-    let cursor = new Date(Date.UTC(xMin.getUTCFullYear(), Math.floor(xMin.getUTCMonth() / 3) * 3, 1));
-    while (cursor <= xMax) {
-        if (cursor >= xMin) xTicks.push(new Date(cursor));
-        cursor = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 3, 1));
-    }
-    for (const d of xTicks) {
-        const xp = x(d);
-        const isJan = d.getUTCMonth() === 0;
-        const t = svgEl('text', {
-            class: 'axis-label',
-            x: xp,
-            y: M.top + innerH + 16,
-            'text-anchor': 'middle',
-            'font-weight': isJan ? '600' : '400',
-        });
-        t.appendChild(document.createTextNode(isJan ? fmtYear(d) : fmtMonthShort(d)));
-        svg.appendChild(t);
-    }
-
-    // axis titles
-    const yTitleX = 24;
-    const yTitleY = M.top + innerH / 2;
-    const yTitle = svgEl('text', {
-        class: 'axis-title',
-        x: yTitleX,
-        y: yTitleY,
-        'text-anchor': 'middle',
-        transform: `rotate(-90 ${yTitleX} ${yTitleY})`,
-    });
-    yTitle.appendChild(document.createTextNode(labels.yAxisTitle));
-    svg.appendChild(yTitle);
-
-    const xTitle = svgEl('text', {
-        class: 'axis-title',
-        x: M.left + innerW / 2,
-        y: H - 22,
-        'text-anchor': 'middle',
-    });
-    xTitle.appendChild(document.createTextNode(labels.xAxisTitle));
-    svg.appendChild(xTitle);
+    svg.dataset.view = 'matches';
+    drawGapChartAxes(svg, { M, innerW, innerH, W, H, x, y, xMin, xMax, yMax }, labels);
 
     // ---- gap area + line (step function) ----
     // Between consecutive reference releases the plotted gap holds at the
@@ -1904,90 +3088,23 @@ function renderHistoricalChart(data) {
         // Star marker at today (rendered after dots so it stays on top)
     }
 
-    // ---- leader frontier rotated bottom ticks ----
-    const LEADER_SKIP = new Set([]); // could be wired up via UI later
-    const tickTopY = M.top + innerH;
-    const ROT_DEG = 40;
-    const ROT_COS = Math.cos((ROT_DEG * Math.PI) / 180);
-    const TICK_TOP = tickTopY + 28;
-    const TICK_BOTTOM = tickTopY + 36;
-    const LEADER_LABEL_Y = tickTopY + 42;
-    let leaderRightX = -Infinity;
-    for (const ev of matcherTimeline) {
-        const xp = x(ev._d);
-        if (xp < M.left || xp > W - M.right) continue;
-        const labelText = shortenModelName(ev.display);
-        if (LEADER_SKIP.has(labelText)) continue;
-        const estW = labelText.length * 6.6 * ROT_COS + 8;
-        // Skip if the rotated label would clip past the chart's right edge.
-        if (xp + estW > W - 6) continue;
-        if (xp < leaderRightX + 6) continue;
-        leaderRightX = xp + estW;
-        svg.appendChild(svgEl('line', {
-            class: 'us-tick',
-            x1: xp, x2: xp, y1: TICK_TOP, y2: TICK_BOTTOM,
-        }));
-        const labelW = labelText.length * 6.6 + 4;
-        svg.appendChild(svgEl('rect', {
-            class: 'label-us-box',
-            x: xp - 2,
-            y: LEADER_LABEL_Y - 10,
-            width: labelW,
-            height: 14,
-            transform: `rotate(${ROT_DEG} ${xp} ${LEADER_LABEL_Y})`,
-        }));
-        const t = svgEl('text', {
-            class: 'label-us',
-            x: xp,
-            y: LEADER_LABEL_Y,
-            'text-anchor': 'start',
-            transform: `rotate(${ROT_DEG} ${xp} ${LEADER_LABEL_Y})`,
-        });
-        t.appendChild(document.createTextNode(labelText));
-        svg.appendChild(t);
-    }
+    // ---- laggard frontier releases as rotated bottom ticks ----
+    drawReleaseTicks(svg, matcherTimeline, { M, innerH, W, x });
 
-    // ---- laggard frontier dots + 2-row labels above ----
-    const ROWS = [
-        { y: M.top - 60, rightX: -Infinity }, // upper
-        { y: M.top - 28, rightX: -Infinity }, // lower (preferred)
-    ];
-    const placed = [];
-    for (const p of gapPoints) {
-        const xp = x(p._d);
-        if (xp < M.left || xp > W - M.right) continue;
-        const labelText = shortenModelName(p.display);
-        const gapText = p.prevGap != null && Number.isFinite(p.prevGap)
-            ? `${p.prevGap.toFixed(1)} → ${p.gap.toFixed(1)} mo`
-            : `${p.gap.toFixed(1)} mo`;
-        const halfW = Math.max(labelText.length * 3.4, gapText.length * 3.1) + 6;
-        let rowIdx = 1;
-        if (xp - halfW < ROWS[1].rightX + 4) rowIdx = 0;
-        if (rowIdx === 0 && xp - halfW < ROWS[0].rightX + 4) {
-            // both rows occupied — drop this label (still draw the dot)
-            placed.push({ p, xp, labelY: null, labelText, gapText });
-            continue;
-        }
-        ROWS[rowIdx].rightX = xp + halfW;
-        placed.push({ p, xp, labelY: ROWS[rowIdx].y, labelText, gapText });
-    }
-    const upperRowY = ROWS[0].y;
-    for (const { p, xp, labelY, labelText, gapText } of placed) {
-        const yp = y(p.gap);
-        if (labelY != null) {
-            const stubY1 = labelY === upperRowY ? M.top - 4 : labelY + 18;
-            svg.appendChild(svgEl('line', { class: 'label-stub', x1: xp, x2: xp, y1: stubY1, y2: yp - 6 }));
-        }
-        svg.appendChild(svgEl('circle', { class: 'cn-dot', cx: xp, cy: yp, r: 4 }));
-        if (labelY != null) {
-            const nameEl = svgEl('text', { class: 'label-cn', x: xp, y: labelY, 'text-anchor': 'middle' });
-            nameEl.appendChild(document.createTextNode(labelText));
-            svg.appendChild(nameEl);
-            const gapEl = svgEl('text', { class: 'label-cn-gap', x: xp, y: labelY + 14, 'text-anchor': 'middle' });
-            gapEl.appendChild(document.createTextNode(gapText));
-            svg.appendChild(gapEl);
-        }
-    }
+    // ---- reference-model dots + 2-row labels above ----
+    const items = gapPoints
+        .map(p => ({
+            p,
+            xp: x(p._d),
+            yp: y(p.gap),
+            labelText: shortenModelName(p.display),
+            gapText: p.prevGap != null && Number.isFinite(p.prevGap)
+                ? `${p.prevGap.toFixed(1)} → ${p.gap.toFixed(1)} mo`
+                : `${p.gap.toFixed(1)} mo`,
+        }))
+        .filter(it => it.xp >= M.left && it.xp <= W - M.right);
+    const { placed, upperRowY } = placeLabelBand(items, M);
+    drawLabelBand(svg, placed, upperRowY, M, 'cn-dot');
 
     // ---- current-gap star marker (after dots so it sits on top) ----
     if (currentEstimate) {
@@ -2142,7 +3259,10 @@ function setupHistoricalChartDownload() {
 function gapChartFilename() {
     const today = new Date().toISOString().slice(0, 10);
     const framing = appState.framing === 'china' ? 'china-us' : 'open-closed';
-    return `gap-over-time-${framing}-${today}.png`;
+    const svg = document.querySelector('#historical-chart svg.gap-chart');
+    const slugs = { matches: 'time-to-match', score: 'score-gap', timeline: 'months-behind' };
+    const view = slugs[(svg && svg.dataset.view) || 'timeline'] || 'months-behind';
+    return `gap-over-time-${framing}-${view}-${today}.png`;
 }
 
 /**
@@ -2207,8 +3327,9 @@ function loadImage(src) {
  */
 const SVG_STYLE_PROPS = [
     'fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-dasharray',
-    'stroke-opacity', 'opacity', 'font-family', 'font-size', 'font-weight',
-    'letter-spacing', 'text-anchor',
+    'stroke-linecap', 'stroke-linejoin', 'stroke-opacity', 'opacity',
+    'font-family', 'font-size', 'font-weight', 'letter-spacing',
+    'text-anchor', 'dominant-baseline', 'paint-order',
 ];
 function inlineComputedStyles(source, target) {
     const srcEls = source.querySelectorAll('*');

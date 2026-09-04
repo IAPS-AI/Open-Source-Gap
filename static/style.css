@@ -688,6 +688,123 @@ details.explainer-panel[open] .explainer-summary::before {
     margin-bottom: 2rem;
     border-radius: var(--radius-md);
 }
+.chart-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+.chart-card__title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c-ink-mute);
+}
+#historical-view-toggle .toggle-btn {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+}
+#historical-view-toggle .toggle-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+#historical-view-toggle[hidden] { display: none; }
+
+/* Legend row for the gap-by-date view */
+.gap-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--c-ink-soft);
+    margin-bottom: 6px;
+}
+.gap-legend[hidden] { display: none; }
+.gap-legend__item { display: inline-flex; align-items: center; gap: 7px; }
+.gap-legend__swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-sizing: border-box;
+    flex: none;
+}
+.gap-legend__swatch.is-dot { background: var(--c-cn); }
+.gap-legend__swatch.is-ring { border: 2px solid var(--c-cn); background: var(--c-paper); }
+.gap-legend__swatch.is-reversal { border: 2px solid var(--c-ink); background: var(--c-paper); }
+.gap-legend__swatch.is-lookback { border: 1.5px solid var(--c-ink); background: var(--c-paper); width: 12px; height: 12px; }
+.gap-legend__swatch.is-tick { width: 3px; height: 12px; border-radius: 1px; background: var(--c-us); }
+.gap-legend__swatch.is-band { width: 18px; height: 10px; border-radius: 2px; background: var(--c-cn-soft); border: 1px solid var(--c-cn); }
+.gap-legend__swatch.is-expected { width: 18px; height: 0; border-radius: 0; border-top: 2px dashed var(--color-closed); }
+.gap-legend__swatch.is-rise { border: 2px solid var(--c-us); background: var(--c-paper); }
+.gap-legend__swatch.is-stale {
+    width: 18px;
+    height: 0;
+    border-radius: 0;
+    border-top: 2px dashed var(--c-ink-mute);
+}
+.gap-context__note.is-warning {
+    color: #92400e;
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+}
+
+/* Context strip: lead sentence + stat tiles for the gap-by-date view */
+.gap-context { margin-bottom: var(--spacing-lg); }
+.gap-context[hidden] { display: none; }
+.gap-context__lead {
+    font-size: 1rem;
+    line-height: 1.55;
+    color: var(--c-ink);
+    margin-bottom: var(--spacing-xs);
+}
+.gap-context__lead strong { font-weight: 600; }
+.gap-context__note {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--c-ink-soft);
+    margin-bottom: var(--spacing-md);
+}
+.gap-context__tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+.gap-tile {
+    border: 1px solid var(--c-rule);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    background: #fafbfc;
+    min-width: 0;
+}
+.gap-tile__label {
+    font-size: 0.68rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--c-ink-mute);
+    margin-bottom: 2px;
+}
+.gap-tile__value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--c-ink);
+    letter-spacing: -0.01em;
+}
+.gap-tile__sub {
+    font-size: 0.74rem;
+    line-height: 1.35;
+    color: var(--c-ink-soft);
+    margin-top: 3px;
+}
 
 #historical-chart-container {
     width: 100%;
@@ -724,6 +841,31 @@ details.explainer-panel[open] .explainer-summary::before {
 .gap-chart .gap-area { fill: var(--c-cn-soft); }
 .gap-chart .gap-area.is-projection { fill: rgba(229, 57, 53, 0.12); }
 .gap-chart .cn-dot { fill: var(--c-cn); stroke: var(--c-paper); stroke-width: 1.5; }
+/* Leader release the laggard had already matched (gap resets to zero). */
+.gap-chart .cn-dot.is-leader { fill: var(--c-paper); stroke: var(--c-cn); stroke-width: 2; }
+/* Criterion reversal: the gap stepped up (see scripts/gap_timeline.py). */
+.gap-chart .cn-dot.is-reversal { fill: var(--c-paper); stroke: var(--c-ink); stroke-width: 2; }
+/* Measured range: between "time since the oldest unmatched leader model"
+   (lower bound) and the matched lead (upper bound). */
+.gap-chart .gap-band { fill: var(--c-cn-soft); }
+.gap-chart .gap-line.is-lower { stroke: var(--c-cn); stroke-width: 1.25; opacity: 0.8; }
+/* Expected lead: survival-analysis estimate recomputed over time (forecast). */
+.gap-chart .expected-line { stroke: var(--color-closed); stroke-width: 1.5; stroke-dasharray: 6 4; fill: none; opacity: 0.85; }
+.gap-chart .expected-dot { fill: var(--color-closed); stroke: var(--c-paper); stroke-width: 1.5; }
+.gap-chart .lower-label { fill: var(--c-ink-soft); font-size: 11px; }
+/* Tail after the last scored release: accrues by the calendar only. */
+.gap-chart .gap-area.is-stale { opacity: 0.45; }
+.gap-chart .gap-line.is-stale { stroke-dasharray: 5 4; opacity: 0.75; }
+.gap-chart .stale-marker { stroke: var(--c-ink-mute); stroke-width: 1; stroke-dasharray: 2 4; opacity: 0.8; }
+.gap-chart .chart-caption { fill: var(--c-ink-soft); font-size: 12.5px; font-weight: 500; letter-spacing: -0.005em; }
+.gap-chart .today-dot { fill: var(--c-cn); stroke: var(--c-paper); stroke-width: 2; }
+.gap-chart .today-label { fill: var(--c-ink); font-size: 13px; font-weight: 600; letter-spacing: -0.005em; }
+.gap-chart .today-sub { fill: var(--c-ink-mute); font-size: 11px; }
+.gap-chart .lookback-ring { fill: var(--c-paper); stroke: var(--c-ink); stroke-width: 1.75; }
+.gap-chart .lookback-guide { stroke: var(--c-ink-mute); stroke-width: 1; stroke-dasharray: 2 4; }
+.gap-chart .lookback-label { fill: var(--c-ink); font-size: 11.5px; font-weight: 500; letter-spacing: -0.005em; }
+.gap-chart .label-box { fill: var(--c-paper); opacity: 0.92; }
+.gap-chart .est-label { fill: var(--color-closed); font-size: 11.5px; font-weight: 500; }
 .gap-chart .current-star { fill: var(--color-closed); stroke: var(--c-paper); stroke-width: 1.5; }
 .gap-chart .us-tick { stroke: var(--c-us); stroke-width: 2; }
 .gap-chart .label-cn {

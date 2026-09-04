@@ -33,14 +33,45 @@ def test_historical_chart_card_present(client):
     a unit; if any anchor goes missing the chart breaks silently in the
     browser, so guard them here."""
     html = client.get("/").get_data(as_text=True)
-    for anchor in (
-        'id="historical-chart-card"',
-        'id="historical-chart-container"',
-        'id="historical-chart"',
-        'id="historical-tooltip"',
-        'id="historical-chart-download"',
-    ):
+    for anchor in HISTORICAL_CHART_ANCHORS:
         assert anchor in html, f"Missing anchor: {anchor}"
+
+
+HISTORICAL_CHART_ANCHORS = (
+    'id="historical-chart-card"',
+    'id="historical-chart-container"',
+    'id="historical-chart"',
+    'id="historical-tooltip"',
+    'id="historical-chart-download"',
+    # Gap-by-date timeline view (2026-09): view toggle, subtitle, context strip.
+    'id="historical-view-toggle"',
+    'id="historical-subtitle"',
+    'id="gap-context"',
+    'data-value="timeline"',
+    'data-value="score"',
+    'data-value="matches"',
+)
+
+
+def test_gap_timeline_wired_in_js():
+    """The gap-by-date view reads `gap_timeline` from data.json and falls
+    back to the per-release view when it is absent; both entry points must
+    exist and the dispatcher must reference the toggle."""
+    js = (Path(__file__).parent.parent / "static" / "script.js").read_text(
+        encoding="utf-8"
+    )
+    for needle in (
+        "function renderHistoricalChart",
+        "function renderGapTimelineChart",
+        "function renderScoreGapChart",
+        "function renderHistoricalMatchesChart",
+        "function renderGapContext",
+        "gap_timeline",
+        "score_gap_timeline",
+        "historical-view-toggle",
+        "historicalView",
+    ):
+        assert needle in js, f"Missing in script.js: {needle}"
 
 
 def test_script_js_referenced(client):
@@ -115,12 +146,6 @@ def test_root_static_index_matches_chart_structure():
     root_html = (Path(__file__).parent.parent / "index.html").read_text(
         encoding="utf-8"
     )
-    for anchor in (
-        'id="historical-chart-card"',
-        'id="historical-chart-container"',
-        'id="historical-chart"',
-        'id="historical-tooltip"',
-        'id="historical-chart-download"',
-    ):
+    for anchor in HISTORICAL_CHART_ANCHORS:
         assert anchor in root_html, f"Missing anchor in root index.html: {anchor}"
     assert 'id="historical-chart" style=' not in root_html
