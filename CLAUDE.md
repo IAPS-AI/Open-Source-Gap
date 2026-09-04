@@ -1,60 +1,23 @@
-# Collaborative Development Protocol
-Claude (Implementer) + Gemini (Senior Reviewer)
+# Development Protocol
 
-## Gemini Integration
-When you complete a significant code change:
-1. Use the command `gemini -p "@[FILENAME] Review this for logical bugs, specifically around: edge cases, off-by-one errors, data handling, and correctness."`
-2. If Gemini suggests changes, implement them immediately.
-
-## Senior Reviewer Prompt
-When invoking Gemini, always use this persona:
-"You are a Senior Software Engineer with experience in research infrastructure.
-Review the attached code for:
-- Logical correctness and edge cases
-- Data processing and transformation errors
-- API integration issues
-- Error handling gaps
-- Security considerations
-- Performance bottlenecks
-- Code clarity and maintainability"
-
-## Usage Examples
-
-### For Data Processing / Analysis Code
-```bash
-gemini -p "@[FILENAME] You are a Senior Software Engineer. Review this code for: data handling errors, off-by-one bugs, incorrect aggregations, missing edge cases, and potential data leakage between conditions."
-```
-
-### For API Integrations (LLM APIs, databases, etc.)
-```bash
-gemini -p "@[FILENAME] Review this code for: rate limiting handling, error recovery, timeout issues, response parsing bugs, and credential security."
-```
-
-### For Research Infrastructure
-```bash
-gemini -p "@[FILENAME] Review this code for: reproducibility issues, logging completeness, configuration errors, and experiment isolation."
-```
-
-### For Web Apps / Dashboards
-```bash
-gemini -p "@[FILENAME] Review this code for: input validation, authentication flaws, state management bugs, and data exposure risks."
-```
-
-### For General Code Review
-```bash
-gemini -p "@[FILENAME] Review this code for logical bugs, edge cases, off-by-one errors, and unclear logic that could cause maintenance issues."
-```
+## Review Scope (read this first)
+Reviews cost a lot of tokens, so they are scoped, not automatic:
+- **Review only** changes under `scripts/` that alter published numbers in `data.json` (gap calculations, matching criteria, statistics, fetchers). One pass, one reviewer: run `/code-review` at medium effort on the changed `scripts/` files.
+- **Skip review** for UI, copy, CSS, HTML, test-only, and documentation changes. Tests plus a manual read of the diff are enough.
+- **One reviewer, not a fan-out.** Never spawn multi-agent or multi-lens review workflows unless I explicitly ask for one in that message.
+- Verify each suggestion against the code and tests before implementing it.
 
 ## Workflow
-1. **Implement** - Claude writes the code
-2. **Review** - Call Gemini to review significant changes
-3. **Iterate** - Implement Gemini's suggestions immediately
-4. **Verify** - Re-review if changes were substantial
+1. **Implement** - Write the code, with tests for anything that changes published numbers.
+2. **Review** - One `/code-review` pass, only if the change is in scope (see Review Scope).
+3. **Iterate** - Implement the suggestions that check out.
+4. **Verify** - Run the test suite (`python -m pytest tests/ -q`); do not re-review unless the fix itself changed a calculation.
 
-## When to Trigger Gemini Review
-- After completing a new feature or module
-- After writing data processing pipelines
-- Before committing significant changes
-- When implementing integrations with external APIs
-- When working with sensitive data or access controls
-- When the logic is complex enough that a second opinion would help
+## When to Trigger a Review
+- After changing a gap calculation, matching criterion, or statistic that reaches `data.json`
+- After writing or changing a data fetcher or pipeline step
+- Not for new charts, page copy, styling, HTML structure, tests, or docs
+
+## Project Notes
+- `data.json` is served straight from the repo by GitHub Pages and regenerated daily by CI; new pipeline fields appear on the site only after a regeneration (locally: `python scripts/update_data.py`, no secrets needed).
+- Both `index.html` (served by Pages) and `templates/index.html` (Flask) must carry the same chart markup; `tests/test_index_html_structure.py` guards the anchors.
