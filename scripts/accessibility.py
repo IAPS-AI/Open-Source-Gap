@@ -1,9 +1,17 @@
 """Shared open/closed accessibility classification.
 
 `classify_accessibility` maps an Epoch `Model accessibility` string to
-True (open weights), False (closed: API/hosted), or None (unclassifiable —
-callers must EXCLUDE such models from open-vs-closed analyses rather than
-guess; see docs/audits/2026-07-01-calculation-logic-audit.md, findings F1/F2).
+True (open weights), False (closed: API, hosted, or limited access), or None
+(unclassifiable — callers must EXCLUDE such models from open-vs-closed
+analyses rather than guess; see
+docs/audits/2026-07-01-calculation-logic-audit.md, findings F1/F2).
+
+"Limited access" (Epoch label first used for Gemini 4 Argon, 2026-09) counts
+as closed: the tracker compares open weights against everything else, and
+limited-access frontier models are capability the closed side holds (METR's
+Claude Mythos Preview is treated the same way). Any other label Epoch adds
+is reported by `report_unrecognized_labels` and excluded until classified
+here.
 
 `ACCESSIBILITY_OVERRIDES` fills gaps where Epoch's data is blank or wrong.
 Rows marked [ocg] are taken verbatim from
@@ -17,16 +25,39 @@ benchmarked_models "Model" display names.
 
 from __future__ import annotations
 
+import logging
+import os
+from typing import Iterable
+
 import pandas as pd
 
-_CLOSED_VALUES = {"API access", "Hosted access (no API)"}
+logger = logging.getLogger(__name__)
+
+_CLOSED_VALUES = {"API access", "Hosted access (no API)", "Limited access"}
+# Labels excluded by design (no public release / status unknown), as opposed
+# to labels this module has never seen.
+_EXCLUDED_VALUES = {"Unreleased", "Unknown"}
+
+
+class AccessibilitySourceError(RuntimeError):
+    """Epoch's accessibility labels are missing or too sparse to trust.
+
+    Raised instead of falling back to guesses: the 2026-09-05 build lost the
+    label source silently and published heuristic open/closed flags for six
+    weeks. update_data.py lets this propagate so the daily build fails and
+    the previous data.json stays live."""
+
+
+def _clean(value) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return ""
+    return str(value).strip()
 
 
 def classify_accessibility(value) -> bool | None:
-    """True = open weights, False = closed (API/hosted), None = unclassifiable."""
-    if value is None or (isinstance(value, float) and pd.isna(value)):
-        return None
-    text = str(value).strip()
+    """True = open weights, False = closed (API/hosted/limited),
+    None = unclassifiable."""
+    text = _clean(value)
     if not text:
         return None
     if "Open" in text:
@@ -34,6 +65,28 @@ def classify_accessibility(value) -> bool | None:
     if text in _CLOSED_VALUES:
         return False
     return None
+
+
+def is_unrecognized_label(value) -> bool:
+    """True for a non-blank label with no rule here — a new Epoch category
+    that needs a classification decision rather than silent exclusion."""
+    text = _clean(value)
+    return (bool(text) and classify_accessibility(text) is None
+            and text not in _EXCLUDED_VALUES)
+
+
+def report_unrecognized_labels(values: Iterable, source: str) -> list[str]:
+    """Log (and annotate the GitHub Actions run with) any unrecognized
+    accessibility labels in `values`. Returns them sorted."""
+    unknown = sorted({_clean(v) for v in values if is_unrecognized_label(v)})
+    if unknown:
+        msg = (f"{source}: unrecognized Epoch accessibility label(s) {unknown}; "
+               "models carrying them are EXCLUDED until scripts/accessibility.py "
+               "classifies them")
+        logger.warning(msg)
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            print(f"::warning title=Unrecognized accessibility label::{msg}")
+    return unknown
 
 
 ACCESSIBILITY_OVERRIDES: dict[str, str] = {

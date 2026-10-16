@@ -38,7 +38,12 @@ DAYS_PER_MONTH = 365.25 / 12  # 30.4375 - accurate average days per month accoun
 
 # Shared accessibility classification (open/closed/None-excluded); see
 # docs/audits/2026-07-01-calculation-logic-audit.md findings F1/F2.
-from accessibility import ACCESSIBILITY_OVERRIDES, classify_accessibility
+from accessibility import (
+    ACCESSIBILITY_OVERRIDES,
+    AccessibilitySourceError,
+    classify_accessibility,
+    report_unrecognized_labels,
+)
 
 # Import CSV-based benchmark fetcher (no credentials required)
 try:
@@ -1330,8 +1335,10 @@ def process_data() -> dict[str, Any]:
     """Process ECI data and calculate gaps."""
     df = fetch_eci_data()
 
-    # True = open weights, False = closed (API/hosted), None = unclassifiable
-    # (blank/Unreleased) — excluded rather than guessed (audit F2).
+    # True = open weights, False = closed (API/hosted/limited), None =
+    # unclassifiable (blank/Unreleased/Unknown/new label) — excluded rather
+    # than guessed (audit F2). New labels are flagged so they get a decision.
+    report_unrecognized_labels(df["Model accessibility"], "benchmarked_models.csv")
     labels = df["Model accessibility"].apply(classify_accessibility)
     excluded = df.loc[labels.isna(), "Model"].tolist()
     if excluded:
@@ -1879,8 +1886,14 @@ def process_all_benchmarks() -> dict:
                             logger.info(f"  Successfully processed {benchmark_id}")
                         else:
                             logger.warning(f"  Skipped {benchmark_id} (insufficient data)")
+                except AccessibilitySourceError:
+                    raise
                 except Exception as e:
                     logger.error(f"  Error processing {benchmark_id}: {e}")
+        except AccessibilitySourceError:
+            # Fail the build (main() exits 1, CI skips the commit) rather than
+            # publish open/closed flags without Epoch's labels.
+            raise
         except Exception as e:
             logger.error(f"Failed to fetch CSV benchmarks: {e}")
             import traceback

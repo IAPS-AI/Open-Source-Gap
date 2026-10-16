@@ -17,12 +17,29 @@ from typing import Optional
 import pandas as pd
 import requests
 
-from accessibility import ACCESSIBILITY_OVERRIDES, classify_accessibility
+from accessibility import (
+    ACCESSIBILITY_OVERRIDES,
+    AccessibilitySourceError,
+    classify_accessibility,
+    report_unrecognized_labels,
+)
 
 logger = logging.getLogger(__name__)
 
 # URL for Epoch AI's benchmark data export
 BENCHMARK_DATA_URL = "https://epoch.ai/data/benchmark_data.zip"
+
+# Per-model-version metadata shipped in the same zip (Model version slug ->
+# accessibility, display name). Replaced epoch_capabilities_index.csv, which
+# Epoch moved out of the zip root around 2026-09-05.
+MODEL_METADATA_FILE = "model_metadata.csv"
+MODEL_METADATA_COLUMNS = ("model_version", "accessibility", "display_name")
+
+# Minimum share of a benchmark's scored rows that must carry a usable Epoch
+# accessibility label. Today's range is ~94-100%; a drop below this means the
+# label source moved or broke, so the build fails rather than publishing a
+# frontier built from overrides alone.
+MIN_EPOCH_LABEL_COVERAGE = 0.85
 
 # Mapping of benchmark IDs to CSV filenames and configuration
 BENCHMARK_CSV_CONFIG = {
@@ -92,27 +109,11 @@ CHINA_ORGS = {
     'qwen', 'tsinghua', 'peking university', 'chinese academy'
 }
 
-# Last-resort heuristics, used only for models absent from the Epoch
-# capabilities index AND the vendored overrides (see _classify_model).
-# Only UNAMBIGUOUS signals belong here: mixed-release labs (Alibaba/Qwen,
-# Mistral, Microsoft, Moonshot, Zhipu, Cohere, AI21) ship both open-weight
-# and API-only models, so org membership alone proves nothing for them
-# (audit finding F1, docs/audits/2026-07-01-calculation-logic-audit.md).
-OPEN_SOURCE_ORGS = {
-    'deepseek', 'meta', '01.ai', 'thudm', 'baichuan', 'bigscience',
-    'eleutherai', 'stability ai', 'together', 'shanghai ai',
-    'idea research', 'modelbest', 'hugging face', 'tii', 'databricks',
-}
-
-# Open-weight model name patterns (catch releases regardless of org — e.g.
-# gpt-oss is open despite the OpenAI org)
-OPEN_MODEL_PATTERNS = {'llama', 'gemma', 'gpt-oss', 'gpt_oss'}
-
-# Known closed-source organizations (exclusively closed-weights)
-CLOSED_SOURCE_ORGS = {
-    'openai', 'anthropic', 'google', 'deepmind', 'xai',
-    'amazon', 'inflection', 'character.ai'
-}
+# There are deliberately no org/name heuristics: labs ship both open and
+# closed models (Meta's API-only Muse line was counted as open by an
+# "org == meta" rule), so a model without an Epoch label or a vendored
+# override is excluded (audit finding F1,
+# docs/audits/2026-07-01-calculation-logic-audit.md).
 
 
 class CSVBenchmarkFetcher:
@@ -123,6 +124,7 @@ class CSVBenchmarkFetcher:
         self._zip_data = None
         self._csv_cache = {}
         self._accessibility_by_version: Optional[dict] = None
+        self._display_name_by_version: Optional[dict] = None
 
     def _download_zip(self) -> bytes:
         """Download the benchmark data zip file."""
@@ -171,33 +173,48 @@ class CSVBenchmarkFetcher:
         org_lower = org.lower()
         return any(china_org in org_lower for china_org in CHINA_ORGS)
 
+    def _load_model_metadata(self) -> None:
+        """Build Model version -> accessibility / display name maps from
+        model_metadata.csv. The benchmark CSVs carry no accessibility column,
+        so this join is the primary classification source. Raises
+        AccessibilitySourceError if the file or its columns are missing."""
+        meta = self._read_csv(MODEL_METADATA_FILE)
+        missing = ([] if meta is None else
+                   [c for c in MODEL_METADATA_COLUMNS if c not in meta.columns])
+        if meta is None or missing:
+            raise AccessibilitySourceError(
+                f"{MODEL_METADATA_FILE} unavailable in {BENCHMARK_DATA_URL}"
+                + (f" (missing columns {missing})" if missing else "")
+                + "; refusing to classify open/closed without Epoch labels")
+
+        meta = meta[meta["model_version"].notna()].copy()
+        meta["model_version"] = meta["model_version"].astype(str).str.strip()
+        meta = meta.drop_duplicates(subset=["model_version"], keep="first")
+        labelled = meta[meta["accessibility"].notna()]
+        named = meta[meta["display_name"].notna()]
+        self._accessibility_by_version = dict(
+            zip(labelled["model_version"], labelled["accessibility"]))
+        self._display_name_by_version = dict(
+            zip(named["model_version"], named["display_name"].astype(str).str.strip()))
+        report_unrecognized_labels(self._accessibility_by_version.values(),
+                                   MODEL_METADATA_FILE)
+
     def _get_accessibility_map(self) -> dict:
-        """Model version -> Model accessibility from the Epoch capabilities
-        index (shipped in the same benchmark_data.zip). The benchmark CSVs
-        themselves carry no accessibility column, so this join is the primary
-        classification source (mirrors open_closed_gap's approach)."""
         if self._accessibility_by_version is None:
-            mapping: dict = {}
-            idx = self._read_csv("epoch_capabilities_index.csv")
-            if idx is not None and "Model version" in idx.columns \
-                    and "Model accessibility" in idx.columns:
-                idx = idx.drop_duplicates(subset=["Model version"], keep="first")
-                for _, r in idx.iterrows():
-                    if pd.notna(r["Model accessibility"]):
-                        mapping[str(r["Model version"]).strip()] = r["Model accessibility"]
-            else:
-                logger.warning("epoch_capabilities_index.csv unavailable; "
-                               "falling back to overrides/heuristics only")
-            self._accessibility_by_version = mapping
+            self._load_model_metadata()
         return self._accessibility_by_version
+
+    def _get_display_name_map(self) -> dict:
+        if self._display_name_by_version is None:
+            self._load_model_metadata()
+        return self._display_name_by_version
 
     def _classify_model(self, row: pd.Series) -> Optional[bool]:
         """True = open weights, False = closed, None = unclassifiable
         (callers must exclude None rows rather than guess).
 
         Precedence: the CSV's own accessibility column (if ever present) >
-        Epoch capabilities index > vendored overrides > unambiguous
-        name/org heuristics > None."""
+        Epoch model metadata > vendored overrides > None."""
         label = classify_accessibility(row.get('Model accessibility'))
         if label is not None:
             return label
@@ -206,19 +223,7 @@ class CSVBenchmarkFetcher:
         label = classify_accessibility(self._get_accessibility_map().get(name))
         if label is not None:
             return label
-        label = classify_accessibility(ACCESSIBILITY_OVERRIDES.get(name))
-        if label is not None:
-            return label
-
-        name_lower = name.lower()
-        if any(pattern in name_lower for pattern in OPEN_MODEL_PATTERNS):
-            return True
-        org = str(row.get('Organization', '')).lower() if pd.notna(row.get('Organization')) else ''
-        if any(closed_org in org for closed_org in CLOSED_SOURCE_ORGS):
-            return False
-        if any(open_org in org for open_org in OPEN_SOURCE_ORGS):
-            return True
-        return None
+        return classify_accessibility(ACCESSIBILITY_OVERRIDES.get(name))
 
     def get_available_benchmarks(self) -> list:
         """Return list of available benchmarks."""
@@ -254,8 +259,13 @@ class CSVBenchmarkFetcher:
 
         logger.info(f"Processing {config['name']} ({len(df)} rows)...")
 
+        accessibility_map = self._get_accessibility_map()
+        display_names = self._get_display_name_map()
+
         models = []
         excluded_unclassifiable = []
+        n_candidates = 0
+        n_epoch_labelled = 0
         for _, row in df.iterrows():
             # Get score - check various column names
             score = None
@@ -302,6 +312,11 @@ class CSVBenchmarkFetcher:
                 if config["scale"] != 1 and stderr <= 1.0:
                     stderr = stderr * config["scale"]
 
+            slug = str(model_name).strip()
+            n_candidates += 1
+            if classify_accessibility(accessibility_map.get(slug)) is not None:
+                n_epoch_labelled += 1
+
             # Determine if open/closed and China/US. Unclassifiable models
             # are excluded — guessing poisons the frontier (audit F1).
             is_open = self._classify_model(row)
@@ -317,7 +332,9 @@ class CSVBenchmarkFetcher:
 
             models.append({
                 "model": str(model_name),
-                "display_name": str(model_name),
+                # Epoch's human-readable name ("Gemini 4 Argon (high)");
+                # older rows ship it blank, so fall back to the slug.
+                "display_name": display_names.get(slug, str(model_name)),
                 "score": round(score, 2),
                 "score_std": round(stderr, 2),
                 "date": date_iso,
@@ -326,6 +343,17 @@ class CSVBenchmarkFetcher:
                 "is_china": is_china,
                 "country": str(country),
             })
+
+        if n_candidates:
+            coverage = n_epoch_labelled / n_candidates
+            logger.info(f"  Epoch accessibility labels cover {coverage:.1%} "
+                        f"of {n_candidates} scored rows")
+            if coverage < MIN_EPOCH_LABEL_COVERAGE:
+                raise AccessibilitySourceError(
+                    f"{benchmark_id}: only {coverage:.1%} of {n_candidates} scored "
+                    f"rows have an Epoch accessibility label in {MODEL_METADATA_FILE} "
+                    f"(minimum {MIN_EPOCH_LABEL_COVERAGE:.0%}); the label source "
+                    "has likely moved or changed format")
 
         # Sort by date
         models.sort(key=lambda x: x['date'])

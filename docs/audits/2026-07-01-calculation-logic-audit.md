@@ -142,3 +142,32 @@ The vendored override rows originate from the source repo's
 release information by its author) plus this repo's additions for
 `benchmarked_models.csv` display names. Factual accessibility labels; see
 `scripts/accessibility.py` for the list and provenance comments.
+
+## Follow-up 2026-10-16: F1 regression and "Limited access"
+
+**Regression (live 2026-09-05 → 2026-10-16).** Epoch moved
+`epoch_capabilities_index.csv` out of the `benchmark_data.zip` root (it now
+sits under `epoch_capabilities_index/` without per-slug labels). The fetcher
+only logged a warning and fell back to the narrowed heuristics, whose
+`meta → open` rule counted Meta's API-only Muse Spark/Wonder models as open
+weights. Those models became the published "open leader" on FrontierMath,
+SimpleQA Verified, and OTIS Mock AIME (OTIS showed a 0-month gap). Open models
+from labs outside the heuristic lists (Kimi K3, GLM-5.3, Kimi K2.6) were
+dropped.
+
+**Fix.**
+- Labels and display names now come from `model_metadata.csv`
+  (`model_version` → `accessibility`, `display_name`) in the same zip.
+- The heuristic tier is removed. The chain is now CSV column → Epoch metadata
+  → vendored overrides → excluded.
+- A missing file or column, or Epoch-label coverage below 85% of a benchmark's
+  scored rows, raises `AccessibilitySourceError`. The daily build then fails
+  and the previous `data.json` stays live.
+
+**"Limited access" → closed.** Epoch added this label for Gemini 4 Argon
+(2026-09-30). It is classified closed: the tracker compares open weights
+against everything else, and METR's Claude Mythos Preview is treated the same
+way. Previously Argon was excluded from ECI and counted closed elsewhere only
+via the Google org heuristic. Any further new label triggers an "Unrecognized
+accessibility label" warning, plus a GitHub Actions annotation, and is excluded
+until classified in `scripts/accessibility.py`.
