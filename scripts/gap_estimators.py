@@ -90,6 +90,8 @@ _MAX_ORDINAL = datetime.max.toordinal()
 # The country trend lag only uses releases from this date on (the appendix
 # fits "the ECI dataset (2024 onward)"); the frontier is built after the cut.
 COUNTRY_LAG_WINDOW_START = "2024-01-01"
+# Points per published trendline (enough for logit/log curves to look smooth).
+TRENDLINE_SAMPLES = 25
 
 
 def transform_scores(values: np.ndarray, transform: str) -> np.ndarray:
@@ -577,11 +579,33 @@ def compute_country_trend_lag(
     t_reach = (level_t - b_lead) / m_lead
     lag_months = (t_eval - t_reach) / DAYS_PER_MONTH
 
+    # Both fitted lines are sampled out to the later of the two frontiers'
+    # last points, so the chart can draw them over the same span.
+    t_end = max(f["date"].iloc[-1] for f in fronts.values()).toordinal()
+
     def _group_summary(name: str) -> dict:
         front = fronts[name]
         x, y, (m, b) = fits[name]
         r2 = _r_squared(x, y, m, b)
+        # Sampled (not two endpoints) because logit/log fits are curves in
+        # raw score units.
+        line_t = np.linspace(x[0], t_end, TRENDLINE_SAMPLES)
         return {
+            "points": [
+                {
+                    "model": r["model"],
+                    "date": r["date"].date().isoformat(),
+                    "score": round(float(r[score_col]), 4),
+                }
+                for _, r in front.iterrows()
+            ],
+            "trendline": [
+                {
+                    "date": datetime.fromordinal(int(round(t))).date().isoformat(),
+                    "score": round(_inverse_transform(m * t + b, transform), 4),
+                }
+                for t in line_t
+            ],
             "n_points": int(len(front)),
             "first_model": front.iloc[0]["model"],
             "first_date": front.iloc[0]["date"].date().isoformat(),

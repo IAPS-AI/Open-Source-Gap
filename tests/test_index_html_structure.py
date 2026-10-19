@@ -155,6 +155,11 @@ COUNTRY_LAG_ANCHORS = (
     'id="stat-card-country-lag"',
     'id="stat-country-lag"',
     'id="country-lag-explainer"',
+    'id="headline-method-note"',
+    'id="caveat-backward"',
+    'id="caveat-release"',
+    'id="caveat-distillation"',
+    'id="caveat-country"',
 )
 
 
@@ -179,5 +184,9 @@ def test_country_lag_wired_in_js():
         "function buildCountryLagHtml",
         "china_framing.country_trend_lag",
         "applyCountryLagHeadline(currentData)",
+        "function updateFramingCaveats",
+        "function addCountryFitTraces",
+        "addCountryFitTraces(traces, annotations, trendAnnotationMap, countryFit, isTrendMetr)",
+        "headline-method-note",
     ):
         assert needle in js, f"Missing in script.js: {needle}"

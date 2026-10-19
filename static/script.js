@@ -278,12 +278,12 @@ function updateBenchmarkDisplay() {
         } else if (appState.currentBenchmark === 'eci') {
             // ECI uses Epoch AI's paired-bootstrap criterion, not a fixed threshold.
             chartNote.innerHTML = `Note: A model is deemed to have <strong>caught up</strong> when its capability exceeds the reference model's in at least 5% of Epoch AI's paired bootstrap resamples (their published criterion).<br>
-                <em>The average gap is measured day by day across the overlapping history &mdash; the open frontier versus the most recent state-of-the-art model it has caught up to. Plotted scores are Epoch's published ECI point estimates.<br>
+                <em>The average gap is measured day by day across the overlapping history &mdash; the ${getFramingLabels().open} frontier versus the most recent ${getFramingLabels().closed} record it has caught up to. Plotted scores are Epoch's published ECI point estimates.<br>
                 Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
         } else {
             const thresholdDesc = `${thresholdValue} percentage point${thresholdValue !== 1 ? 's' : ''}`;
             chartNote.innerHTML = `Note: A model is deemed to have caught up if its score is <strong>within ${thresholdDesc}</strong> of the reference model.<br>
-                <em>Average gap is computed by sampling 100 score levels and measuring time-to-match at each level, starting from the level where reference models first appear.<br>
+                <em>The average gap is measured day by day across the overlapping history &mdash; the ${getFramingLabels().open} frontier versus the most recent ${getFramingLabels().closed} record it has caught up to.<br>
                 Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
         }
     }
@@ -415,7 +415,12 @@ function getCurrentData() {
             historical_gaps: benchmarkData.china_framing.historical_gaps || result.historical_gaps,
             // No fallback to the open-vs-closed trend gap or timeline: showing
             // the other framing's numbers would be worse than showing none.
-            trend_gap: benchmarkData.china_framing.trend_gap || null,
+            // When the headline trendline lag exists it replaces the older
+            // frontier trend gap, which fits a different window and date and
+            // would put a second, conflicting "trend" figure on screen.
+            trend_gap: benchmarkData.china_framing.country_trend_lag
+                ? null
+                : (benchmarkData.china_framing.trend_gap || null),
             gap_timeline: benchmarkData.china_framing.gap_timeline || null,
             score_gap_timeline: benchmarkData.china_framing.score_gap_timeline || null,
             country_trend_lag: benchmarkData.china_framing.country_trend_lag || null,
@@ -474,6 +479,15 @@ function applyCountryLagHeadline(currentData) {
     const lag = isChina ? currentData.country_trend_lag : null;
     if (card) card.hidden = !lag;
     if (explainer) explainer.classList.toggle('hidden', !isChina);
+    updateFramingCaveats(isChina, Boolean(lag));
+    const note = document.getElementById('headline-method-note');
+    if (note) {
+        note.hidden = !lag;
+        note.textContent = lag
+            ? 'Headline: how many months earlier the US trendline reached the Chinese trendline\'s level '
+              + '(record-setting releases since 2024). The Gap Metric toggle changes the cards below, not the headline.'
+            : '';
+    }
     if (!isChina) return;
 
     const content = explainer?.querySelector('.explainer-content');
@@ -490,6 +504,43 @@ function applyCountryLagHeadline(currentData) {
     updateTitle(lagText);
     document.getElementById('stat-country-lag').textContent = `${lagText} mo`;
     if (content) content.innerHTML = buildCountryLagHtml(lag);
+}
+
+// Caveat bullets whose wording depends on the framing. The open-vs-closed
+// text lives in the HTML and is captured on first use.
+const CHINA_CAVEATS = {
+    'caveat-release': `<strong>Release dates embed testing lag.</strong> Developers differ in how long they
+        evaluate models before release, so release-date gaps can over- or understate the underlying development gap.`,
+    'caveat-distillation': `<strong>Distillation can inflate apparent catch-up.</strong> Chinese developers may
+        train against US-model outputs, so a short measured gap does not by itself imply independent capability parity.`,
+};
+const CHINA_BACKWARD_CAVEAT = {
+    trendline: `<strong>A trendline comparison, read at China's latest record.</strong> The headline compares
+        straight-line fits through each country's record-setting releases since 2024, read on the date of the
+        latest Chinese record. It smooths over single releases and does not grow while no new Chinese record
+        appears; on benchmarks with few Chinese record-setters (see the explainer) the fit, and so the figure,
+        is less stable. The Gap Over Time charts measure release by release instead.`,
+    release: `<strong>Backward-looking by default.</strong> Published gaps measure how long ago the US frontier
+        reached the Chinese frontier's current level. Catch-up projections from trend extrapolation are
+        forecasts with wider, assumption-laden uncertainty, and are labeled as such.`,
+};
+
+function updateFramingCaveats(isChina, hasTrendlineLag) {
+    const ids = ['caveat-backward', ...Object.keys(CHINA_CAVEATS)];
+    for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (el.dataset.openText === undefined) el.dataset.openText = el.innerHTML;
+        if (!isChina) {
+            el.innerHTML = el.dataset.openText;
+        } else if (id === 'caveat-backward') {
+            el.innerHTML = hasTrendlineLag ? CHINA_BACKWARD_CAVEAT.trendline : CHINA_BACKWARD_CAVEAT.release;
+        } else {
+            el.innerHTML = CHINA_CAVEATS[id];
+        }
+    }
+    const country = document.getElementById('caveat-country');
+    if (country) country.hidden = !isChina;
 }
 
 function buildCountryLagHtml(lag) {
@@ -856,6 +907,71 @@ function renderAll() {
 /**
  * Render the trend chart with dynamic trend lines based on benchmark data
  */
+/**
+ * China-view trend chart overlay: the headline fit's record-setting points,
+ * its trendlines (sampled server-side in raw units, so logit/log fits curve
+ * correctly), and a horizontal marker from the date the US trendline reached
+ * the Chinese trendline's level to the date of the latest Chinese record.
+ */
+function addCountryFitTraces(traces, annotations, trendAnnotationMap, fit, logAxis) {
+    const groups = [
+        { g: fit.leader, name: 'US', color: COLORS.us, dash: 'solid' },
+        { g: fit.laggard, name: 'China', color: COLORS.china, dash: 'dot' },
+    ];
+    for (const { g, name, color, dash } of groups) {
+        if (!g.points || !g.trendline) continue;
+        traces.push({
+            x: g.points.map(p => p.date),
+            y: g.points.map(p => p.score),
+            mode: 'markers',
+            type: 'scatter',
+            name: `${name} record-setters`,
+            marker: { color, size: 10, line: { color: '#fff', width: 1 } },
+            text: g.points.map(p => p.model),
+            hovertemplate: '%{text}<br>%{x|%b %d, %Y}: %{y:.1f}<extra></extra>',
+        });
+        traces.push({
+            x: g.trendline.map(p => p.date),
+            y: g.trendline.map(p => p.score),
+            mode: 'lines',
+            type: 'scatter',
+            name: `${name} trendline`,
+            line: { width: 3, dash, color },
+            hoverinfo: 'skip',
+        });
+    }
+    if (!fit.leader_reached_level_date) return;
+    const level = fit.laggard_trend_level;
+    const lagName = `Headline lag (${fit.lag_months.toFixed(1)} mo)`;
+    traces.push({
+        x: [fit.leader_reached_level_date, fit.eval_date],
+        y: [level, level],
+        mode: 'lines+markers',
+        type: 'scatter',
+        name: lagName,
+        line: { color: '#111827', width: 2.5 },
+        marker: {
+            color: '#111827',
+            size: [12, 11],
+            symbol: ['line-ns-open', fit.lag_months >= 0 ? 'triangle-right' : 'triangle-left'],
+        },
+        hoverinfo: 'skip',
+    });
+    trendAnnotationMap[lagName] = annotations.length;
+    annotations.push({
+        x: fit.eval_date,
+        // Annotation positions on a log axis are given in log10 units.
+        y: logAxis ? Math.log10(level) : level,
+        text: `<b>${fit.lag_months.toFixed(1)} mo</b>`,
+        showarrow: false,
+        xanchor: 'left',
+        xshift: 10,
+        bgcolor: 'rgba(255, 255, 255, 0.85)',
+        font: { size: 12, color: '#111827' },
+        visible: true,
+    });
+}
+
 function renderTrendChart(data) {
     const models = data.trend_models || data.models;
     const isTrendMetr = appState.currentBenchmark === 'metr_time_horizon';
@@ -872,6 +988,11 @@ function renderTrendChart(data) {
     const getScore = (m) => m[scoreField] ?? m.eci ?? m.score;
     const benchmarkMetadata = getBenchmarkMetadata();
     const unitName = appState.currentBenchmark === 'eci' ? 'ECI points' : (benchmarkMetadata?.unit || 'points');
+    // China view with a published headline fit: draw that fit (each
+    // country's record-setters since 2024 and the trendlines behind the
+    // headline) over faded context points, instead of client-side raw fits
+    // over all models, which can disagree with the headline.
+    const countryFit = appState.framing === 'china' ? data.country_trend_lag : null;
 
     // Filter models based on current framing
     let category1Models, category2Models;
@@ -880,8 +1001,8 @@ function renderTrendChart(data) {
     if (appState.framing === 'china') {
         category1Models = models.filter(m => m.is_china && m.date && getScore(m) !== undefined);
         category2Models = models.filter(m => !m.is_china && m.date && getScore(m) !== undefined);
-        cat1Name = 'China';
-        cat2Name = 'US/Other';
+        cat1Name = countryFit ? 'All Chinese models' : 'China';
+        cat2Name = countryFit ? 'All other models' : 'US/Other';
         cat1Color = COLORS.china;
         cat2Color = COLORS.us;
     } else {
@@ -904,7 +1025,7 @@ function renderTrendChart(data) {
         mode: 'markers',
         type: 'scatter',
         name: cat1Name,
-        marker: { color: cat1Color, size: 8, opacity: 0.6 },
+        marker: { color: cat1Color, size: 8, opacity: countryFit ? 0.2 : 0.6 },
         text: category1Models.map(m => m.display_name),
     });
 
@@ -914,16 +1035,16 @@ function renderTrendChart(data) {
         mode: 'markers',
         type: 'scatter',
         name: cat2Name,
-        marker: { color: cat2Color, size: 8, opacity: 0.6 },
+        marker: { color: cat2Color, size: 8, opacity: countryFit ? 0.2 : 0.6 },
         text: category2Models.map(m => m.display_name),
     });
 
     // Calculate trend lines for each category
     // For METR (log-scale axis), use log-linear regression so the trend line is straight
-    const cat1Regression = category1Models.length >= 3
+    const cat1Regression = !countryFit && category1Models.length >= 3
         ? linearRegression(category1Models.map(m => m.date), category1Models.map(m => getScore(m)), isTrendMetr)
         : null;
-    const cat2Regression = category2Models.length >= 3
+    const cat2Regression = !countryFit && category2Models.length >= 3
         ? linearRegression(category2Models.map(m => m.date), category2Models.map(m => getScore(m)), isTrendMetr)
         : null;
 
@@ -1027,15 +1148,27 @@ function renderTrendChart(data) {
         });
     }
 
+    if (countryFit) {
+        addCountryFitTraces(traces, annotations, trendAnnotationMap, countryFit, isTrendMetr);
+    }
+
     // Update trend chart title based on framing
     const trendTitle = document.getElementById('trend-title');
     const trendSubtitle = document.getElementById('trend-subtitle');
     if (trendTitle && trendSubtitle) {
         const scoreLabel = appState.currentBenchmark === 'eci' ? 'ECI' : 'Score';
-        const framingLabel = appState.framing === 'china' ? 'China vs US/Other' : 'Open vs Closed';
-        trendTitle.textContent = `${scoreLabel} Growth Trends: ${framingLabel}`;
         const scoreLabelLower = appState.currentBenchmark === 'eci' ? 'ECI' : 'score';
-        trendSubtitle.textContent = `Comparing ${scoreLabelLower} growth rates between ${cat1Name.toLowerCase()} and ${cat2Name.toLowerCase()} models.`;
+        if (countryFit) {
+            const since = parseUTCDate(countryFit.window_start).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+            trendTitle.textContent = `${scoreLabel} Frontier Trends: China vs US`;
+            trendSubtitle.textContent = `Each country's record-setting releases since ${since} and the trendlines behind the headline; `
+                + `the black marker is the headline lag. Faded points are all models, other countries included.`;
+        } else {
+            const framingLabel = appState.framing === 'china' ? 'China vs US/Other' : 'Open vs Closed';
+            trendTitle.textContent = `${scoreLabel} Growth Trends: ${framingLabel}`;
+            const [name1, name2] = appState.framing === 'china' ? ['Chinese', 'US/other'] : ['closed', 'open'];
+            trendSubtitle.textContent = `Comparing ${scoreLabelLower} growth rates between ${name1} and ${name2} models.`;
+        }
     }
 
     // Add "current date" vertical line logic
@@ -1102,12 +1235,24 @@ function renderTrendChart(data) {
     // Trend-gap summary box: horizontal offset between the two fitted
     // frontier trend lines (backward-looking), its velocity, and the
     // trend-conditional catch-up projection (a forecast).
-    const trendGap = (getCurrentData() || {}).trend_gap;
-    if (trendGap && trendGap.backward_gap_months !== null && trendGap.backward_gap_months !== undefined) {
+    // In the China view the box shows the headline trendline lag instead
+    // (getCurrentData drops trend_gap there so the two fits never disagree
+    // on screen).
+    const current = getCurrentData() || {};
+    const trendGap = current.trend_gap;
+    const countryLag = current.country_trend_lag;
+    const fmtD = (s) => parseUTCDate(s).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+    let boxText = null;
+    if (countryLag) {
+        const change = countryLag.gap_change_months_per_year;
+        const dir = change > 0 ? 'widening' : change < 0 ? 'narrowing' : 'steady';
+        boxText = `<b>Trendline lag (headline):</b> ${countryLag.lag_months.toFixed(1)} mo`
+            + `<br>${dir} at ${Math.abs(change).toFixed(1)} mo/yr · at ${fmtD(countryLag.eval_date)}`
+            + `<br><i>US vs China record-setters since ${fmtD(countryLag.window_start)}, ${countryLag.transform} space</i>`;
+    } else if (trendGap && trendGap.backward_gap_months !== null && trendGap.backward_gap_months !== undefined) {
         const dir = trendGap.gap_change_months_per_year < 0 ? 'shrinking' : 'growing';
         const rate = Math.abs(trendGap.gap_change_months_per_year).toFixed(1);
-        const fmtD = (s) => parseUTCDate(s).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-        let boxText = `<b>Trend gap:</b> ${trendGap.backward_gap_months.toFixed(1)} mo`;
+        boxText = `<b>Trend gap:</b> ${trendGap.backward_gap_months.toFixed(1)} mo`;
         if (trendGap.backward_gap_ci_90) {
             boxText += ` (90% CI ${trendGap.backward_gap_ci_90[0]}–${trendGap.backward_gap_ci_90[1]})`;
         }
@@ -1125,6 +1270,8 @@ function renderTrendChart(data) {
         // models; this box quantifies the frontier-only fit in transform
         // space, so say so.
         boxText += `<br><i>frontier-model fit, ${trendGap.transform} space</i>`;
+    }
+    if (boxText) {
         annotations.push({
             x: 0.02,
             y: 0.98,
@@ -1988,7 +2135,7 @@ function getTimelineLabels(framing) {
             referenceRow: 'Most recent US model it had caught up to',
             referenceRowUnmatched: 'Earliest US model (none matched yet)',
             nextLeaderRow: 'Oldest US model not yet matched',
-            subtitle: 'How far the Chinese frontier trailed the US frontier on each date, and how that lead has changed.',
+            subtitle: 'How far the Chinese frontier trailed the US frontier on each date, and how that lead has changed. Measured release by release, so it moves in steps the headline trendline lag smooths over.',
             matchesSubtitle: 'How long each US frontier release took to be matched by a Chinese model.',
             matchesButton: 'Time to match each US release',
             scoreSubtitle: `How far the best US model scored above the best Chinese model on each date (${unit.long}).`,

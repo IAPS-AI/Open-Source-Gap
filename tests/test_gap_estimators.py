@@ -417,6 +417,38 @@ def test_country_lag_none_when_too_few_points_or_flat_leader():
     assert compute_country_trend_lag(make_df(flat + cn4)) is None
 
 
+def test_country_lag_publishes_points_and_trendline_for_plotting():
+    us = country_series("US", "2024-01-01", 10, 60, 100.0, 0.05, False)
+    cn = country_series("CN", "2024-07-02", 8, 60, 100.0, 0.05, True)
+    r = compute_country_trend_lag(make_df(us + cn), transform="linear")
+    lead, lag = r["leader"], r["laggard"]
+    assert [p["model"] for p in lag["points"]] == [f"CN{i}" for i in range(8)]
+    assert len(lead["points"]) == lead["n_points"]
+    # Lines start at each frontier's first point and share an end date.
+    assert lead["trendline"][0]["date"] == lead["first_date"]
+    assert lag["trendline"][0]["date"] == lag["first_date"]
+    assert lead["trendline"][-1]["date"] == lag["trendline"][-1]["date"] == lag["last_date"]
+    # Exact linear data: the line passes through the points.
+    assert lag["trendline"][0]["score"] == pytest.approx(lag["points"][0]["score"], abs=1e-6)
+    # The lag marker sits on both lines: the US line at the reach date and
+    # the China line at the evaluation date share the laggard trend level.
+    assert r["laggard_trend_level"] == pytest.approx(lag["points"][-1]["score"], abs=0.01)
+
+
+def test_country_lag_logit_trendline_in_raw_percent():
+    def series(prefix, start, n, is_china):
+        base = pd.Timestamp(start)
+        return [(f"{prefix}{i}", base + pd.Timedelta(days=60 * i),
+                 100.0 / (1.0 + np.exp(-(-2.0 + 0.004 * 60 * i))), is_china)
+                for i in range(n)]
+    r = compute_country_trend_lag(
+        make_df(series("US", "2024-01-01", 10, False) + series("CN", "2024-07-01", 8, True)),
+        transform="logit")
+    scores = [p["score"] for p in r["leader"]["trendline"]]
+    assert all(0 < s < 100 for s in scores)
+    assert scores == sorted(scores)
+
+
 def test_country_lag_json_safe():
     us = country_series("US", "2024-01-01", 10, 60, 100.0, 0.05, False)
     cn = country_series("CN", "2024-07-02", 8, 60, 100.0, 0.05, True)

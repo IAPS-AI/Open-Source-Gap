@@ -32,6 +32,7 @@
         <header class="header">
             <h1 id="main-title">The performance gap between frontier <span class="text-open" id="category-open">open</span> and <span class="text-closed" id="category-closed">closed-source</span> models on <span id="benchmark-name">ECI</span> is around <span id="gap-value">--</span> months</h1>
             <p class="subtitle" id="benchmark-source">Source: Epoch AI Epoch Capabilities Index (Frontier Models only).</p>
+            <p class="subtitle" id="headline-method-note" hidden></p>
         </header>
 
         <div class="controls-panel">
@@ -131,11 +132,12 @@
             <summary class="explainer-summary">What this number does and does not measure</summary>
             <div class="explainer-content">
                 <ul>
-                    <li><strong>Backward-looking by default.</strong> Published gaps measure how long ago the closed frontier reached the open frontier's current level. Catch-up projections from trend extrapolation are forecasts with wider, assumption-laden uncertainty, and are labeled as such.</li>
+                    <li id="caveat-backward"><strong>Backward-looking by default.</strong> Published gaps measure how long ago the closed frontier reached the open frontier's current level. Catch-up projections from trend extrapolation are forecasts with wider, assumption-laden uncertainty, and are labeled as such.</li>
                     <li><strong>Benchmark composition shapes the answer.</strong> Capabilities are domain-dependent: a model family can close the gap on coding while lagging in mathematics or in aggregate. The cross-benchmark threshold aggregate here leans on math/science benchmarks; check per-benchmark views before generalizing.</li>
                     <li><strong>Matched-on-score is not matched-in-practice.</strong> Model size, token/reasoning efficiency, and serving cost are not factored in; a model can match a score while being far more expensive to run.</li>
-                    <li><strong>Release dates embed safety-testing lag.</strong> Closed frontier models typically undergo longer pre-release evaluation, so release-date gaps understate the underlying development gap.</li>
-                    <li><strong>Distillation can inflate apparent catch-up.</strong> Open-weight models may train against closed-model outputs, so a short measured gap does not by itself imply independent capability parity.</li>
+                    <li id="caveat-release"><strong>Release dates embed safety-testing lag.</strong> Closed frontier models typically undergo longer pre-release evaluation, so release-date gaps understate the underlying development gap.</li>
+                    <li id="caveat-distillation"><strong>Distillation can inflate apparent catch-up.</strong> Open-weight models may train against closed-model outputs, so a short measured gap does not by itself imply independent capability parity.</li>
+                    <li id="caveat-country" hidden><strong>Country means the developer's headquarters.</strong> The China vs US view counts open- and closed-weight models alike and leaves out developers from other countries.</li>
                     <li><strong>Benchmarks under-represent real-world tasks</strong> and rarely elicit maximum performance, for cost and time reasons.</li>
                 </ul>
             </div>
