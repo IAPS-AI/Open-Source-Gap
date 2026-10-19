@@ -87,6 +87,10 @@
         </div>
 
                 <div class="stats-panel">
+            <div class="stat-card" id="stat-card-country-lag" hidden>
+                <div class="stat-value" id="stat-country-lag">--</div>
+                <div class="stat-label">Trendline Lag (China vs US)</div>
+            </div>
             <div class="stat-card">
                 <div class="stat-value" id="stat-avg-gap">--</div>
                 <div class="stat-label">Average Gap</div>
@@ -104,6 +108,13 @@
                 <div class="stat-label">Unmatched</div>
             </div>
         </div>
+
+        <details id="country-lag-explainer" class="explainer-panel hidden">
+            <summary class="explainer-summary">How is the China vs US headline calculated?</summary>
+            <div class="explainer-content">
+                <!-- Populated dynamically by script.js -->
+            </div>
+        </details>
 
         <details id="current-gap-explainer" class="explainer-panel hidden">
             <summary class="explainer-summary">How is the current gap estimated?</summary>

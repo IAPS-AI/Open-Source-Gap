@@ -149,3 +149,35 @@ def test_root_static_index_matches_chart_structure():
     for anchor in HISTORICAL_CHART_ANCHORS:
         assert anchor in root_html, f"Missing anchor in root index.html: {anchor}"
     assert 'id="historical-chart" style=' not in root_html
+
+
+COUNTRY_LAG_ANCHORS = (
+    'id="stat-card-country-lag"',
+    'id="stat-country-lag"',
+    'id="country-lag-explainer"',
+)
+
+
+def test_country_lag_anchors_in_both_templates(client):
+    """The China vs US headline (appendix trendline lag) needs its stat card
+    and explainer in the Flask template and the Pages-served root index."""
+    served = client.get("/").get_data(as_text=True)
+    root_html = (Path(__file__).parent.parent / "index.html").read_text(
+        encoding="utf-8"
+    )
+    for anchor in COUNTRY_LAG_ANCHORS:
+        assert anchor in served, f"Missing in templates/index.html: {anchor}"
+        assert anchor in root_html, f"Missing in root index.html: {anchor}"
+
+
+def test_country_lag_wired_in_js():
+    js = (Path(__file__).parent.parent / "static" / "script.js").read_text(
+        encoding="utf-8"
+    )
+    for needle in (
+        "function applyCountryLagHeadline",
+        "function buildCountryLagHtml",
+        "china_framing.country_trend_lag",
+        "applyCountryLagHeadline(currentData)",
+    ):
+        assert needle in js, f"Missing in script.js: {needle}"

@@ -903,5 +903,57 @@ class TestFrontierMatchMap:
         assert m == {"CN1": "US_new"}
 
 
+class TestChinaFramingAllBenchmarks:
+    """Every benchmark ships a China-vs-US framing with the appendix
+    trendline lag (the China view's headline)."""
+
+    @staticmethod
+    def _models():
+        rows = []
+        base = pd.Timestamp("2024-01-01")
+        for i in range(8):  # US: OpenAI, closed; Meta, open
+            rows.append({"model": f"us{i}", "date": (base + pd.Timedelta(days=60 * i)).isoformat(),
+                         "score": 30.0 + 5 * i, "organization": "OpenAI",
+                         "is_open": False, "is_china": False})
+        rows.append({"model": "meta0", "date": "2024-03-01T00:00:00", "score": 25.0,
+                     "organization": "Meta AI", "is_open": True, "is_china": False})
+        for i in range(6):  # China, open
+            rows.append({"model": f"cn{i}", "date": (base + pd.Timedelta(days=180 + 60 * i)).isoformat(),
+                         "score": 28.0 + 5 * i, "organization": "DeepSeek",
+                         "is_open": True, "is_china": True})
+        rows.append({"model": "other0", "date": "2024-06-01T00:00:00", "score": 60.0,
+                     "organization": "Mistral AI", "is_open": True, "is_china": False})
+        return rows
+
+    def test_csv_benchmark_gets_china_framing_with_country_lag(self):
+        from update_data import process_benchmark_data
+        out = process_benchmark_data("toy", {
+            "models": self._models(),
+            "metadata": {"id": "toy", "name": "Toy", "threshold": 1.0, "scale": 100},
+        })
+        cf = out["china_framing"]
+        lag = cf["country_trend_lag"]
+        assert lag is not None
+        assert lag["transform"] == "logit"
+        assert lag["eval_model"] == "cn5"
+        # Non-US, non-China models (Mistral) are outside the China/US universe.
+        assert lag["leader"]["n_points"] == 8
+        assert lag["lag_months"] > 0
+        assert cf["statistics"]  # China-vs-US stats, not the open/closed ones
+        assert cf["statistics"]["avg_horizontal_gap_months"] != \
+            out["statistics"]["avg_horizontal_gap_months"]
+
+    def test_china_framing_empty_shape_without_chinese_models(self):
+        from update_data import build_china_framing
+        df = pd.DataFrame(self._models())
+        df["date"] = pd.to_datetime(df["date"])
+        df["is_us"] = df["organization"].apply(is_us_org)
+        df = df[~df["is_china"]]
+        cf = build_china_framing(df, score_col="score", model_col="model",
+                                 threshold=1.0, transform="linear")
+        assert cf["country_trend_lag"] is None
+        assert cf["gaps"] == [] and cf["statistics"] == {}
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

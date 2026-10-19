@@ -29,6 +29,15 @@ three estimators. This module makes all three explicit for the open-vs-closed
      empirical backward-looking numbers.
    Bootstrap (resampling models within each group) supplies 90% CIs.
 
+3. ``compute_country_trend_lag`` -- the US-China appendix method (a recent
+   paper's "Appendix 1: Estimating the US-China AI capabilities gap"): a
+   strict running-max frontier per group from ``COUNTRY_LAG_WINDOW_START``
+   on, one trendline per frontier, and the horizontal lag between the lines
+   at the date of the laggard's most recent frontier point. Unlike
+   ``compute_trend_gap`` it builds its own frontier from ALL models (so the
+   window cut cannot drop records) and evaluates at the laggard's latest
+   frontier release rather than the latest release in the data.
+
 Scores are fitted/interpolated in a transform space appropriate to the
 metric, following the article's treatment of bounded indexes:
 
@@ -78,6 +87,9 @@ FORWARD_CI_MIN_SHARE = 0.9
 # forecasts; report None ("no projected catch-up at current trends").
 MAX_FORWARD_MONTHS = 240.0
 _MAX_ORDINAL = datetime.max.toordinal()
+# The country trend lag only uses releases from this date on (the appendix
+# fits "the ECI dataset (2024 onward)"); the frontier is built after the cut.
+COUNTRY_LAG_WINDOW_START = "2024-01-01"
 
 
 def transform_scores(values: np.ndarray, transform: str) -> np.ndarray:
@@ -460,4 +472,148 @@ def compute_trend_gap(
             "score": round(leader_best_score, 2),
         },
         "n_boot_valid": int(len(boot_backward)),
+    }
+
+
+def _inverse_transform(t: float, transform: str) -> float:
+    """Map one fit-space value back to raw score units."""
+    if transform == "linear":
+        return float(t)
+    if transform == "logit":
+        return float(100.0 / (1.0 + np.exp(-t)))
+    if transform == "log":
+        return float(np.exp(t))
+    raise ValueError(f"Unknown transform: {transform}")
+
+
+def country_frontier(
+    rows: pd.DataFrame, score_col: str, model_col: str
+) -> pd.DataFrame:
+    """Strict running-max frontier, same-day releases collapsed to the day's max.
+
+    A release joins the frontier only if it beats every earlier release; a
+    later release that merely ties the record does not.
+    """
+    d = rows.copy()
+    d["_day"] = d["date"].dt.normalize()
+    # idxmax keeps the first row on ties, so the earliest-listed best model of
+    # the day represents it.
+    d = d.loc[d.groupby("_day")[score_col].idxmax()].sort_values("_day")
+    keep = []
+    run = -np.inf
+    for idx, s in d[score_col].items():
+        if s > run:
+            run = s
+            keep.append(idx)
+    out = d.loc[keep].drop(columns="_day")
+    out["model"] = out.get(model_col, out.get("model"))
+    return out
+
+
+def _r_squared(x: np.ndarray, y: np.ndarray, slope: float, intercept: float) -> Optional[float]:
+    ss_tot = float(np.sum((y - y.mean()) ** 2))
+    if ss_tot == 0:
+        return None
+    ss_res = float(np.sum((y - (slope * x + intercept)) ** 2))
+    return 1.0 - ss_res / ss_tot
+
+
+def compute_country_trend_lag(
+    df: pd.DataFrame,
+    score_col: str = "score",
+    model_col: str = "model",
+    transform: str = "linear",
+    window_start: Optional[Any] = COUNTRY_LAG_WINDOW_START,
+    min_points: int = 3,
+) -> Optional[dict]:
+    """Horizontal lag between the leader and laggard frontier trendlines.
+
+    Follows the US-China appendix method: keep releases on or after
+    ``window_start``; within each group build a strict running-max frontier
+    (same-day records collapsed to the day's max); fit one OLS line per
+    frontier (transformed score ~ release date); then, at the date of the
+    laggard's most recent frontier point, read the laggard trend's level and
+    report how many months earlier the leader trend reached it.
+
+    ``df`` should hold ALL scored models of both groups (not a pre-built
+    frontier), with ``Open`` = True marking the laggard (China). Returns None
+    when either frontier has fewer than ``min_points`` points or the leader
+    trend is flat/decreasing (it cannot then be inverted). A negative lag
+    means the laggard trend sits above the leader trend at that date.
+    """
+    groups = _prepare_groups(df, score_col, transform)
+    if groups is None:
+        return None
+    laggard, leader = groups
+    if window_start is not None:
+        ws = pd.Timestamp(window_start)
+        laggard = laggard[laggard["date"] >= ws]
+        leader = leader[leader["date"] >= ws]
+
+    fronts = {}
+    fits = {}
+    for name, rows in (("laggard", laggard), ("leader", leader)):
+        if rows.empty:
+            return None
+        front = country_frontier(rows, score_col, model_col)
+        if len(front) < min_points:
+            return None
+        x = front["date"].map(datetime.toordinal).to_numpy(dtype=float)
+        y = transform_scores(front[score_col].to_numpy(dtype=float), transform)
+        fit = _fit_line(x, y)
+        if fit is None:
+            return None
+        fronts[name] = front
+        fits[name] = (x, y, fit)
+
+    _, _, (m_lag, b_lag) = fits["laggard"]
+    _, _, (m_lead, b_lead) = fits["leader"]
+    if m_lead <= 0:
+        return None
+
+    eval_row = fronts["laggard"].iloc[-1]
+    t_eval = float(eval_row["date"].toordinal())
+    level_t = m_lag * t_eval + b_lag
+    t_reach = (level_t - b_lead) / m_lead
+    lag_months = (t_eval - t_reach) / DAYS_PER_MONTH
+
+    def _group_summary(name: str) -> dict:
+        front = fronts[name]
+        x, y, (m, b) = fits[name]
+        r2 = _r_squared(x, y, m, b)
+        return {
+            "n_points": int(len(front)),
+            "first_model": front.iloc[0]["model"],
+            "first_date": front.iloc[0]["date"].date().isoformat(),
+            "last_model": front.iloc[-1]["model"],
+            "last_date": front.iloc[-1]["date"].date().isoformat(),
+            # Transform-space units per month (ECI points for ECI; log-minutes
+            # for METR; logits for percentage benchmarks).
+            "slope_per_month": round(m * DAYS_PER_MONTH, 4),
+            "r2": round(r2, 3) if r2 is not None else None,
+        }
+
+    reach_iso = (
+        datetime.fromordinal(int(round(t_reach))).date().isoformat()
+        if 1 <= t_reach <= _MAX_ORDINAL
+        else None
+    )
+    return {
+        "method": "country_frontier_trend_lag",
+        "transform": transform,
+        "window_start": (
+            pd.Timestamp(window_start).date().isoformat()
+            if window_start is not None
+            else None
+        ),
+        "lag_months": round(lag_months, 2),
+        # Positive = the leader trend is pulling away (gap widening).
+        "gap_change_months_per_year": round((1.0 - m_lag / m_lead) * 12.0, 2),
+        "eval_date": eval_row["date"].date().isoformat(),
+        "eval_model": eval_row["model"],
+        "eval_model_score": round(float(eval_row[score_col]), 2),
+        "laggard_trend_level": round(_inverse_transform(level_t, transform), 2),
+        "leader_reached_level_date": reach_iso,
+        "laggard": _group_summary("laggard"),
+        "leader": _group_summary("leader"),
     }

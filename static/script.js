@@ -401,6 +401,7 @@ function getCurrentData() {
         historical_gaps: benchmarkData.historical_gaps,
         gap_timeline: benchmarkData.gap_timeline || null,
         score_gap_timeline: benchmarkData.score_gap_timeline || null,
+        country_trend_lag: null,
         metadata: benchmarkData.metadata,
         last_updated: data.last_updated,
     };
@@ -417,6 +418,7 @@ function getCurrentData() {
             trend_gap: benchmarkData.china_framing.trend_gap || null,
             gap_timeline: benchmarkData.china_framing.gap_timeline || null,
             score_gap_timeline: benchmarkData.china_framing.score_gap_timeline || null,
+            country_trend_lag: benchmarkData.china_framing.country_trend_lag || null,
         };
     } else if (appState.framing === 'china') {
         // Benchmark ships no China framing data at all: never present the
@@ -452,9 +454,83 @@ function updateDisplay() {
         updateStats(stats);
         hideExplainer();
     }
+    applyCountryLagHeadline(currentData);
 
     // Re-render historical chart to reflect gap metric mode
     renderHistoricalChart(currentData);
+}
+
+/**
+ * China vs US view: the headline and first stat card show the appendix
+ * trendline lag (how many months earlier the US frontier trend reached the
+ * level of the Chinese frontier trend at the latest Chinese frontier
+ * release). When a benchmark has too few frontier points to fit both lines,
+ * the framing's existing average/current gap stays in the headline.
+ */
+function applyCountryLagHeadline(currentData) {
+    const card = document.getElementById('stat-card-country-lag');
+    const explainer = document.getElementById('country-lag-explainer');
+    const isChina = appState.framing === 'china';
+    const lag = isChina ? currentData.country_trend_lag : null;
+    if (card) card.hidden = !lag;
+    if (explainer) explainer.classList.toggle('hidden', !isChina);
+    if (!isChina) return;
+
+    const content = explainer?.querySelector('.explainer-content');
+    if (!lag) {
+        const fallback = appState.gapMetric === 'current' ? 'estimated current gap' : 'average gap';
+        if (content) {
+            content.innerHTML = `<p>This benchmark has too few US or Chinese record-setting releases
+                since 2024 to fit both trendlines (at least three each), so the headline shows the
+                ${fallback} instead.</p>`;
+        }
+        return;
+    }
+    const lagText = lag.lag_months.toFixed(1);
+    updateTitle(lagText);
+    document.getElementById('stat-country-lag').textContent = `${lagText} mo`;
+    if (content) content.innerHTML = buildCountryLagHtml(lag);
+}
+
+function buildCountryLagHtml(lag) {
+    const fmtDate = (s) => parseUTCDate(s).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+    const fmtDay = (s) => parseUTCDate(s).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+    const slope = (g) => {
+        if (lag.transform === 'log') return `doubling every ${(Math.LN2 / g.slope_per_month).toFixed(1)} months`;
+        if (lag.transform === 'logit') return `${g.slope_per_month.toFixed(3)} logits/month`;
+        return `${g.slope_per_month.toFixed(2)} points/month`;
+    };
+    const r2 = (g) => (g.r2 === null || g.r2 === undefined ? '' : `, R&sup2; = ${g.r2.toFixed(2)}`);
+    const group = (label, g) => `${label} frontier: <strong>${g.n_points}</strong> record-setting releases
+        (${escapeHTML(g.first_model)}, ${fmtDate(g.first_date)} &ndash; ${escapeHTML(g.last_model)}, ${fmtDate(g.last_date)}),
+        trend ${slope(g)}${r2(g)}`;
+    const space = lag.transform === 'log'
+        ? ' in log space (time horizons grow exponentially)'
+        : lag.transform === 'logit' ? ' in logit space (percentage scores are bounded at 0&ndash;100)' : '';
+    const level = lag.transform === 'logit' ? `${lag.laggard_trend_level}%`
+        : lag.transform === 'log' ? `${lag.laggard_trend_level} minutes`
+        : `${lag.laggard_trend_level}`;
+    const change = lag.gap_change_months_per_year;
+    const dir =change > 0 ? 'widening' : change < 0 ? 'narrowing' : 'steady';
+    const reached = lag.leader_reached_level_date
+        ? ` around <strong>${fmtDay(lag.leader_reached_level_date)}</strong>`
+        : '';
+    const lead = lag.lag_months >= 0
+        ? `The US trendline reached that level${reached}, <strong>${lag.lag_months.toFixed(1)} months</strong> earlier`
+        : `The Chinese trendline sits above the US trendline there, by <strong>${Math.abs(lag.lag_months).toFixed(1)} months</strong>`;
+    return `
+        <p><strong>Method:</strong> models are split by the developer's country, open- and closed-weight alike.
+        For each country we keep releases from ${fmtDate(lag.window_start)} on, take the record-setting ones
+        (a running maximum by release date; same-day records collapse to the day's best), and fit a straight
+        trendline through them${space}. The headline is how many months earlier the US trendline reached the level
+        the Chinese trendline stands at on the date of the latest Chinese record-setting release.</p>
+        <p>${group('US', lag.leader)}.<br>${group('China', lag.laggard)}.</p>
+        <p>On ${fmtDay(lag.eval_date)} (${escapeHTML(lag.eval_model)}'s release) the Chinese trendline stands at
+        ${level}. ${lead}. At current slopes the gap is ${dir}
+        (${Math.abs(change).toFixed(1)} months/year).</p>
+        <p>The trendline lag compares fitted trends, so one unusually strong or weak release moves it less
+        than the release-lag bracket. It is measured at the latest Chinese record rather than today, so it
+        does not grow while no new Chinese record appears.</p>`;
 }
 
 /**

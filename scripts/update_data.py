@@ -103,11 +103,16 @@ except Exception as e:  # pragma: no cover - defensive
 # under/over/central bracket, trendline gap with velocity and forward-looking
 # catch-up projection); see scripts/gap_estimators.py.
 try:
-    from gap_estimators import current_lag_bracket, compute_trend_gap
+    from gap_estimators import (
+        compute_country_trend_lag,
+        compute_trend_gap,
+        current_lag_bracket,
+    )
     GAP_ESTIMATORS_AVAILABLE = True
 except Exception as e:  # pragma: no cover - defensive
     current_lag_bracket = None
     compute_trend_gap = None
+    compute_country_trend_lag = None
     GAP_ESTIMATORS_AVAILABLE = False
     print(f"Note: gap estimators module unavailable ({e})")
 
@@ -211,6 +216,68 @@ def compute_gap_estimators(df, *, score_col: str, model_col: str,
         except Exception as e:  # pragma: no cover - defensive
             logger.warning(f"compute_trend_gap failed ({transform}): {e}")
     return bracket, trend
+
+
+def compute_country_lag(df, *, score_col: str, model_col: str,
+                        transform: str) -> Optional[dict]:
+    """Fail-open wrapper around :func:`gap_estimators.compute_country_trend_lag`
+    (the US-China appendix trendline lag, headline of the China framing).
+    ``df`` is every China/US model (not a frontier), ``Open`` = is_china."""
+    if not GAP_ESTIMATORS_AVAILABLE:
+        return None
+    try:
+        return compute_country_trend_lag(
+            df, score_col=score_col, model_col=model_col, transform=transform)
+    except Exception as e:  # pragma: no cover - defensive
+        logger.warning(f"compute_country_trend_lag failed ({transform}): {e}")
+        return None
+
+
+def build_china_framing(df, *, score_col: str, model_col: str, threshold: float,
+                        transform: str, use_survival_analysis: bool = True) -> dict:
+    """China-vs-US framing block for a benchmark: the same gap set as the
+    open-vs-closed framing, computed with ``Open`` = is_china over China and
+    US models only, plus the appendix trendline lag. Empty-shaped when either
+    side has no models."""
+    df_china_us = df[df["is_china"] | df["is_us"]].copy()
+    df_china_us["Open"] = df_china_us["is_china"].astype(bool)
+    framing = {"gaps": [], "statistics": {}, "historical_gaps": [], "trend_gap": None,
+               "gap_timeline": None, "score_gap_timeline": None,
+               "country_trend_lag": None}
+    df_china_models = df_china_us[df_china_us["Open"]].copy()
+    df_us_models = df_china_us[~df_china_us["Open"]].copy()
+    if len(df_china_models) == 0 or len(df_us_models) == 0:
+        return framing
+
+    df_china_models["group_rank"] = get_rank(df_china_models, sort_col="date", val_col=score_col)
+    df_us_models["group_rank"] = get_rank(df_us_models, sort_col="date", val_col=score_col)
+    df_cu_combined = pd.concat([df_china_models, df_us_models]).sort_values("date")
+    df_cu_frontier = df_cu_combined[df_cu_combined["group_rank"] <= 1].copy()
+
+    china_gaps = calculate_horizontal_gaps(
+        df_cu_frontier, score_col=score_col, threshold=threshold, model_col=model_col)
+    china_stats = calculate_statistics(
+        df_cu_frontier, china_gaps, score_col=score_col,
+        use_survival_analysis=use_survival_analysis, threshold=threshold)
+    china_bracket, china_trend_gap = compute_gap_estimators(
+        df_cu_frontier, score_col=score_col, model_col=model_col, transform=transform)
+    if china_bracket is not None:
+        china_stats["current_lag_bracket"] = china_bracket
+    framing.update({
+        "gaps": china_gaps,
+        "statistics": china_stats,
+        "historical_gaps": calculate_historical_gaps(
+            df_cu_frontier, score_col=score_col, threshold=threshold, model_col=model_col),
+        "trend_gap": china_trend_gap,
+        "gap_timeline": compute_gap_timeline(
+            df_cu_frontier, score_col=score_col, model_col=model_col, threshold=threshold,
+            use_survival_analysis=use_survival_analysis),
+        "score_gap_timeline": compute_score_gap_timeline(
+            df_cu_frontier, score_col=score_col, model_col=model_col),
+        "country_trend_lag": compute_country_lag(
+            df_china_us, score_col=score_col, model_col=model_col, transform=transform),
+    })
+    return framing
 
 
 def compute_threshold_block(df, benchmark_id: str, *, score_col: str,
@@ -1465,6 +1532,10 @@ def process_data() -> dict[str, Any]:
             threshold=ECI_MATCH_THRESHOLD, bootstrap=bootstrap)
         china_score_gap_timeline = compute_score_gap_timeline(
             df_china_us_frontier, score_col="eci", model_col="Model")
+        # Appendix trendline lag: builds its own frontier from every China/US
+        # model, so it gets df_china_us rather than the frontier.
+        china_country_lag = compute_country_lag(
+            df_china_us, score_col="eci", model_col="Model", transform="linear")
     else:
         china_gaps = []
         china_stats = {}
@@ -1472,6 +1543,7 @@ def process_data() -> dict[str, Any]:
         china_trend_gap = None
         china_gap_timeline = None
         china_score_gap_timeline = None
+        china_country_lag = None
 
     # Per-laggard matched-leader maps for the Gap Over Time chart (one per
     # framing). The frontend uses these for ECI instead of recomputing matches
@@ -1504,6 +1576,7 @@ def process_data() -> dict[str, Any]:
             "trend_gap": china_trend_gap,
             "gap_timeline": china_gap_timeline,
             "score_gap_timeline": china_score_gap_timeline,
+            "country_trend_lag": china_country_lag,
         },
         "threshold_analysis": compute_threshold_block(
             df_combined, "eci", score_col="eci", model_col="Model"),
@@ -1621,6 +1694,17 @@ def process_benchmark_data(benchmark_id: str, benchmark_data: dict) -> Optional[
     # Calculate trends
     trends = calculate_trends(df_combined.rename(columns={"score": "eci"}), bounded=bounded)
 
+    # China framing: the fetchers flag is_china; US membership uses the same
+    # organization list as ECI.
+    df_cu = df.copy()
+    df_cu["is_china"] = (df_cu["is_china"] if "is_china" in df_cu.columns else False)
+    df_cu["is_china"] = df_cu["is_china"].fillna(False).astype(bool)
+    df_cu["is_us"] = (df_cu["organization"].apply(is_us_org)
+                      if "organization" in df_cu.columns else False)
+    china_framing = build_china_framing(
+        df_cu, score_col="score", model_col="model", threshold=threshold,
+        transform=transform)
+
     return {
         "metadata": metadata,
         "models": output_models,
@@ -1632,6 +1716,7 @@ def process_benchmark_data(benchmark_id: str, benchmark_data: dict) -> Optional[
         "historical_gaps": historical_gaps,
         "gap_timeline": gap_timeline,
         "score_gap_timeline": score_gap_timeline,
+        "china_framing": china_framing,
         "threshold_analysis": compute_threshold_block(
             df_combined, benchmark_id, score_col="score", model_col="model"),
     }
@@ -1762,39 +1847,10 @@ def process_metr_data(metr_raw: dict) -> Optional[dict]:
         use_apr_2024_split=False
     )
 
-    # China framing
-    df_china_us = df[df["is_china"] | df["is_us"]].copy()
-    df_china_us["Open"] = df_china_us["is_china"]
-
-    china_framing = {"gaps": [], "statistics": {}, "historical_gaps": [], "trend_gap": None,
-                     "gap_timeline": None, "score_gap_timeline": None}
-    df_china_models = df_china_us[df_china_us["Open"]].copy()
-    df_us_models = df_china_us[~df_china_us["Open"]].copy()
-
-    if len(df_china_models) > 0 and len(df_us_models) > 0:
-        df_china_models["group_rank"] = get_rank(df_china_models, sort_col="date", val_col="score")
-        df_us_models["group_rank"] = get_rank(df_us_models, sort_col="date", val_col="score")
-        df_cu_combined = pd.concat([df_china_models, df_us_models]).sort_values("date")
-        df_cu_frontier = df_cu_combined[df_cu_combined["group_rank"] <= 1].copy()
-
-        china_gaps = calculate_horizontal_gaps(df_cu_frontier, score_col="score", threshold=0, model_col="model")
-        china_stats = calculate_statistics(df_cu_frontier, china_gaps, score_col="score", use_survival_analysis=False, threshold=0)
-        china_historical = calculate_historical_gaps(df_cu_frontier, score_col="score", threshold=0, model_col="model")
-        china_bracket, china_trend_gap = compute_gap_estimators(
-            df_cu_frontier, score_col="score", model_col="model", transform="log")
-        if china_bracket is not None:
-            china_stats["current_lag_bracket"] = china_bracket
-        china_framing = {
-            "gaps": china_gaps,
-            "statistics": china_stats,
-            "historical_gaps": china_historical,
-            "trend_gap": china_trend_gap,
-            "gap_timeline": compute_gap_timeline(
-                df_cu_frontier, score_col="score", model_col="model", threshold=0,
-                use_survival_analysis=False),
-            "score_gap_timeline": compute_score_gap_timeline(
-                df_cu_frontier, score_col="score", model_col="model"),
-        }
+    # China framing (horizons -> log space, oldest-unmatched rule as above)
+    china_framing = build_china_framing(
+        df, score_col="score", model_col="model", threshold=0, transform="log",
+        use_survival_analysis=False)
 
     return {
         "metadata": metadata,
