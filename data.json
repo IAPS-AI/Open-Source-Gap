@@ -3177,6 +3177,23 @@
           "end": "2026-09-22T00:00:00",
           "n_days": 1289
         },
+        "headline_gap": {
+          "months": 6.4,
+          "range_90": [
+            4.6,
+            9.3
+          ],
+          "score_gap": 8.5,
+          "score_gap_range_90": [
+            4.8,
+            11.1
+          ],
+          "window_start": "2025-09-22T00:00:00",
+          "window_end": "2026-09-22T00:00:00",
+          "n_days": 366,
+          "window_months": 12,
+          "full_history": false
+        },
         "total_matched": 17,
         "total_unmatched": 6,
         "current_gap_estimate": {
@@ -3342,7 +3359,459 @@
           "model": "Claude Opus 5.5",
           "score": 166.82
         },
-        "n_boot_valid": 2000
+        "n_boot_valid": 2000,
+        "plot": {
+          "laggard_points": [
+            {
+              "model": "LLaMA-65B",
+              "date": "2023-02-24",
+              "score": 110.23
+            },
+            {
+              "model": "Llama 2-70B",
+              "date": "2023-07-18",
+              "score": 113.84
+            },
+            {
+              "model": "Stable Beluga 2",
+              "date": "2023-07-20",
+              "score": 117.16
+            },
+            {
+              "model": "Yi-34B",
+              "date": "2023-11-22",
+              "score": 117.43
+            },
+            {
+              "model": "Mixtral 8x7B",
+              "date": "2023-12-11",
+              "score": 118.5
+            },
+            {
+              "model": "Mixtral 8x22B",
+              "date": "2024-04-17",
+              "score": 122.05
+            },
+            {
+              "model": "Llama 3-70B",
+              "date": "2024-04-18",
+              "score": 122.94
+            },
+            {
+              "model": "DeepSeek-V2 (MoE-236B)",
+              "date": "2024-05-07",
+              "score": 124.78
+            },
+            {
+              "model": "Qwen2-72B",
+              "date": "2024-06-07",
+              "score": 125.28
+            },
+            {
+              "model": "Llama 3.1-405B",
+              "date": "2024-07-23",
+              "score": 128.76
+            },
+            {
+              "model": "Qwen2.5-72B",
+              "date": "2024-09-19",
+              "score": 129.0
+            },
+            {
+              "model": "Phi-4",
+              "date": "2024-12-12",
+              "score": 130.43
+            },
+            {
+              "model": "DeepSeek-V3",
+              "date": "2024-12-26",
+              "score": 132.33
+            },
+            {
+              "model": "DeepSeek-R1",
+              "date": "2025-01-20",
+              "score": 138.96
+            },
+            {
+              "model": "Qwen3-235B-A22B",
+              "date": "2025-04-29",
+              "score": 139.35
+            },
+            {
+              "model": "DeepSeek-R1 (May 2025)",
+              "date": "2025-05-28",
+              "score": 141.27
+            },
+            {
+              "model": "Qwen3-235B-A22B (Jul 2025)",
+              "date": "2025-07-25",
+              "score": 143.81
+            },
+            {
+              "model": "DeepSeek-V3.2-Exp",
+              "date": "2025-09-29",
+              "score": 144.97
+            },
+            {
+              "model": "Kimi K2 Thinking",
+              "date": "2025-11-06",
+              "score": 145.96
+            },
+            {
+              "model": "DeepSeek-V3.2",
+              "date": "2025-12-01",
+              "score": 146.11
+            },
+            {
+              "model": "Kimi K2.5",
+              "date": "2026-01-27",
+              "score": 147.98
+            },
+            {
+              "model": "GLM-5.1",
+              "date": "2026-04-07",
+              "score": 149.99
+            },
+            {
+              "model": "Kimi K2.6",
+              "date": "2026-04-20",
+              "score": 150.92
+            },
+            {
+              "model": "GLM-5.2",
+              "date": "2026-06-16",
+              "score": 151.86
+            },
+            {
+              "model": "Kimi K3",
+              "date": "2026-07-16",
+              "score": 157.42
+            }
+          ],
+          "leader_points": [
+            {
+              "model": "GPT-4 (Mar 2023)",
+              "date": "2023-03-14",
+              "score": 125.88
+            },
+            {
+              "model": "GPT-4 Turbo (Nov 2023)",
+              "date": "2024-01-25",
+              "score": 126.46
+            },
+            {
+              "model": "Claude 3 Opus",
+              "date": "2024-02-29",
+              "score": 126.91
+            },
+            {
+              "model": "GPT-4 Turbo (Apr 2024)",
+              "date": "2024-04-09",
+              "score": 127.25
+            },
+            {
+              "model": "GPT-4o",
+              "date": "2024-05-13",
+              "score": 129.05
+            },
+            {
+              "model": "Claude 3.5 Sonnet",
+              "date": "2024-06-20",
+              "score": 130.0
+            },
+            {
+              "model": "o1-mini",
+              "date": "2024-09-12",
+              "score": 135.82
+            },
+            {
+              "model": "o1",
+              "date": "2024-12-17",
+              "score": 141.84
+            },
+            {
+              "model": "Gemini 2.5 Pro (Mar 2025)",
+              "date": "2025-03-31",
+              "score": 144.12
+            },
+            {
+              "model": "o3",
+              "date": "2025-04-16",
+              "score": 146.87
+            },
+            {
+              "model": "o3-pro",
+              "date": "2025-06-10",
+              "score": 147.37
+            },
+            {
+              "model": "GPT-5",
+              "date": "2025-08-07",
+              "score": 150.0
+            },
+            {
+              "model": "GPT-5 Pro",
+              "date": "2025-10-07",
+              "score": 150.74
+            },
+            {
+              "model": "Gemini 3 Pro",
+              "date": "2025-11-18",
+              "score": 152.9
+            },
+            {
+              "model": "GPT-5.2 Pro",
+              "date": "2025-12-11",
+              "score": 156.03
+            },
+            {
+              "model": "GPT-5.3 Codex",
+              "date": "2026-02-05",
+              "score": 156.76
+            },
+            {
+              "model": "GPT-5.4 Pro",
+              "date": "2026-03-05",
+              "score": 159.0
+            },
+            {
+              "model": "GPT-5.5 Pro",
+              "date": "2026-04-23",
+              "score": 161.97
+            },
+            {
+              "model": "Claude Fable 5",
+              "date": "2026-06-09",
+              "score": 162.13
+            },
+            {
+              "model": "Claude Opus 5",
+              "date": "2026-07-24",
+              "score": 162.6
+            },
+            {
+              "model": "Claude Fable 5.1",
+              "date": "2026-09-01",
+              "score": 164.65
+            },
+            {
+              "model": "GPT-6 Astra",
+              "date": "2026-09-03",
+              "score": 166.41
+            },
+            {
+              "model": "Claude Opus 5.5",
+              "date": "2026-09-22",
+              "score": 166.82
+            }
+          ],
+          "laggard_trendline": [
+            {
+              "date": "2023-02-24",
+              "score": 108.7089
+            },
+            {
+              "date": "2023-04-19",
+              "score": 110.7424
+            },
+            {
+              "date": "2023-06-13",
+              "score": 112.7758
+            },
+            {
+              "date": "2023-08-06",
+              "score": 114.8092
+            },
+            {
+              "date": "2023-09-30",
+              "score": 116.8426
+            },
+            {
+              "date": "2023-11-23",
+              "score": 118.8761
+            },
+            {
+              "date": "2024-01-17",
+              "score": 120.9095
+            },
+            {
+              "date": "2024-03-11",
+              "score": 122.9429
+            },
+            {
+              "date": "2024-05-04",
+              "score": 124.9763
+            },
+            {
+              "date": "2024-06-28",
+              "score": 127.0098
+            },
+            {
+              "date": "2024-08-21",
+              "score": 129.0432
+            },
+            {
+              "date": "2024-10-15",
+              "score": 131.0766
+            },
+            {
+              "date": "2024-12-08",
+              "score": 133.11
+            },
+            {
+              "date": "2025-01-31",
+              "score": 135.1435
+            },
+            {
+              "date": "2025-03-27",
+              "score": 137.1769
+            },
+            {
+              "date": "2025-05-20",
+              "score": 139.2103
+            },
+            {
+              "date": "2025-07-14",
+              "score": 141.2437
+            },
+            {
+              "date": "2025-09-06",
+              "score": 143.2772
+            },
+            {
+              "date": "2025-10-30",
+              "score": 145.3106
+            },
+            {
+              "date": "2025-12-24",
+              "score": 147.344
+            },
+            {
+              "date": "2026-02-16",
+              "score": 149.3774
+            },
+            {
+              "date": "2026-04-12",
+              "score": 151.4109
+            },
+            {
+              "date": "2026-06-05",
+              "score": 153.4443
+            },
+            {
+              "date": "2026-07-30",
+              "score": 155.4777
+            },
+            {
+              "date": "2026-09-22",
+              "score": 157.5111
+            }
+          ],
+          "leader_trendline": [
+            {
+              "date": "2023-03-14",
+              "score": 115.8359
+            },
+            {
+              "date": "2023-05-07",
+              "score": 117.9134
+            },
+            {
+              "date": "2023-06-29",
+              "score": 119.9909
+            },
+            {
+              "date": "2023-08-22",
+              "score": 122.0685
+            },
+            {
+              "date": "2023-10-15",
+              "score": 124.146
+            },
+            {
+              "date": "2023-12-07",
+              "score": 126.2235
+            },
+            {
+              "date": "2024-01-30",
+              "score": 128.301
+            },
+            {
+              "date": "2024-03-24",
+              "score": 130.3786
+            },
+            {
+              "date": "2024-05-16",
+              "score": 132.4561
+            },
+            {
+              "date": "2024-07-09",
+              "score": 134.5336
+            },
+            {
+              "date": "2024-09-01",
+              "score": 136.6112
+            },
+            {
+              "date": "2024-10-24",
+              "score": 138.6887
+            },
+            {
+              "date": "2024-12-17",
+              "score": 140.7662
+            },
+            {
+              "date": "2025-02-09",
+              "score": 142.8438
+            },
+            {
+              "date": "2025-04-03",
+              "score": 144.9213
+            },
+            {
+              "date": "2025-05-27",
+              "score": 146.9988
+            },
+            {
+              "date": "2025-07-20",
+              "score": 149.0764
+            },
+            {
+              "date": "2025-09-11",
+              "score": 151.1539
+            },
+            {
+              "date": "2025-11-04",
+              "score": 153.2314
+            },
+            {
+              "date": "2025-12-28",
+              "score": 155.3089
+            },
+            {
+              "date": "2026-02-19",
+              "score": 157.3865
+            },
+            {
+              "date": "2026-04-14",
+              "score": 159.464
+            },
+            {
+              "date": "2026-06-07",
+              "score": 161.5415
+            },
+            {
+              "date": "2026-07-30",
+              "score": 163.6191
+            },
+            {
+              "date": "2026-09-22",
+              "score": 165.6966
+            }
+          ],
+          "laggard_trend_level": 157.5111,
+          "leader_reached_level_date": "2026-02-23"
+        }
       },
       "historical_gaps": [
         {
@@ -6945,6 +7414,23 @@
             "end": "2026-09-22T00:00:00",
             "n_days": 1210
           },
+          "headline_gap": {
+            "months": 6.2,
+            "range_90": [
+              4.0,
+              9.3
+            ],
+            "score_gap": 8.1,
+            "score_gap_range_90": [
+              4.8,
+              11.1
+            ],
+            "window_start": "2025-09-22T00:00:00",
+            "window_end": "2026-09-22T00:00:00",
+            "n_days": 366,
+            "window_months": 12,
+            "full_history": false
+          },
           "total_matched": 18,
           "total_unmatched": 6,
           "current_gap_estimate": {
@@ -7365,7 +7851,444 @@
             "model": "Claude Opus 5.5",
             "score": 166.82
           },
-          "n_boot_valid": 2000
+          "n_boot_valid": 2000,
+          "plot": {
+            "laggard_points": [
+              {
+                "model": "Baichuan1-7B",
+                "date": "2023-06-01",
+                "score": 90.61
+              },
+              {
+                "model": "Baichuan2-13B",
+                "date": "2023-09-06",
+                "score": 103.29
+              },
+              {
+                "model": "Qwen-14B",
+                "date": "2023-09-28",
+                "score": 113.09
+              },
+              {
+                "model": "Yi-34B",
+                "date": "2023-11-22",
+                "score": 117.43
+              },
+              {
+                "model": "DeepSeek-V2 (MoE-236B)",
+                "date": "2024-05-07",
+                "score": 124.78
+              },
+              {
+                "model": "Qwen2-72B",
+                "date": "2024-06-07",
+                "score": 125.28
+              },
+              {
+                "model": "Qwen2.5-32B",
+                "date": "2024-09-17",
+                "score": 128.53
+              },
+              {
+                "model": "Qwen2.5-72B",
+                "date": "2024-09-19",
+                "score": 129.0
+              },
+              {
+                "model": "DeepSeek-V3",
+                "date": "2024-12-26",
+                "score": 132.33
+              },
+              {
+                "model": "DeepSeek-R1",
+                "date": "2025-01-20",
+                "score": 138.96
+              },
+              {
+                "model": "Qwen3-235B-A22B",
+                "date": "2025-04-29",
+                "score": 139.35
+              },
+              {
+                "model": "DeepSeek-R1 (May 2025)",
+                "date": "2025-05-28",
+                "score": 141.27
+              },
+              {
+                "model": "Qwen3-235B-A22B (Jul 2025)",
+                "date": "2025-07-25",
+                "score": 143.81
+              },
+              {
+                "model": "DeepSeek-V3.2-Exp",
+                "date": "2025-09-29",
+                "score": 144.97
+              },
+              {
+                "model": "Kimi K2 Thinking",
+                "date": "2025-11-06",
+                "score": 145.96
+              },
+              {
+                "model": "DeepSeek-V3.2",
+                "date": "2025-12-01",
+                "score": 146.11
+              },
+              {
+                "model": "Kimi K2.5",
+                "date": "2026-01-27",
+                "score": 147.98
+              },
+              {
+                "model": "GLM-5.1",
+                "date": "2026-04-07",
+                "score": 149.99
+              },
+              {
+                "model": "Kimi K2.6",
+                "date": "2026-04-20",
+                "score": 150.92
+              },
+              {
+                "model": "Qwen3.7-Max",
+                "date": "2026-05-19",
+                "score": 153.83
+              },
+              {
+                "model": "Kimi K3",
+                "date": "2026-07-16",
+                "score": 157.42
+              }
+            ],
+            "leader_points": [
+              {
+                "model": "LLaMA-65B",
+                "date": "2023-02-24",
+                "score": 110.23
+              },
+              {
+                "model": "GPT-4 (Mar 2023)",
+                "date": "2023-03-14",
+                "score": 125.88
+              },
+              {
+                "model": "GPT-4 Turbo (Nov 2023)",
+                "date": "2024-01-25",
+                "score": 126.46
+              },
+              {
+                "model": "Claude 3 Opus",
+                "date": "2024-02-29",
+                "score": 126.91
+              },
+              {
+                "model": "GPT-4 Turbo (Apr 2024)",
+                "date": "2024-04-09",
+                "score": 127.25
+              },
+              {
+                "model": "GPT-4o",
+                "date": "2024-05-13",
+                "score": 129.05
+              },
+              {
+                "model": "Claude 3.5 Sonnet",
+                "date": "2024-06-20",
+                "score": 130.0
+              },
+              {
+                "model": "o1-mini",
+                "date": "2024-09-12",
+                "score": 135.82
+              },
+              {
+                "model": "o1",
+                "date": "2024-12-17",
+                "score": 141.84
+              },
+              {
+                "model": "Gemini 2.5 Pro (Mar 2025)",
+                "date": "2025-03-31",
+                "score": 144.12
+              },
+              {
+                "model": "o3",
+                "date": "2025-04-16",
+                "score": 146.87
+              },
+              {
+                "model": "o3-pro",
+                "date": "2025-06-10",
+                "score": 147.37
+              },
+              {
+                "model": "GPT-5",
+                "date": "2025-08-07",
+                "score": 150.0
+              },
+              {
+                "model": "GPT-5 Pro",
+                "date": "2025-10-07",
+                "score": 150.74
+              },
+              {
+                "model": "Gemini 3 Pro",
+                "date": "2025-11-18",
+                "score": 152.9
+              },
+              {
+                "model": "GPT-5.2 Pro",
+                "date": "2025-12-11",
+                "score": 156.03
+              },
+              {
+                "model": "GPT-5.3 Codex",
+                "date": "2026-02-05",
+                "score": 156.76
+              },
+              {
+                "model": "GPT-5.4 Pro",
+                "date": "2026-03-05",
+                "score": 159.0
+              },
+              {
+                "model": "GPT-5.5 Pro",
+                "date": "2026-04-23",
+                "score": 161.97
+              },
+              {
+                "model": "Claude Fable 5",
+                "date": "2026-06-09",
+                "score": 162.13
+              },
+              {
+                "model": "Claude Opus 5",
+                "date": "2026-07-24",
+                "score": 162.6
+              },
+              {
+                "model": "Claude Fable 5.1",
+                "date": "2026-09-01",
+                "score": 164.65
+              },
+              {
+                "model": "GPT-6 Astra",
+                "date": "2026-09-03",
+                "score": 166.41
+              },
+              {
+                "model": "Claude Opus 5.5",
+                "date": "2026-09-22",
+                "score": 166.82
+              }
+            ],
+            "laggard_trendline": [
+              {
+                "date": "2023-06-01",
+                "score": 104.3073
+              },
+              {
+                "date": "2023-07-21",
+                "score": 106.696
+              },
+              {
+                "date": "2023-09-10",
+                "score": 109.0847
+              },
+              {
+                "date": "2023-10-30",
+                "score": 111.4734
+              },
+              {
+                "date": "2023-12-20",
+                "score": 113.8621
+              },
+              {
+                "date": "2024-02-08",
+                "score": 116.2508
+              },
+              {
+                "date": "2024-03-29",
+                "score": 118.6395
+              },
+              {
+                "date": "2024-05-19",
+                "score": 121.0282
+              },
+              {
+                "date": "2024-07-08",
+                "score": 123.4169
+              },
+              {
+                "date": "2024-08-27",
+                "score": 125.8056
+              },
+              {
+                "date": "2024-10-17",
+                "score": 128.1943
+              },
+              {
+                "date": "2024-12-06",
+                "score": 130.583
+              },
+              {
+                "date": "2025-01-25",
+                "score": 132.9717
+              },
+              {
+                "date": "2025-03-17",
+                "score": 135.3604
+              },
+              {
+                "date": "2025-05-06",
+                "score": 137.749
+              },
+              {
+                "date": "2025-06-26",
+                "score": 140.1377
+              },
+              {
+                "date": "2025-08-15",
+                "score": 142.5264
+              },
+              {
+                "date": "2025-10-04",
+                "score": 144.9151
+              },
+              {
+                "date": "2025-11-24",
+                "score": 147.3038
+              },
+              {
+                "date": "2026-01-13",
+                "score": 149.6925
+              },
+              {
+                "date": "2026-03-05",
+                "score": 152.0812
+              },
+              {
+                "date": "2026-04-24",
+                "score": 154.4699
+              },
+              {
+                "date": "2026-06-13",
+                "score": 156.8586
+              },
+              {
+                "date": "2026-08-03",
+                "score": 159.2473
+              },
+              {
+                "date": "2026-09-22",
+                "score": 161.636
+              }
+            ],
+            "leader_trendline": [
+              {
+                "date": "2023-02-24",
+                "score": 114.0649
+              },
+              {
+                "date": "2023-04-19",
+                "score": 116.2306
+              },
+              {
+                "date": "2023-06-13",
+                "score": 118.3963
+              },
+              {
+                "date": "2023-08-06",
+                "score": 120.562
+              },
+              {
+                "date": "2023-09-30",
+                "score": 122.7277
+              },
+              {
+                "date": "2023-11-23",
+                "score": 124.8934
+              },
+              {
+                "date": "2024-01-17",
+                "score": 127.0591
+              },
+              {
+                "date": "2024-03-11",
+                "score": 129.2248
+              },
+              {
+                "date": "2024-05-04",
+                "score": 131.3905
+              },
+              {
+                "date": "2024-06-28",
+                "score": 133.5562
+              },
+              {
+                "date": "2024-08-21",
+                "score": 135.722
+              },
+              {
+                "date": "2024-10-15",
+                "score": 137.8877
+              },
+              {
+                "date": "2024-12-08",
+                "score": 140.0534
+              },
+              {
+                "date": "2025-01-31",
+                "score": 142.2191
+              },
+              {
+                "date": "2025-03-27",
+                "score": 144.3848
+              },
+              {
+                "date": "2025-05-20",
+                "score": 146.5505
+              },
+              {
+                "date": "2025-07-14",
+                "score": 148.7162
+              },
+              {
+                "date": "2025-09-06",
+                "score": 150.8819
+              },
+              {
+                "date": "2025-10-30",
+                "score": 153.0476
+              },
+              {
+                "date": "2025-12-24",
+                "score": 155.2133
+              },
+              {
+                "date": "2026-02-16",
+                "score": 157.379
+              },
+              {
+                "date": "2026-04-12",
+                "score": 159.5448
+              },
+              {
+                "date": "2026-06-05",
+                "score": 161.7105
+              },
+              {
+                "date": "2026-07-30",
+                "score": 163.8762
+              },
+              {
+                "date": "2026-09-22",
+                "score": 166.0419
+              }
+            ],
+            "laggard_trend_level": 161.636,
+            "leader_reached_level_date": "2026-06-03"
+          }
         },
         "gap_timeline": {
           "method": "epoch_daily",
@@ -12075,6 +12998,23 @@
           "end": "2026-04-07T00:00:00",
           "n_days": 670
         },
+        "headline_gap": {
+          "months": 10.5,
+          "range_90": [
+            6.1,
+            15.4
+          ],
+          "score_gap": 243.8,
+          "score_gap_range_90": [
+            87.0,
+            661.2
+          ],
+          "window_start": "2025-04-07T00:00:00",
+          "window_end": "2026-04-07T00:00:00",
+          "n_days": 366,
+          "window_months": 12,
+          "full_history": false
+        },
         "total_matched": 11,
         "total_unmatched": 8,
         "current_gap_estimate": {
@@ -12192,7 +13132,349 @@
           "model": "claude_mythos_preview_early_inspect",
           "score": 1044.78
         },
-        "n_boot_valid": 0
+        "n_boot_valid": 0,
+        "plot": {
+          "laggard_points": [
+            {
+              "model": "qwen_2_72b",
+              "date": "2024-06-07",
+              "score": 2.5366
+            },
+            {
+              "model": "qwen_2_5_72b",
+              "date": "2024-09-19",
+              "score": 5.8138
+            },
+            {
+              "model": "deepseek_v3",
+              "date": "2024-12-26",
+              "score": 19.8228
+            },
+            {
+              "model": "deepseek_r1",
+              "date": "2025-01-20",
+              "score": 27.8876
+            },
+            {
+              "model": "deepseek_r1_0528",
+              "date": "2025-05-28",
+              "score": 32.7643
+            },
+            {
+              "model": "gpt-oss-120b",
+              "date": "2025-08-05",
+              "score": 45.1102
+            },
+            {
+              "model": "kimi_k2_thinking",
+              "date": "2025-11-06",
+              "score": 57.6217
+            }
+          ],
+          "leader_points": [
+            {
+              "model": "gpt2",
+              "date": "2019-02-14",
+              "score": 0.0538
+            },
+            {
+              "model": "davinci_002",
+              "date": "2020-05-28",
+              "score": 0.1441
+            },
+            {
+              "model": "gpt_3_5_turbo_instruct",
+              "date": "2022-03-15",
+              "score": 0.5992
+            },
+            {
+              "model": "gpt_4",
+              "date": "2023-03-14",
+              "score": 3.9874
+            },
+            {
+              "model": "gpt_4_1106_inspect",
+              "date": "2023-11-06",
+              "score": 4.045
+            },
+            {
+              "model": "gpt_4_0125",
+              "date": "2024-01-25",
+              "score": 6.3469
+            },
+            {
+              "model": "gpt_4o_inspect",
+              "date": "2024-05-13",
+              "score": 6.9912
+            },
+            {
+              "model": "claude_3_5_sonnet_20240620_inspect",
+              "date": "2024-06-20",
+              "score": 11.3954
+            },
+            {
+              "model": "o1_preview",
+              "date": "2024-09-12",
+              "score": 20.3266
+            },
+            {
+              "model": "claude_3_5_sonnet_20241022_inspect",
+              "date": "2024-10-22",
+              "score": 20.5229
+            },
+            {
+              "model": "o1_inspect",
+              "date": "2024-12-05",
+              "score": 38.8316
+            },
+            {
+              "model": "claude_3_7_sonnet_inspect",
+              "date": "2025-02-24",
+              "score": 60.3889
+            },
+            {
+              "model": "o3_inspect",
+              "date": "2025-04-16",
+              "score": 119.7326
+            },
+            {
+              "model": "gpt_5_2025_08_07_inspect",
+              "date": "2025-08-07",
+              "score": 203.0126
+            },
+            {
+              "model": "gemini_3_pro",
+              "date": "2025-11-18",
+              "score": 224.3259
+            },
+            {
+              "model": "claude_opus_4_5_inspect",
+              "date": "2025-11-24",
+              "score": 292.9946
+            },
+            {
+              "model": "gpt_5_2",
+              "date": "2025-12-11",
+              "score": 352.2493
+            },
+            {
+              "model": "claude_opus_4_6_inspect",
+              "date": "2026-02-05",
+              "score": 718.8068
+            },
+            {
+              "model": "claude_mythos_preview_early_inspect",
+              "date": "2026-04-07",
+              "score": 1044.7801
+            }
+          ],
+          "laggard_trendline": [
+            {
+              "date": "2024-06-07",
+              "score": 3.9127
+            },
+            {
+              "date": "2024-07-05",
+              "score": 4.6134
+            },
+            {
+              "date": "2024-08-02",
+              "score": 5.4395
+            },
+            {
+              "date": "2024-08-30",
+              "score": 6.4136
+            },
+            {
+              "date": "2024-09-27",
+              "score": 7.5622
+            },
+            {
+              "date": "2024-10-24",
+              "score": 8.9164
+            },
+            {
+              "date": "2024-11-21",
+              "score": 10.5131
+            },
+            {
+              "date": "2024-12-19",
+              "score": 12.3958
+            },
+            {
+              "date": "2025-01-16",
+              "score": 14.6156
+            },
+            {
+              "date": "2025-02-13",
+              "score": 17.233
+            },
+            {
+              "date": "2025-03-13",
+              "score": 20.319
+            },
+            {
+              "date": "2025-04-10",
+              "score": 23.9577
+            },
+            {
+              "date": "2025-05-07",
+              "score": 28.248
+            },
+            {
+              "date": "2025-06-04",
+              "score": 33.3066
+            },
+            {
+              "date": "2025-07-02",
+              "score": 39.2712
+            },
+            {
+              "date": "2025-07-30",
+              "score": 46.3038
+            },
+            {
+              "date": "2025-08-27",
+              "score": 54.5958
+            },
+            {
+              "date": "2025-09-24",
+              "score": 64.3728
+            },
+            {
+              "date": "2025-10-22",
+              "score": 75.9005
+            },
+            {
+              "date": "2025-11-19",
+              "score": 89.4927
+            },
+            {
+              "date": "2025-12-17",
+              "score": 105.5189
+            },
+            {
+              "date": "2026-01-13",
+              "score": 124.4151
+            },
+            {
+              "date": "2026-02-10",
+              "score": 146.6952
+            },
+            {
+              "date": "2026-03-10",
+              "score": 172.9652
+            },
+            {
+              "date": "2026-04-07",
+              "score": 203.9396
+            }
+          ],
+          "leader_trendline": [
+            {
+              "date": "2019-02-14",
+              "score": 0.0153
+            },
+            {
+              "date": "2019-06-03",
+              "score": 0.0231
+            },
+            {
+              "date": "2019-09-19",
+              "score": 0.0349
+            },
+            {
+              "date": "2020-01-06",
+              "score": 0.0528
+            },
+            {
+              "date": "2020-04-24",
+              "score": 0.0799
+            },
+            {
+              "date": "2020-08-11",
+              "score": 0.1208
+            },
+            {
+              "date": "2020-11-27",
+              "score": 0.1827
+            },
+            {
+              "date": "2021-03-16",
+              "score": 0.2763
+            },
+            {
+              "date": "2021-07-03",
+              "score": 0.4178
+            },
+            {
+              "date": "2021-10-19",
+              "score": 0.6318
+            },
+            {
+              "date": "2022-02-05",
+              "score": 0.9554
+            },
+            {
+              "date": "2022-05-25",
+              "score": 1.4448
+            },
+            {
+              "date": "2022-09-10",
+              "score": 2.1847
+            },
+            {
+              "date": "2022-12-28",
+              "score": 3.3037
+            },
+            {
+              "date": "2023-04-16",
+              "score": 4.9958
+            },
+            {
+              "date": "2023-08-03",
+              "score": 7.5545
+            },
+            {
+              "date": "2023-11-19",
+              "score": 11.4237
+            },
+            {
+              "date": "2024-03-07",
+              "score": 17.2745
+            },
+            {
+              "date": "2024-06-24",
+              "score": 26.1221
+            },
+            {
+              "date": "2024-10-10",
+              "score": 39.5011
+            },
+            {
+              "date": "2025-01-27",
+              "score": 59.7324
+            },
+            {
+              "date": "2025-05-16",
+              "score": 90.3256
+            },
+            {
+              "date": "2025-09-02",
+              "score": 136.5878
+            },
+            {
+              "date": "2025-12-19",
+              "score": 206.5442
+            },
+            {
+              "date": "2026-04-07",
+              "score": 312.3303
+            }
+          ],
+          "laggard_trend_level": 203.9396,
+          "leader_reached_level_date": "2025-12-16"
+        }
       },
       "historical_gaps": [
         {
@@ -14115,6 +15397,23 @@
             "end": "2026-04-07T00:00:00",
             "n_days": 670
           },
+          "headline_gap": {
+            "months": 10.9,
+            "range_90": [
+              6.1,
+              15.4
+            ],
+            "score_gap": 246.9,
+            "score_gap_range_90": [
+              87.0,
+              661.2
+            ],
+            "window_start": "2025-04-07T00:00:00",
+            "window_end": "2026-04-07T00:00:00",
+            "n_days": 366,
+            "window_months": 12,
+            "full_history": false
+          },
           "total_matched": 11,
           "total_unmatched": 8,
           "current_gap_estimate": {
@@ -14438,7 +15737,344 @@
             "model": "claude_mythos_preview_early_inspect",
             "score": 1044.78
           },
-          "n_boot_valid": 0
+          "n_boot_valid": 0,
+          "plot": {
+            "laggard_points": [
+              {
+                "model": "qwen_2_72b",
+                "date": "2024-06-07",
+                "score": 2.5366
+              },
+              {
+                "model": "qwen_2_5_72b",
+                "date": "2024-09-19",
+                "score": 5.8138
+              },
+              {
+                "model": "deepseek_v3",
+                "date": "2024-12-26",
+                "score": 19.8228
+              },
+              {
+                "model": "deepseek_r1",
+                "date": "2025-01-20",
+                "score": 27.8876
+              },
+              {
+                "model": "deepseek_r1_0528",
+                "date": "2025-05-28",
+                "score": 32.7643
+              },
+              {
+                "model": "kimi_k2_thinking",
+                "date": "2025-11-06",
+                "score": 57.6217
+              }
+            ],
+            "leader_points": [
+              {
+                "model": "gpt2",
+                "date": "2019-02-14",
+                "score": 0.0538
+              },
+              {
+                "model": "davinci_002",
+                "date": "2020-05-28",
+                "score": 0.1441
+              },
+              {
+                "model": "gpt_3_5_turbo_instruct",
+                "date": "2022-03-15",
+                "score": 0.5992
+              },
+              {
+                "model": "gpt_4",
+                "date": "2023-03-14",
+                "score": 3.9874
+              },
+              {
+                "model": "gpt_4_1106_inspect",
+                "date": "2023-11-06",
+                "score": 4.045
+              },
+              {
+                "model": "gpt_4_0125",
+                "date": "2024-01-25",
+                "score": 6.3469
+              },
+              {
+                "model": "gpt_4o_inspect",
+                "date": "2024-05-13",
+                "score": 6.9912
+              },
+              {
+                "model": "claude_3_5_sonnet_20240620_inspect",
+                "date": "2024-06-20",
+                "score": 11.3954
+              },
+              {
+                "model": "o1_preview",
+                "date": "2024-09-12",
+                "score": 20.3266
+              },
+              {
+                "model": "claude_3_5_sonnet_20241022_inspect",
+                "date": "2024-10-22",
+                "score": 20.5229
+              },
+              {
+                "model": "o1_inspect",
+                "date": "2024-12-05",
+                "score": 38.8316
+              },
+              {
+                "model": "claude_3_7_sonnet_inspect",
+                "date": "2025-02-24",
+                "score": 60.3889
+              },
+              {
+                "model": "o3_inspect",
+                "date": "2025-04-16",
+                "score": 119.7326
+              },
+              {
+                "model": "gpt_5_2025_08_07_inspect",
+                "date": "2025-08-07",
+                "score": 203.0126
+              },
+              {
+                "model": "gemini_3_pro",
+                "date": "2025-11-18",
+                "score": 224.3259
+              },
+              {
+                "model": "claude_opus_4_5_inspect",
+                "date": "2025-11-24",
+                "score": 292.9946
+              },
+              {
+                "model": "gpt_5_2",
+                "date": "2025-12-11",
+                "score": 352.2493
+              },
+              {
+                "model": "claude_opus_4_6_inspect",
+                "date": "2026-02-05",
+                "score": 718.8068
+              },
+              {
+                "model": "claude_mythos_preview_early_inspect",
+                "date": "2026-04-07",
+                "score": 1044.7801
+              }
+            ],
+            "laggard_trendline": [
+              {
+                "date": "2024-06-07",
+                "score": 3.8892
+              },
+              {
+                "date": "2024-07-05",
+                "score": 4.5945
+              },
+              {
+                "date": "2024-08-02",
+                "score": 5.4278
+              },
+              {
+                "date": "2024-08-30",
+                "score": 6.4121
+              },
+              {
+                "date": "2024-09-27",
+                "score": 7.5749
+              },
+              {
+                "date": "2024-10-24",
+                "score": 8.9486
+              },
+              {
+                "date": "2024-11-21",
+                "score": 10.5714
+              },
+              {
+                "date": "2024-12-19",
+                "score": 12.4884
+              },
+              {
+                "date": "2025-01-16",
+                "score": 14.7532
+              },
+              {
+                "date": "2025-02-13",
+                "score": 17.4286
+              },
+              {
+                "date": "2025-03-13",
+                "score": 20.5893
+              },
+              {
+                "date": "2025-04-10",
+                "score": 24.3231
+              },
+              {
+                "date": "2025-05-07",
+                "score": 28.734
+              },
+              {
+                "date": "2025-06-04",
+                "score": 33.9449
+              },
+              {
+                "date": "2025-07-02",
+                "score": 40.1007
+              },
+              {
+                "date": "2025-07-30",
+                "score": 47.3729
+              },
+              {
+                "date": "2025-08-27",
+                "score": 55.9638
+              },
+              {
+                "date": "2025-09-24",
+                "score": 66.1127
+              },
+              {
+                "date": "2025-10-22",
+                "score": 78.1021
+              },
+              {
+                "date": "2025-11-19",
+                "score": 92.2657
+              },
+              {
+                "date": "2025-12-17",
+                "score": 108.9978
+              },
+              {
+                "date": "2026-01-13",
+                "score": 128.7643
+              },
+              {
+                "date": "2026-02-10",
+                "score": 152.1154
+              },
+              {
+                "date": "2026-03-10",
+                "score": 179.7011
+              },
+              {
+                "date": "2026-04-07",
+                "score": 212.2895
+              }
+            ],
+            "leader_trendline": [
+              {
+                "date": "2019-02-14",
+                "score": 0.0153
+              },
+              {
+                "date": "2019-06-03",
+                "score": 0.0231
+              },
+              {
+                "date": "2019-09-19",
+                "score": 0.0349
+              },
+              {
+                "date": "2020-01-06",
+                "score": 0.0528
+              },
+              {
+                "date": "2020-04-24",
+                "score": 0.0799
+              },
+              {
+                "date": "2020-08-11",
+                "score": 0.1208
+              },
+              {
+                "date": "2020-11-27",
+                "score": 0.1827
+              },
+              {
+                "date": "2021-03-16",
+                "score": 0.2763
+              },
+              {
+                "date": "2021-07-03",
+                "score": 0.4178
+              },
+              {
+                "date": "2021-10-19",
+                "score": 0.6318
+              },
+              {
+                "date": "2022-02-05",
+                "score": 0.9554
+              },
+              {
+                "date": "2022-05-25",
+                "score": 1.4448
+              },
+              {
+                "date": "2022-09-10",
+                "score": 2.1847
+              },
+              {
+                "date": "2022-12-28",
+                "score": 3.3037
+              },
+              {
+                "date": "2023-04-16",
+                "score": 4.9958
+              },
+              {
+                "date": "2023-08-03",
+                "score": 7.5545
+              },
+              {
+                "date": "2023-11-19",
+                "score": 11.4237
+              },
+              {
+                "date": "2024-03-07",
+                "score": 17.2745
+              },
+              {
+                "date": "2024-06-24",
+                "score": 26.1221
+              },
+              {
+                "date": "2024-10-10",
+                "score": 39.5011
+              },
+              {
+                "date": "2025-01-27",
+                "score": 59.7324
+              },
+              {
+                "date": "2025-05-16",
+                "score": 90.3256
+              },
+              {
+                "date": "2025-09-02",
+                "score": 136.5878
+              },
+              {
+                "date": "2025-12-19",
+                "score": 206.5442
+              },
+              {
+                "date": "2026-04-07",
+                "score": 312.3303
+              }
+            ],
+            "laggard_trend_level": 212.2895,
+            "leader_reached_level_date": "2025-12-27"
+          }
         },
         "gap_timeline": {
           "method": "epoch_daily",
@@ -20196,6 +21832,23 @@
           "end": "2026-09-30T00:00:00",
           "n_days": 1171
         },
+        "headline_gap": {
+          "months": 2.7,
+          "range_90": [
+            0.2,
+            4.8
+          ],
+          "score_gap": 5.0,
+          "score_gap_range_90": [
+            1.5,
+            8.4
+          ],
+          "window_start": "2025-09-30T00:00:00",
+          "window_end": "2026-09-30T00:00:00",
+          "n_days": 366,
+          "window_months": 12,
+          "full_history": false
+        },
         "total_matched": 18,
         "total_unmatched": 4,
         "current_gap_estimate": {
@@ -20327,7 +21980,449 @@
           "model": "gemini-4-argon_high",
           "score": 96.4
         },
-        "n_boot_valid": 2000
+        "n_boot_valid": 2000,
+        "plot": {
+          "laggard_points": [
+            {
+              "model": "Llama-2-70b-chat-hf",
+              "date": "2023-07-18",
+              "score": 26.33
+            },
+            {
+              "model": "Mixtral-8x7B-Instruct-v0.1",
+              "date": "2023-12-11",
+              "score": 30.59
+            },
+            {
+              "model": "dbrx-instruct",
+              "date": "2024-03-27",
+              "score": 32.89
+            },
+            {
+              "model": "WizardLM-2-8x22B",
+              "date": "2024-04-15",
+              "score": 43.43
+            },
+            {
+              "model": "Llama-3.1-70B-Instruct",
+              "date": "2024-07-23",
+              "score": 44.19
+            },
+            {
+              "model": "Llama-3.1-405B-Instruct",
+              "date": "2024-07-23",
+              "score": 50.92
+            },
+            {
+              "model": "mistral-large-2411",
+              "date": "2024-11-18",
+              "score": 51.33
+            },
+            {
+              "model": "phi-4",
+              "date": "2024-12-12",
+              "score": 56.06
+            },
+            {
+              "model": "DeepSeek-V3",
+              "date": "2024-12-26",
+              "score": 56.53
+            },
+            {
+              "model": "DeepSeek-R1",
+              "date": "2025-01-20",
+              "score": 69.22
+            },
+            {
+              "model": "DeepSeek-R1-Distill-Qwen-32B",
+              "date": "2025-01-20",
+              "score": 64.14
+            },
+            {
+              "model": "qwen3-235b-a22b",
+              "date": "2025-04-29",
+              "score": 70.71
+            },
+            {
+              "model": "DeepSeek-R1-0528",
+              "date": "2025-05-28",
+              "score": 76.33
+            },
+            {
+              "model": "Qwen3-235B-A22B-Thinking-2507",
+              "date": "2025-07-25",
+              "score": 80.05
+            },
+            {
+              "model": "kimi-k2-thinking-turbo",
+              "date": "2025-11-06",
+              "score": 84.22
+            },
+            {
+              "model": "fireworks/kimi-k2p5",
+              "date": "2026-01-27",
+              "score": 87.6
+            },
+            {
+              "model": "glm-5",
+              "date": "2026-02-11",
+              "score": 87.82
+            },
+            {
+              "model": "glm-5.1",
+              "date": "2026-04-07",
+              "score": 89.9
+            },
+            {
+              "model": "kimi-k2.6",
+              "date": "2026-04-20",
+              "score": 90.78
+            },
+            {
+              "model": "deepseek-v4-pro_high",
+              "date": "2026-04-24",
+              "score": 90.91
+            },
+            {
+              "model": "MiniMax-M3",
+              "date": "2026-06-01",
+              "score": 90.91
+            },
+            {
+              "model": "glm-5.2_max",
+              "date": "2026-06-16",
+              "score": 91.86
+            },
+            {
+              "model": "kimi-k3_high",
+              "date": "2026-07-16",
+              "score": 91.92
+            },
+            {
+              "model": "kimi-k3_max",
+              "date": "2026-07-16",
+              "score": 93.12
+            }
+          ],
+          "leader_points": [
+            {
+              "model": "gpt-4-0314",
+              "date": "2023-03-14",
+              "score": 35.73
+            },
+            {
+              "model": "gpt-4-1106-preview",
+              "date": "2023-11-06",
+              "score": 42.36
+            },
+            {
+              "model": "claude-3-opus-20240229",
+              "date": "2024-02-29",
+              "score": 47.16
+            },
+            {
+              "model": "gpt-4o-2024-05-13",
+              "date": "2024-05-13",
+              "score": 48.9
+            },
+            {
+              "model": "claude-3-5-sonnet-20240620",
+              "date": "2024-06-20",
+              "score": 54.04
+            },
+            {
+              "model": "o1-mini-2024-09-12_high",
+              "date": "2024-09-12",
+              "score": 62.37
+            },
+            {
+              "model": "o1-2024-12-17_high",
+              "date": "2024-12-17",
+              "score": 76.77
+            },
+            {
+              "model": "o1-2024-12-17_low",
+              "date": "2024-12-17",
+              "score": 74.24
+            },
+            {
+              "model": "o3-mini-2025-01-31_high",
+              "date": "2025-01-31",
+              "score": 77.02
+            },
+            {
+              "model": "claude-3-7-sonnet-20250219_64K",
+              "date": "2025-02-24",
+              "score": 78.5
+            },
+            {
+              "model": "gemini-2.5-pro-exp-03-25",
+              "date": "2025-03-25",
+              "score": 83.84
+            },
+            {
+              "model": "gemini-2.5-pro-preview-06-05",
+              "date": "2025-06-05",
+              "score": 84.85
+            },
+            {
+              "model": "gemini-2.5-pro",
+              "date": "2025-06-17",
+              "score": 85.29
+            },
+            {
+              "model": "grok-4-0709",
+              "date": "2025-07-09",
+              "score": 87.0
+            },
+            {
+              "model": "gpt-5.1-2025-11-13_high",
+              "date": "2025-11-13",
+              "score": 87.63
+            },
+            {
+              "model": "gemini-3-pro-preview",
+              "date": "2025-11-18",
+              "score": 92.61
+            },
+            {
+              "model": "gemini-3.1-pro-preview_high",
+              "date": "2026-02-19",
+              "score": 94.44
+            },
+            {
+              "model": "gpt-5.4-pro-2026-03-05_xhigh",
+              "date": "2026-03-05",
+              "score": 94.6
+            },
+            {
+              "model": "gemini-3.7-flash_high",
+              "date": "2026-08-13",
+              "score": 94.82
+            },
+            {
+              "model": "gemini-3.8-flash_high",
+              "date": "2026-09-02",
+              "score": 95.39
+            },
+            {
+              "model": "gpt-6-astra_max",
+              "date": "2026-09-03",
+              "score": 95.77
+            },
+            {
+              "model": "gemini-4-argon_high",
+              "date": "2026-09-30",
+              "score": 96.4
+            }
+          ],
+          "laggard_trendline": [
+            {
+              "date": "2023-07-18",
+              "score": 20.2726
+            },
+            {
+              "date": "2023-09-05",
+              "score": 23.2195
+            },
+            {
+              "date": "2023-10-23",
+              "score": 26.4527
+            },
+            {
+              "date": "2023-12-11",
+              "score": 29.9603
+            },
+            {
+              "date": "2024-01-29",
+              "score": 33.7199
+            },
+            {
+              "date": "2024-03-18",
+              "score": 37.6973
+            },
+            {
+              "date": "2024-05-06",
+              "score": 41.8476
+            },
+            {
+              "date": "2024-06-23",
+              "score": 46.1167
+            },
+            {
+              "date": "2024-08-11",
+              "score": 50.4435
+            },
+            {
+              "date": "2024-09-29",
+              "score": 54.7636
+            },
+            {
+              "date": "2024-11-16",
+              "score": 59.0132
+            },
+            {
+              "date": "2025-01-04",
+              "score": 63.1323
+            },
+            {
+              "date": "2025-02-22",
+              "score": 67.0684
+            },
+            {
+              "date": "2025-04-12",
+              "score": 70.7788
+            },
+            {
+              "date": "2025-05-31",
+              "score": 74.2318
+            },
+            {
+              "date": "2025-07-18",
+              "score": 77.407
+            },
+            {
+              "date": "2025-09-05",
+              "score": 80.2948
+            },
+            {
+              "date": "2025-10-24",
+              "score": 82.8951
+            },
+            {
+              "date": "2025-12-11",
+              "score": 85.2154
+            },
+            {
+              "date": "2026-01-29",
+              "score": 87.2693
+            },
+            {
+              "date": "2026-03-19",
+              "score": 89.0744
+            },
+            {
+              "date": "2026-05-07",
+              "score": 90.651
+            },
+            {
+              "date": "2026-06-25",
+              "score": 92.0205
+            },
+            {
+              "date": "2026-08-12",
+              "score": 93.2044
+            },
+            {
+              "date": "2026-09-30",
+              "score": 94.2237
+            }
+          ],
+          "leader_trendline": [
+            {
+              "date": "2023-03-14",
+              "score": 25.3155
+            },
+            {
+              "date": "2023-05-07",
+              "score": 28.9047
+            },
+            {
+              "date": "2023-06-30",
+              "score": 32.7795
+            },
+            {
+              "date": "2023-08-23",
+              "score": 36.904
+            },
+            {
+              "date": "2023-10-16",
+              "score": 41.2292
+            },
+            {
+              "date": "2023-12-09",
+              "score": 45.6942
+            },
+            {
+              "date": "2024-02-01",
+              "score": 50.2295
+            },
+            {
+              "date": "2024-03-26",
+              "score": 54.761
+            },
+            {
+              "date": "2024-05-19",
+              "score": 59.215
+            },
+            {
+              "date": "2024-07-12",
+              "score": 63.5225
+            },
+            {
+              "date": "2024-09-04",
+              "score": 67.6239
+            },
+            {
+              "date": "2024-10-28",
+              "score": 71.4712
+            },
+            {
+              "date": "2024-12-21",
+              "score": 75.0301
+            },
+            {
+              "date": "2025-02-13",
+              "score": 78.28
+            },
+            {
+              "date": "2025-04-08",
+              "score": 81.2128
+            },
+            {
+              "date": "2025-06-01",
+              "score": 83.8314
+            },
+            {
+              "date": "2025-07-25",
+              "score": 86.1473
+            },
+            {
+              "date": "2025-09-17",
+              "score": 88.1782
+            },
+            {
+              "date": "2025-11-10",
+              "score": 89.9461
+            },
+            {
+              "date": "2026-01-03",
+              "score": 91.4752
+            },
+            {
+              "date": "2026-02-26",
+              "score": 92.7904
+            },
+            {
+              "date": "2026-04-21",
+              "score": 93.9162
+            },
+            {
+              "date": "2026-06-14",
+              "score": 94.8759
+            },
+            {
+              "date": "2026-08-07",
+              "score": 95.6911
+            },
+            {
+              "date": "2026-09-30",
+              "score": 96.3816
+            }
+          ],
+          "laggard_trend_level": 94.2237,
+          "leader_reached_level_date": "2026-05-07"
+        }
       },
       "historical_gaps": [
         {
@@ -23638,6 +25733,23 @@
             "end": "2026-09-30T00:00:00",
             "n_days": 1044
           },
+          "headline_gap": {
+            "months": 2.7,
+            "range_90": [
+              0.2,
+              4.8
+            ],
+            "score_gap": 5.0,
+            "score_gap_range_90": [
+              1.5,
+              8.4
+            ],
+            "window_start": "2025-09-30T00:00:00",
+            "window_end": "2026-09-30T00:00:00",
+            "n_days": 366,
+            "window_months": 12,
+            "full_history": false
+          },
           "total_matched": 18,
           "total_unmatched": 4,
           "current_gap_estimate": {
@@ -24029,7 +26141,454 @@
             "model": "gemini-4-argon_high",
             "score": 96.4
           },
-          "n_boot_valid": 2000
+          "n_boot_valid": 2000,
+          "plot": {
+            "laggard_points": [
+              {
+                "model": "Yi-34B-Chat",
+                "date": "2023-11-22",
+                "score": 14.74
+              },
+              {
+                "model": "deepseek-llm-67b-chat",
+                "date": "2023-11-29",
+                "score": 24.62
+              },
+              {
+                "model": "qwen1.5-72b-chat",
+                "date": "2024-02-04",
+                "score": 28.82
+              },
+              {
+                "model": "qwen1.5-32b-chat",
+                "date": "2024-04-03",
+                "score": 30.74
+              },
+              {
+                "model": "Yi-1.5-34B-Chat",
+                "date": "2024-05-13",
+                "score": 31.98
+              },
+              {
+                "model": "qwen2-72b-instruct",
+                "date": "2024-06-07",
+                "score": 40.78
+              },
+              {
+                "model": "qwen2.5-32b-instruct",
+                "date": "2024-09-17",
+                "score": 46.09
+              },
+              {
+                "model": "qwen2.5-72b-instruct",
+                "date": "2024-09-19",
+                "score": 49.15
+              },
+              {
+                "model": "DeepSeek-V3",
+                "date": "2024-12-26",
+                "score": 56.53
+              },
+              {
+                "model": "DeepSeek-R1-Distill-Qwen-32B",
+                "date": "2025-01-20",
+                "score": 64.14
+              },
+              {
+                "model": "DeepSeek-R1",
+                "date": "2025-01-20",
+                "score": 69.22
+              },
+              {
+                "model": "qwen3-235b-a22b",
+                "date": "2025-04-29",
+                "score": 70.71
+              },
+              {
+                "model": "DeepSeek-R1-0528",
+                "date": "2025-05-28",
+                "score": 76.33
+              },
+              {
+                "model": "Qwen3-235B-A22B-Thinking-2507",
+                "date": "2025-07-25",
+                "score": 80.05
+              },
+              {
+                "model": "kimi-k2-thinking-turbo",
+                "date": "2025-11-06",
+                "score": 84.22
+              },
+              {
+                "model": "fireworks/kimi-k2p5",
+                "date": "2026-01-27",
+                "score": 87.6
+              },
+              {
+                "model": "glm-5",
+                "date": "2026-02-11",
+                "score": 87.82
+              },
+              {
+                "model": "qwen3.6-plus",
+                "date": "2026-03-31",
+                "score": 88.38
+              },
+              {
+                "model": "glm-5.1",
+                "date": "2026-04-07",
+                "score": 89.9
+              },
+              {
+                "model": "kimi-k2.6",
+                "date": "2026-04-20",
+                "score": 90.78
+              },
+              {
+                "model": "deepseek-v4-pro_high",
+                "date": "2026-04-24",
+                "score": 90.91
+              },
+              {
+                "model": "qwen3.7-max",
+                "date": "2026-05-19",
+                "score": 90.91
+              },
+              {
+                "model": "glm-5.2_max",
+                "date": "2026-06-16",
+                "score": 91.86
+              },
+              {
+                "model": "kimi-k3_max",
+                "date": "2026-07-16",
+                "score": 93.12
+              },
+              {
+                "model": "kimi-k3_high",
+                "date": "2026-07-16",
+                "score": 91.92
+              }
+            ],
+            "leader_points": [
+              {
+                "model": "gpt-4-0314",
+                "date": "2023-03-14",
+                "score": 35.73
+              },
+              {
+                "model": "gpt-4-1106-preview",
+                "date": "2023-11-06",
+                "score": 42.36
+              },
+              {
+                "model": "claude-3-opus-20240229",
+                "date": "2024-02-29",
+                "score": 47.16
+              },
+              {
+                "model": "gpt-4o-2024-05-13",
+                "date": "2024-05-13",
+                "score": 48.9
+              },
+              {
+                "model": "claude-3-5-sonnet-20240620",
+                "date": "2024-06-20",
+                "score": 54.04
+              },
+              {
+                "model": "o1-mini-2024-09-12_high",
+                "date": "2024-09-12",
+                "score": 62.37
+              },
+              {
+                "model": "o1-2024-12-17_low",
+                "date": "2024-12-17",
+                "score": 74.24
+              },
+              {
+                "model": "o1-2024-12-17_high",
+                "date": "2024-12-17",
+                "score": 76.77
+              },
+              {
+                "model": "o3-mini-2025-01-31_high",
+                "date": "2025-01-31",
+                "score": 77.02
+              },
+              {
+                "model": "claude-3-7-sonnet-20250219_64K",
+                "date": "2025-02-24",
+                "score": 78.5
+              },
+              {
+                "model": "gemini-2.5-pro-exp-03-25",
+                "date": "2025-03-25",
+                "score": 83.84
+              },
+              {
+                "model": "gemini-2.5-pro-preview-06-05",
+                "date": "2025-06-05",
+                "score": 84.85
+              },
+              {
+                "model": "gemini-2.5-pro",
+                "date": "2025-06-17",
+                "score": 85.29
+              },
+              {
+                "model": "grok-4-0709",
+                "date": "2025-07-09",
+                "score": 87.0
+              },
+              {
+                "model": "gpt-5.1-2025-11-13_high",
+                "date": "2025-11-13",
+                "score": 87.63
+              },
+              {
+                "model": "gemini-3-pro-preview",
+                "date": "2025-11-18",
+                "score": 92.61
+              },
+              {
+                "model": "gemini-3.1-pro-preview_high",
+                "date": "2026-02-19",
+                "score": 94.44
+              },
+              {
+                "model": "gpt-5.4-pro-2026-03-05_xhigh",
+                "date": "2026-03-05",
+                "score": 94.6
+              },
+              {
+                "model": "gemini-3.7-flash_high",
+                "date": "2026-08-13",
+                "score": 94.82
+              },
+              {
+                "model": "gemini-3.8-flash_high",
+                "date": "2026-09-02",
+                "score": 95.39
+              },
+              {
+                "model": "gpt-6-astra_max",
+                "date": "2026-09-03",
+                "score": 95.77
+              },
+              {
+                "model": "gemini-4-argon_high",
+                "date": "2026-09-30",
+                "score": 96.4
+              }
+            ],
+            "laggard_trendline": [
+              {
+                "date": "2023-11-22",
+                "score": 21.7724
+              },
+              {
+                "date": "2024-01-04",
+                "score": 24.9046
+              },
+              {
+                "date": "2024-02-17",
+                "score": 28.3243
+              },
+              {
+                "date": "2024-03-31",
+                "score": 32.0133
+              },
+              {
+                "date": "2024-05-14",
+                "score": 35.9419
+              },
+              {
+                "date": "2024-06-26",
+                "score": 40.0685
+              },
+              {
+                "date": "2024-08-09",
+                "score": 44.3409
+              },
+              {
+                "date": "2024-09-21",
+                "score": 48.6987
+              },
+              {
+                "date": "2024-11-04",
+                "score": 53.0763
+              },
+              {
+                "date": "2024-12-17",
+                "score": 57.4072
+              },
+              {
+                "date": "2025-01-30",
+                "score": 61.6272
+              },
+              {
+                "date": "2025-03-14",
+                "score": 65.6792
+              },
+              {
+                "date": "2025-04-27",
+                "score": 69.5149
+              },
+              {
+                "date": "2025-06-09",
+                "score": 73.0976
+              },
+              {
+                "date": "2025-07-22",
+                "score": 76.4021
+              },
+              {
+                "date": "2025-09-04",
+                "score": 79.415
+              },
+              {
+                "date": "2025-10-17",
+                "score": 82.1332
+              },
+              {
+                "date": "2025-11-30",
+                "score": 84.5623
+              },
+              {
+                "date": "2026-01-12",
+                "score": 86.7145
+              },
+              {
+                "date": "2026-02-25",
+                "score": 88.6071
+              },
+              {
+                "date": "2026-04-09",
+                "score": 90.2604
+              },
+              {
+                "date": "2026-05-23",
+                "score": 91.6962
+              },
+              {
+                "date": "2026-07-05",
+                "score": 92.9369
+              },
+              {
+                "date": "2026-08-18",
+                "score": 94.0044
+              },
+              {
+                "date": "2026-09-30",
+                "score": 94.9194
+              }
+            ],
+            "leader_trendline": [
+              {
+                "date": "2023-03-14",
+                "score": 25.3155
+              },
+              {
+                "date": "2023-05-07",
+                "score": 28.9047
+              },
+              {
+                "date": "2023-06-30",
+                "score": 32.7795
+              },
+              {
+                "date": "2023-08-23",
+                "score": 36.904
+              },
+              {
+                "date": "2023-10-16",
+                "score": 41.2292
+              },
+              {
+                "date": "2023-12-09",
+                "score": 45.6942
+              },
+              {
+                "date": "2024-02-01",
+                "score": 50.2295
+              },
+              {
+                "date": "2024-03-26",
+                "score": 54.761
+              },
+              {
+                "date": "2024-05-19",
+                "score": 59.215
+              },
+              {
+                "date": "2024-07-12",
+                "score": 63.5225
+              },
+              {
+                "date": "2024-09-04",
+                "score": 67.6239
+              },
+              {
+                "date": "2024-10-28",
+                "score": 71.4712
+              },
+              {
+                "date": "2024-12-21",
+                "score": 75.0301
+              },
+              {
+                "date": "2025-02-13",
+                "score": 78.28
+              },
+              {
+                "date": "2025-04-08",
+                "score": 81.2128
+              },
+              {
+                "date": "2025-06-01",
+                "score": 83.8314
+              },
+              {
+                "date": "2025-07-25",
+                "score": 86.1473
+              },
+              {
+                "date": "2025-09-17",
+                "score": 88.1782
+              },
+              {
+                "date": "2025-11-10",
+                "score": 89.9461
+              },
+              {
+                "date": "2026-01-03",
+                "score": 91.4752
+              },
+              {
+                "date": "2026-02-26",
+                "score": 92.7904
+              },
+              {
+                "date": "2026-04-21",
+                "score": 93.9162
+              },
+              {
+                "date": "2026-06-14",
+                "score": 94.8759
+              },
+              {
+                "date": "2026-08-07",
+                "score": 95.6911
+              },
+              {
+                "date": "2026-09-30",
+                "score": 96.3816
+              }
+            ],
+            "laggard_trend_level": 94.9194,
+            "leader_reached_level_date": "2026-06-17"
+          }
         },
         "gap_timeline": {
           "method": "epoch_daily",
@@ -28959,6 +31518,23 @@
           "end": "2025-08-07T00:00:00",
           "n_days": 752
         },
+        "headline_gap": {
+          "months": 4.6,
+          "range_90": [
+            1.8,
+            7.8
+          ],
+          "score_gap": 11.7,
+          "score_gap_range_90": [
+            1.2,
+            29.8
+          ],
+          "window_start": "2024-08-07T00:00:00",
+          "window_end": "2025-08-07T00:00:00",
+          "n_days": 366,
+          "window_months": 12,
+          "full_history": false
+        },
         "total_matched": 10,
         "total_unmatched": 3,
         "current_gap_estimate": {
@@ -29089,7 +31665,369 @@
           "model": "gpt-5-2025-08-07_high",
           "score": 98.13
         },
-        "n_boot_valid": 2000
+        "n_boot_valid": 2000,
+        "plot": {
+          "laggard_points": [
+            {
+              "model": "Llama-2-70b-chat-hf",
+              "date": "2023-07-18",
+              "score": 3.29
+            },
+            {
+              "model": "open-mistral-7b",
+              "date": "2023-09-27",
+              "score": 3.68
+            },
+            {
+              "model": "Yi-34B-Chat",
+              "date": "2023-11-22",
+              "score": 5.15
+            },
+            {
+              "model": "deepseek-llm-67b-chat",
+              "date": "2023-11-29",
+              "score": 6.39
+            },
+            {
+              "model": "Mixtral-8x7B-Instruct-v0.1",
+              "date": "2023-12-11",
+              "score": 9.29
+            },
+            {
+              "model": "open-mixtral-8x7b",
+              "date": "2023-12-11",
+              "score": 9.95
+            },
+            {
+              "model": "dbrx-instruct",
+              "date": "2024-03-27",
+              "score": 11.65
+            },
+            {
+              "model": "WizardLM-2-8x22B",
+              "date": "2024-04-15",
+              "score": 25.74
+            },
+            {
+              "model": "qwen2-72b-instruct",
+              "date": "2024-06-07",
+              "score": 39.07
+            },
+            {
+              "model": "Llama-3.1-405B-Instruct",
+              "date": "2024-07-23",
+              "score": 49.77
+            },
+            {
+              "model": "qwen2.5-32b-instruct",
+              "date": "2024-09-17",
+              "score": 56.07
+            },
+            {
+              "model": "qwen2.5-72b-instruct",
+              "date": "2024-09-19",
+              "score": 63.17
+            },
+            {
+              "model": "phi-4",
+              "date": "2024-12-12",
+              "score": 64.94
+            },
+            {
+              "model": "DeepSeek-R1",
+              "date": "2025-01-20",
+              "score": 93.05
+            },
+            {
+              "model": "DeepSeek-R1-Distill-Qwen-14B",
+              "date": "2025-01-20",
+              "score": 87.12
+            },
+            {
+              "model": "DeepSeek-R1-Distill-Llama-70B",
+              "date": "2025-01-20",
+              "score": 89.9
+            },
+            {
+              "model": "DeepSeek-R1-0528",
+              "date": "2025-05-28",
+              "score": 96.64
+            }
+          ],
+          "leader_points": [
+            {
+              "model": "gpt-4-0613",
+              "date": "2023-06-13",
+              "score": 22.97
+            },
+            {
+              "model": "gpt-4-1106-preview",
+              "date": "2023-11-06",
+              "score": 40.02
+            },
+            {
+              "model": "gpt-4-turbo-2024-04-09",
+              "date": "2024-04-09",
+              "score": 46.73
+            },
+            {
+              "model": "gpt-4o-2024-05-13",
+              "date": "2024-05-13",
+              "score": 51.05
+            },
+            {
+              "model": "claude-3-5-sonnet-20240620",
+              "date": "2024-06-20",
+              "score": 51.68
+            },
+            {
+              "model": "gpt-4o-mini-2024-07-18",
+              "date": "2024-07-18",
+              "score": 52.63
+            },
+            {
+              "model": "gpt-4o-2024-08-06",
+              "date": "2024-08-06",
+              "score": 53.28
+            },
+            {
+              "model": "o1-mini-2024-09-12_high",
+              "date": "2024-09-12",
+              "score": 89.18
+            },
+            {
+              "model": "o1-2024-12-17_high",
+              "date": "2024-12-17",
+              "score": 94.71
+            },
+            {
+              "model": "o3-mini-2025-01-31_high",
+              "date": "2025-01-31",
+              "score": 96.49
+            },
+            {
+              "model": "o4-mini-2025-04-16_high",
+              "date": "2025-04-16",
+              "score": 97.83
+            },
+            {
+              "model": "gpt-5-mini-2025-08-07_high",
+              "date": "2025-08-07",
+              "score": 97.85
+            },
+            {
+              "model": "gpt-5-2025-08-07_high",
+              "date": "2025-08-07",
+              "score": 98.13
+            }
+          ],
+          "laggard_trendline": [
+            {
+              "date": "2023-07-18",
+              "score": 1.8569
+            },
+            {
+              "date": "2023-08-18",
+              "score": 2.5657
+            },
+            {
+              "date": "2023-09-19",
+              "score": 3.5354
+            },
+            {
+              "date": "2023-10-20",
+              "score": 4.8534
+            },
+            {
+              "date": "2023-11-20",
+              "score": 6.6288
+            },
+            {
+              "date": "2023-12-21",
+              "score": 8.9924
+            },
+            {
+              "date": "2024-01-22",
+              "score": 12.0896
+            },
+            {
+              "date": "2024-02-22",
+              "score": 16.0653
+            },
+            {
+              "date": "2024-03-24",
+              "score": 21.0356
+            },
+            {
+              "date": "2024-04-25",
+              "score": 27.048
+            },
+            {
+              "date": "2024-05-26",
+              "score": 34.0382
+            },
+            {
+              "date": "2024-06-26",
+              "score": 41.7997
+            },
+            {
+              "date": "2024-07-27",
+              "score": 49.9898
+            },
+            {
+              "date": "2024-08-28",
+              "score": 58.1805
+            },
+            {
+              "date": "2024-09-28",
+              "score": 65.9436
+            },
+            {
+              "date": "2024-10-29",
+              "score": 72.9359
+            },
+            {
+              "date": "2024-11-30",
+              "score": 78.9509
+            },
+            {
+              "date": "2024-12-31",
+              "score": 83.9237
+            },
+            {
+              "date": "2025-01-31",
+              "score": 87.9017
+            },
+            {
+              "date": "2025-03-04",
+              "score": 91.0009
+            },
+            {
+              "date": "2025-04-04",
+              "score": 93.3661
+            },
+            {
+              "date": "2025-05-05",
+              "score": 95.1429
+            },
+            {
+              "date": "2025-06-05",
+              "score": 96.4618
+            },
+            {
+              "date": "2025-07-07",
+              "score": 97.4322
+            },
+            {
+              "date": "2025-08-07",
+              "score": 98.1416
+            }
+          ],
+          "leader_trendline": [
+            {
+              "date": "2023-06-13",
+              "score": 11.7799
+            },
+            {
+              "date": "2023-07-16",
+              "score": 14.6482
+            },
+            {
+              "date": "2023-08-18",
+              "score": 18.0718
+            },
+            {
+              "date": "2023-09-19",
+              "score": 22.0886
+            },
+            {
+              "date": "2023-10-22",
+              "score": 26.7071
+            },
+            {
+              "date": "2023-11-24",
+              "score": 31.8959
+            },
+            {
+              "date": "2023-12-26",
+              "score": 37.576
+            },
+            {
+              "date": "2024-01-28",
+              "score": 43.6198
+            },
+            {
+              "date": "2024-03-01",
+              "score": 49.8592
+            },
+            {
+              "date": "2024-04-03",
+              "score": 56.1031
+            },
+            {
+              "date": "2024-05-06",
+              "score": 62.1595
+            },
+            {
+              "date": "2024-06-07",
+              "score": 67.859
+            },
+            {
+              "date": "2024-07-10",
+              "score": 73.0719
+            },
+            {
+              "date": "2024-08-12",
+              "score": 77.717
+            },
+            {
+              "date": "2024-09-13",
+              "score": 81.7608
+            },
+            {
+              "date": "2024-10-16",
+              "score": 85.2104
+            },
+            {
+              "date": "2024-11-18",
+              "score": 88.1026
+            },
+            {
+              "date": "2024-12-21",
+              "score": 90.4922
+            },
+            {
+              "date": "2025-01-23",
+              "score": 92.4431
+            },
+            {
+              "date": "2025-02-24",
+              "score": 94.0201
+            },
+            {
+              "date": "2025-03-29",
+              "score": 95.2848
+            },
+            {
+              "date": "2025-05-01",
+              "score": 96.2926
+            },
+            {
+              "date": "2025-06-02",
+              "score": 97.0916
+            },
+            {
+              "date": "2025-07-05",
+              "score": 97.7224
+            },
+            {
+              "date": "2025-08-07",
+              "score": 98.2189
+            }
+          ],
+          "laggard_trend_level": 98.1416,
+          "leader_reached_level_date": "2025-08-01"
+        }
       },
       "historical_gaps": [
         {
@@ -31467,6 +34405,23 @@
             "end": "2025-09-24T00:00:00",
             "n_days": 673
           },
+          "headline_gap": {
+            "months": 5.2,
+            "range_90": [
+              2.2,
+              7.8
+            ],
+            "score_gap": 10.5,
+            "score_gap_range_90": [
+              1.2,
+              29.9
+            ],
+            "window_start": "2024-09-24T00:00:00",
+            "window_end": "2025-09-24T00:00:00",
+            "n_days": 366,
+            "window_months": 12,
+            "full_history": false
+          },
           "total_matched": 12,
           "total_unmatched": 1,
           "current_gap_estimate": {
@@ -31855,7 +34810,344 @@
             "model": "gpt-5-2025-08-07_high",
             "score": 98.13
           },
-          "n_boot_valid": 2000
+          "n_boot_valid": 2000,
+          "plot": {
+            "laggard_points": [
+              {
+                "model": "Yi-34B-Chat",
+                "date": "2023-11-22",
+                "score": 5.15
+              },
+              {
+                "model": "deepseek-llm-67b-chat",
+                "date": "2023-11-29",
+                "score": 6.39
+              },
+              {
+                "model": "Yi-1.5-34B-Chat",
+                "date": "2024-05-13",
+                "score": 25.48
+              },
+              {
+                "model": "qwen2-72b-instruct",
+                "date": "2024-06-07",
+                "score": 39.07
+              },
+              {
+                "model": "qwen2.5-32b-instruct",
+                "date": "2024-09-17",
+                "score": 56.07
+              },
+              {
+                "model": "qwen2.5-72b-instruct",
+                "date": "2024-09-19",
+                "score": 63.17
+              },
+              {
+                "model": "DeepSeek-V3",
+                "date": "2024-12-26",
+                "score": 64.85
+              },
+              {
+                "model": "DeepSeek-R1-Distill-Qwen-14B",
+                "date": "2025-01-20",
+                "score": 87.12
+              },
+              {
+                "model": "DeepSeek-R1-Distill-Llama-70B",
+                "date": "2025-01-20",
+                "score": 89.9
+              },
+              {
+                "model": "DeepSeek-R1",
+                "date": "2025-01-20",
+                "score": 93.05
+              },
+              {
+                "model": "DeepSeek-R1-0528",
+                "date": "2025-05-28",
+                "score": 96.64
+              },
+              {
+                "model": "qwen3-max-2025-09-23",
+                "date": "2025-09-24",
+                "score": 97.13
+              }
+            ],
+            "leader_points": [
+              {
+                "model": "gpt-4-0613",
+                "date": "2023-06-13",
+                "score": 22.97
+              },
+              {
+                "model": "gpt-4-1106-preview",
+                "date": "2023-11-06",
+                "score": 40.02
+              },
+              {
+                "model": "gpt-4-turbo-2024-04-09",
+                "date": "2024-04-09",
+                "score": 46.73
+              },
+              {
+                "model": "gpt-4o-2024-05-13",
+                "date": "2024-05-13",
+                "score": 51.05
+              },
+              {
+                "model": "claude-3-5-sonnet-20240620",
+                "date": "2024-06-20",
+                "score": 51.68
+              },
+              {
+                "model": "gpt-4o-mini-2024-07-18",
+                "date": "2024-07-18",
+                "score": 52.63
+              },
+              {
+                "model": "gpt-4o-2024-08-06",
+                "date": "2024-08-06",
+                "score": 53.28
+              },
+              {
+                "model": "o1-mini-2024-09-12_high",
+                "date": "2024-09-12",
+                "score": 89.18
+              },
+              {
+                "model": "o1-2024-12-17_high",
+                "date": "2024-12-17",
+                "score": 94.71
+              },
+              {
+                "model": "o3-mini-2025-01-31_high",
+                "date": "2025-01-31",
+                "score": 96.49
+              },
+              {
+                "model": "o4-mini-2025-04-16_high",
+                "date": "2025-04-16",
+                "score": 97.83
+              },
+              {
+                "model": "gpt-5-mini-2025-08-07_high",
+                "date": "2025-08-07",
+                "score": 97.85
+              },
+              {
+                "model": "gpt-5-2025-08-07_high",
+                "date": "2025-08-07",
+                "score": 98.13
+              }
+            ],
+            "laggard_trendline": [
+              {
+                "date": "2023-11-22",
+                "score": 6.3144
+              },
+              {
+                "date": "2023-12-20",
+                "score": 8.265
+              },
+              {
+                "date": "2024-01-17",
+                "score": 10.7491
+              },
+              {
+                "date": "2024-02-14",
+                "score": 13.8669
+              },
+              {
+                "date": "2024-03-13",
+                "score": 17.7096
+              },
+              {
+                "date": "2024-04-10",
+                "score": 22.3409
+              },
+              {
+                "date": "2024-05-08",
+                "score": 27.7746
+              },
+              {
+                "date": "2024-06-05",
+                "score": 33.9521
+              },
+              {
+                "date": "2024-07-03",
+                "score": 40.7288
+              },
+              {
+                "date": "2024-07-31",
+                "score": 47.8776
+              },
+              {
+                "date": "2024-08-28",
+                "score": 55.1143
+              },
+              {
+                "date": "2024-09-25",
+                "score": 62.1409
+              },
+              {
+                "date": "2024-10-23",
+                "score": 68.6923
+              },
+              {
+                "date": "2024-11-20",
+                "score": 74.5739
+              },
+              {
+                "date": "2024-12-18",
+                "score": 79.6774
+              },
+              {
+                "date": "2025-01-15",
+                "score": 83.9767
+              },
+              {
+                "date": "2025-02-12",
+                "score": 87.509
+              },
+              {
+                "date": "2025-03-12",
+                "score": 90.3521
+              },
+              {
+                "date": "2025-04-09",
+                "score": 92.6028
+              },
+              {
+                "date": "2025-05-07",
+                "score": 94.3612
+              },
+              {
+                "date": "2025-06-04",
+                "score": 95.7209
+              },
+              {
+                "date": "2025-07-02",
+                "score": 96.764
+              },
+              {
+                "date": "2025-07-30",
+                "score": 97.5593
+              },
+              {
+                "date": "2025-08-27",
+                "score": 98.1629
+              },
+              {
+                "date": "2025-09-24",
+                "score": 98.6193
+              }
+            ],
+            "leader_trendline": [
+              {
+                "date": "2023-06-13",
+                "score": 11.7799
+              },
+              {
+                "date": "2023-07-18",
+                "score": 14.8409
+              },
+              {
+                "date": "2023-08-22",
+                "score": 18.5302
+              },
+              {
+                "date": "2023-09-25",
+                "score": 22.89
+              },
+              {
+                "date": "2023-10-30",
+                "score": 27.9241
+              },
+              {
+                "date": "2023-12-04",
+                "score": 33.5832
+              },
+              {
+                "date": "2024-01-07",
+                "score": 39.7565
+              },
+              {
+                "date": "2024-02-11",
+                "score": 46.2739
+              },
+              {
+                "date": "2024-03-17",
+                "score": 52.9213
+              },
+              {
+                "date": "2024-04-21",
+                "score": 59.4666
+              },
+              {
+                "date": "2024-05-26",
+                "score": 65.6918
+              },
+              {
+                "date": "2024-06-29",
+                "score": 71.4204
+              },
+              {
+                "date": "2024-08-03",
+                "score": 76.5342
+              },
+              {
+                "date": "2024-09-07",
+                "score": 80.9767
+              },
+              {
+                "date": "2024-10-11",
+                "score": 84.7458
+              },
+              {
+                "date": "2024-11-15",
+                "score": 87.8799
+              },
+              {
+                "date": "2024-12-20",
+                "score": 90.4427
+              },
+              {
+                "date": "2025-01-24",
+                "score": 92.5097
+              },
+              {
+                "date": "2025-02-28",
+                "score": 94.1586
+              },
+              {
+                "date": "2025-04-03",
+                "score": 95.4623
+              },
+              {
+                "date": "2025-05-08",
+                "score": 96.4859
+              },
+              {
+                "date": "2025-06-12",
+                "score": 97.2852
+              },
+              {
+                "date": "2025-07-16",
+                "score": 97.9066
+              },
+              {
+                "date": "2025-08-20",
+                "score": 98.3881
+              },
+              {
+                "date": "2025-09-24",
+                "score": 98.7603
+              }
+            ],
+            "laggard_trend_level": 98.6193,
+            "leader_reached_level_date": "2025-09-10"
+          }
         },
         "gap_timeline": {
           "method": "epoch_daily",
@@ -34721,6 +38013,23 @@
           "end": "2026-06-16T00:00:00",
           "n_days": 141
         },
+        "headline_gap": {
+          "months": 3.4,
+          "range_90": [
+            2.3,
+            4.6
+          ],
+          "score_gap": 5.3,
+          "score_gap_range_90": [
+            2.9,
+            6.8
+          ],
+          "window_start": "2026-01-27T00:00:00",
+          "window_end": "2026-06-16T00:00:00",
+          "n_days": 141,
+          "window_months": 12,
+          "full_history": true
+        },
         "total_matched": 8,
         "total_unmatched": 1,
         "current_gap_estimate": {
@@ -34837,7 +38146,289 @@
           "model": "claude-opus-4-7_max",
           "score": 83.47
         },
-        "n_boot_valid": 0
+        "n_boot_valid": 0,
+        "plot": {
+          "laggard_points": [
+            {
+              "model": "kimi-k2.5",
+              "date": "2026-01-27",
+              "score": 73.76
+            },
+            {
+              "model": "glm-5.1",
+              "date": "2026-04-07",
+              "score": 74.17
+            },
+            {
+              "model": "kimi-k2.6",
+              "date": "2026-04-20",
+              "score": 76.65
+            },
+            {
+              "model": "deepseek-v4-pro_max",
+              "date": "2026-04-24",
+              "score": 77.64
+            },
+            {
+              "model": "glm-5.2_max",
+              "date": "2026-06-16",
+              "score": 78.7
+            }
+          ],
+          "leader_points": [
+            {
+              "model": "gpt-4o-2024-11-20",
+              "date": "2024-11-20",
+              "score": 30.99
+            },
+            {
+              "model": "claude-3-7-sonnet-20250219",
+              "date": "2025-02-24",
+              "score": 60.95
+            },
+            {
+              "model": "o3-2025-04-16_medium",
+              "date": "2025-04-16",
+              "score": 62.32
+            },
+            {
+              "model": "claude-opus-4-20250514",
+              "date": "2025-05-22",
+              "score": 70.66
+            },
+            {
+              "model": "claude-opus-4-1-20250805",
+              "date": "2025-08-05",
+              "score": 73.35
+            },
+            {
+              "model": "gpt-5-2025-08-07_high",
+              "date": "2025-08-07",
+              "score": 73.55
+            },
+            {
+              "model": "claude-opus-4-5-20251101",
+              "date": "2025-11-24",
+              "score": 76.65
+            },
+            {
+              "model": "claude-opus-4-6",
+              "date": "2026-02-05",
+              "score": 78.72
+            },
+            {
+              "model": "claude-opus-4-7_max",
+              "date": "2026-04-16",
+              "score": 83.47
+            }
+          ],
+          "laggard_trendline": [
+            {
+              "date": "2026-01-27",
+              "score": 73.2833
+            },
+            {
+              "date": "2026-02-02",
+              "score": 73.5181
+            },
+            {
+              "date": "2026-02-08",
+              "score": 73.7517
+            },
+            {
+              "date": "2026-02-13",
+              "score": 73.9838
+            },
+            {
+              "date": "2026-02-19",
+              "score": 74.2147
+            },
+            {
+              "date": "2026-02-25",
+              "score": 74.4442
+            },
+            {
+              "date": "2026-03-03",
+              "score": 74.6723
+            },
+            {
+              "date": "2026-03-09",
+              "score": 74.8991
+            },
+            {
+              "date": "2026-03-15",
+              "score": 75.1246
+            },
+            {
+              "date": "2026-03-21",
+              "score": 75.3487
+            },
+            {
+              "date": "2026-03-26",
+              "score": 75.5714
+            },
+            {
+              "date": "2026-04-01",
+              "score": 75.7928
+            },
+            {
+              "date": "2026-04-07",
+              "score": 76.0128
+            },
+            {
+              "date": "2026-04-13",
+              "score": 76.2314
+            },
+            {
+              "date": "2026-04-19",
+              "score": 76.4486
+            },
+            {
+              "date": "2026-04-24",
+              "score": 76.6645
+            },
+            {
+              "date": "2026-04-30",
+              "score": 76.879
+            },
+            {
+              "date": "2026-05-06",
+              "score": 77.0921
+            },
+            {
+              "date": "2026-05-12",
+              "score": 77.3038
+            },
+            {
+              "date": "2026-05-18",
+              "score": 77.5141
+            },
+            {
+              "date": "2026-05-24",
+              "score": 77.7231
+            },
+            {
+              "date": "2026-05-30",
+              "score": 77.9307
+            },
+            {
+              "date": "2026-06-04",
+              "score": 78.1368
+            },
+            {
+              "date": "2026-06-10",
+              "score": 78.3416
+            },
+            {
+              "date": "2026-06-16",
+              "score": 78.545
+            }
+          ],
+          "leader_trendline": [
+            {
+              "date": "2024-11-20",
+              "score": 45.9535
+            },
+            {
+              "date": "2024-12-14",
+              "score": 48.2196
+            },
+            {
+              "date": "2025-01-07",
+              "score": 50.4931
+            },
+            {
+              "date": "2025-01-31",
+              "score": 52.7646
+            },
+            {
+              "date": "2025-02-24",
+              "score": 55.0246
+            },
+            {
+              "date": "2025-03-19",
+              "score": 57.2641
+            },
+            {
+              "date": "2025-04-12",
+              "score": 59.4743
+            },
+            {
+              "date": "2025-05-06",
+              "score": 61.6467
+            },
+            {
+              "date": "2025-05-30",
+              "score": 63.7735
+            },
+            {
+              "date": "2025-06-23",
+              "score": 65.8478
+            },
+            {
+              "date": "2025-07-17",
+              "score": 67.8631
+            },
+            {
+              "date": "2025-08-10",
+              "score": 69.8141
+            },
+            {
+              "date": "2025-09-02",
+              "score": 71.6959
+            },
+            {
+              "date": "2025-09-26",
+              "score": 73.505
+            },
+            {
+              "date": "2025-10-20",
+              "score": 75.2384
+            },
+            {
+              "date": "2025-11-13",
+              "score": 76.8941
+            },
+            {
+              "date": "2025-12-07",
+              "score": 78.4707
+            },
+            {
+              "date": "2025-12-31",
+              "score": 79.9678
+            },
+            {
+              "date": "2026-01-24",
+              "score": 81.3854
+            },
+            {
+              "date": "2026-02-17",
+              "score": 82.7244
+            },
+            {
+              "date": "2026-03-13",
+              "score": 83.9861
+            },
+            {
+              "date": "2026-04-05",
+              "score": 85.1721
+            },
+            {
+              "date": "2026-04-29",
+              "score": 86.2846
+            },
+            {
+              "date": "2026-05-23",
+              "score": 87.3261
+            },
+            {
+              "date": "2026-06-16",
+              "score": 88.2992
+            }
+          ],
+          "laggard_trend_level": 78.545,
+          "leader_reached_level_date": "2025-12-08"
+        }
       },
       "historical_gaps": [
         {
@@ -35700,6 +39291,23 @@
             "end": "2026-06-16T00:00:00",
             "n_days": 141
           },
+          "headline_gap": {
+            "months": 3.4,
+            "range_90": [
+              2.3,
+              4.6
+            ],
+            "score_gap": 5.3,
+            "score_gap_range_90": [
+              2.9,
+              6.8
+            ],
+            "window_start": "2026-01-27T00:00:00",
+            "window_end": "2026-06-16T00:00:00",
+            "n_days": 141,
+            "window_months": 12,
+            "full_history": true
+          },
           "total_matched": 8,
           "total_unmatched": 1,
           "current_gap_estimate": {
@@ -35833,7 +39441,294 @@
             "model": "claude-opus-4-7_max",
             "score": 83.47
           },
-          "n_boot_valid": 0
+          "n_boot_valid": 0,
+          "plot": {
+            "laggard_points": [
+              {
+                "model": "kimi-k2.5",
+                "date": "2026-01-27",
+                "score": 73.76
+              },
+              {
+                "model": "glm-5.1",
+                "date": "2026-04-07",
+                "score": 74.17
+              },
+              {
+                "model": "kimi-k2.6",
+                "date": "2026-04-20",
+                "score": 76.65
+              },
+              {
+                "model": "qwen3.6-max-preview",
+                "date": "2026-04-20",
+                "score": 76.65
+              },
+              {
+                "model": "deepseek-v4-pro_max",
+                "date": "2026-04-24",
+                "score": 77.64
+              },
+              {
+                "model": "glm-5.2_max",
+                "date": "2026-06-16",
+                "score": 78.7
+              }
+            ],
+            "leader_points": [
+              {
+                "model": "gpt-4o-2024-11-20",
+                "date": "2024-11-20",
+                "score": 30.99
+              },
+              {
+                "model": "claude-3-7-sonnet-20250219",
+                "date": "2025-02-24",
+                "score": 60.95
+              },
+              {
+                "model": "o3-2025-04-16_medium",
+                "date": "2025-04-16",
+                "score": 62.32
+              },
+              {
+                "model": "claude-opus-4-20250514",
+                "date": "2025-05-22",
+                "score": 70.66
+              },
+              {
+                "model": "claude-opus-4-1-20250805",
+                "date": "2025-08-05",
+                "score": 73.35
+              },
+              {
+                "model": "gpt-5-2025-08-07_high",
+                "date": "2025-08-07",
+                "score": 73.55
+              },
+              {
+                "model": "claude-opus-4-5-20251101",
+                "date": "2025-11-24",
+                "score": 76.65
+              },
+              {
+                "model": "claude-opus-4-6",
+                "date": "2026-02-05",
+                "score": 78.72
+              },
+              {
+                "model": "claude-opus-4-7_max",
+                "date": "2026-04-16",
+                "score": 83.47
+              }
+            ],
+            "laggard_trendline": [
+              {
+                "date": "2026-01-27",
+                "score": 73.3036
+              },
+              {
+                "date": "2026-02-02",
+                "score": 73.5388
+              },
+              {
+                "date": "2026-02-08",
+                "score": 73.7728
+              },
+              {
+                "date": "2026-02-13",
+                "score": 74.0054
+              },
+              {
+                "date": "2026-02-19",
+                "score": 74.2366
+              },
+              {
+                "date": "2026-02-25",
+                "score": 74.4666
+              },
+              {
+                "date": "2026-03-03",
+                "score": 74.6951
+              },
+              {
+                "date": "2026-03-09",
+                "score": 74.9223
+              },
+              {
+                "date": "2026-03-15",
+                "score": 75.1482
+              },
+              {
+                "date": "2026-03-21",
+                "score": 75.3726
+              },
+              {
+                "date": "2026-03-26",
+                "score": 75.5957
+              },
+              {
+                "date": "2026-04-01",
+                "score": 75.8175
+              },
+              {
+                "date": "2026-04-07",
+                "score": 76.0378
+              },
+              {
+                "date": "2026-04-13",
+                "score": 76.2568
+              },
+              {
+                "date": "2026-04-19",
+                "score": 76.4744
+              },
+              {
+                "date": "2026-04-24",
+                "score": 76.6906
+              },
+              {
+                "date": "2026-04-30",
+                "score": 76.9055
+              },
+              {
+                "date": "2026-05-06",
+                "score": 77.1189
+              },
+              {
+                "date": "2026-05-12",
+                "score": 77.3309
+              },
+              {
+                "date": "2026-05-18",
+                "score": 77.5416
+              },
+              {
+                "date": "2026-05-24",
+                "score": 77.7509
+              },
+              {
+                "date": "2026-05-30",
+                "score": 77.9587
+              },
+              {
+                "date": "2026-06-04",
+                "score": 78.1652
+              },
+              {
+                "date": "2026-06-10",
+                "score": 78.3703
+              },
+              {
+                "date": "2026-06-16",
+                "score": 78.5739
+              }
+            ],
+            "leader_trendline": [
+              {
+                "date": "2024-11-20",
+                "score": 45.9535
+              },
+              {
+                "date": "2024-12-14",
+                "score": 48.2196
+              },
+              {
+                "date": "2025-01-07",
+                "score": 50.4931
+              },
+              {
+                "date": "2025-01-31",
+                "score": 52.7646
+              },
+              {
+                "date": "2025-02-24",
+                "score": 55.0246
+              },
+              {
+                "date": "2025-03-19",
+                "score": 57.2641
+              },
+              {
+                "date": "2025-04-12",
+                "score": 59.4743
+              },
+              {
+                "date": "2025-05-06",
+                "score": 61.6467
+              },
+              {
+                "date": "2025-05-30",
+                "score": 63.7735
+              },
+              {
+                "date": "2025-06-23",
+                "score": 65.8478
+              },
+              {
+                "date": "2025-07-17",
+                "score": 67.8631
+              },
+              {
+                "date": "2025-08-10",
+                "score": 69.8141
+              },
+              {
+                "date": "2025-09-02",
+                "score": 71.6959
+              },
+              {
+                "date": "2025-09-26",
+                "score": 73.505
+              },
+              {
+                "date": "2025-10-20",
+                "score": 75.2384
+              },
+              {
+                "date": "2025-11-13",
+                "score": 76.8941
+              },
+              {
+                "date": "2025-12-07",
+                "score": 78.4707
+              },
+              {
+                "date": "2025-12-31",
+                "score": 79.9678
+              },
+              {
+                "date": "2026-01-24",
+                "score": 81.3854
+              },
+              {
+                "date": "2026-02-17",
+                "score": 82.7244
+              },
+              {
+                "date": "2026-03-13",
+                "score": 83.9861
+              },
+              {
+                "date": "2026-04-05",
+                "score": 85.1721
+              },
+              {
+                "date": "2026-04-29",
+                "score": 86.2846
+              },
+              {
+                "date": "2026-05-23",
+                "score": 87.3261
+              },
+              {
+                "date": "2026-06-16",
+                "score": 88.2992
+              }
+            ],
+            "laggard_trend_level": 78.5739,
+            "leader_reached_level_date": "2025-12-09"
+          }
         },
         "gap_timeline": {
           "method": "epoch_daily",
@@ -38533,6 +42428,23 @@
           "end": "2026-04-23T00:00:00",
           "n_days": 522
         },
+        "headline_gap": {
+          "months": 6.8,
+          "range_90": [
+            4.5,
+            8.8
+          ],
+          "score_gap": 20.2,
+          "score_gap_range_90": [
+            12.8,
+            23.9
+          ],
+          "window_start": "2025-04-23T00:00:00",
+          "window_end": "2026-04-23T00:00:00",
+          "n_days": 366,
+          "window_months": 12,
+          "full_history": false
+        },
         "total_matched": 13,
         "total_unmatched": 4,
         "current_gap_estimate": {
@@ -38664,7 +42576,344 @@
           "model": "gpt-5.5-pro-pre-release_high",
           "score": 52.4
         },
-        "n_boot_valid": 2000
+        "n_boot_valid": 2000,
+        "plot": {
+          "laggard_points": [
+            {
+              "model": "mistral-large-2411",
+              "date": "2024-11-18",
+              "score": 0.34
+            },
+            {
+              "model": "DeepSeek-V3",
+              "date": "2024-12-26",
+              "score": 1.72
+            },
+            {
+              "model": "Qwen/Qwen3-235B-A22B-Thinking-2507",
+              "date": "2025-07-25",
+              "score": 8.48
+            },
+            {
+              "model": "moonshotai/Kimi-K2-Thinking",
+              "date": "2025-11-06",
+              "score": 21.4
+            },
+            {
+              "model": "fireworks/deepseek-v3p2",
+              "date": "2025-12-01",
+              "score": 22.1
+            },
+            {
+              "model": "fireworks/kimi-k2p5",
+              "date": "2026-01-27",
+              "score": 27.9
+            },
+            {
+              "model": "glm-5.1",
+              "date": "2026-04-07",
+              "score": 33.45
+            },
+            {
+              "model": "kimi-k2.6",
+              "date": "2026-04-20",
+              "score": 38.97
+            }
+          ],
+          "leader_points": [
+            {
+              "model": "claude-3-5-sonnet-20240620",
+              "date": "2024-06-20",
+              "score": 1.03
+            },
+            {
+              "model": "o1-mini-2024-09-12_medium",
+              "date": "2024-09-12",
+              "score": 1.72
+            },
+            {
+              "model": "claude-3-5-sonnet-20241022",
+              "date": "2024-10-22",
+              "score": 2.07
+            },
+            {
+              "model": "o1-2024-12-17_high",
+              "date": "2024-12-17",
+              "score": 9.31
+            },
+            {
+              "model": "o3-mini-2025-01-31_high",
+              "date": "2025-01-31",
+              "score": 12.41
+            },
+            {
+              "model": "o3-2025-04-16_high",
+              "date": "2025-04-16",
+              "score": 18.69
+            },
+            {
+              "model": "o4-mini-2025-04-16_medium",
+              "date": "2025-04-16",
+              "score": 18.97
+            },
+            {
+              "model": "o4-mini-2025-04-16_high",
+              "date": "2025-04-16",
+              "score": 24.83
+            },
+            {
+              "model": "gemini-2.5-deep-think-2025-08-01-webapp",
+              "date": "2025-08-01",
+              "score": 29.0
+            },
+            {
+              "model": "gpt-5-2025-08-07_high",
+              "date": "2025-08-07",
+              "score": 32.41
+            },
+            {
+              "model": "gemini-3-pro-preview",
+              "date": "2025-11-18",
+              "score": 37.6
+            },
+            {
+              "model": "gpt-5.2-2025-12-11_xhigh",
+              "date": "2025-12-11",
+              "score": 40.7
+            },
+            {
+              "model": "claude-opus-4-6_max",
+              "date": "2026-02-05",
+              "score": 40.7
+            },
+            {
+              "model": "gpt-5.4-2026-03-05_xhigh",
+              "date": "2026-03-05",
+              "score": 47.6
+            },
+            {
+              "model": "gpt-5.4-pro-2026-03-05_xhigh",
+              "date": "2026-03-05",
+              "score": 50.0
+            },
+            {
+              "model": "gpt-5.5-pro-pre-release_xhigh",
+              "date": "2026-04-23",
+              "score": 51.0
+            },
+            {
+              "model": "gpt-5.5-pro-pre-release_high",
+              "date": "2026-04-23",
+              "score": 52.4
+            }
+          ],
+          "laggard_trendline": [
+            {
+              "date": "2024-11-18",
+              "score": 0.7414
+            },
+            {
+              "date": "2024-12-10",
+              "score": 0.901
+            },
+            {
+              "date": "2024-12-31",
+              "score": 1.0947
+            },
+            {
+              "date": "2025-01-22",
+              "score": 1.3293
+            },
+            {
+              "date": "2025-02-13",
+              "score": 1.6135
+            },
+            {
+              "date": "2025-03-07",
+              "score": 1.9571
+            },
+            {
+              "date": "2025-03-28",
+              "score": 2.3723
+            },
+            {
+              "date": "2025-04-19",
+              "score": 2.8728
+            },
+            {
+              "date": "2025-05-11",
+              "score": 3.4753
+            },
+            {
+              "date": "2025-06-01",
+              "score": 4.1986
+            },
+            {
+              "date": "2025-06-23",
+              "score": 5.0646
+            },
+            {
+              "date": "2025-07-15",
+              "score": 6.0978
+            },
+            {
+              "date": "2025-08-05",
+              "score": 7.3256
+            },
+            {
+              "date": "2025-08-27",
+              "score": 8.7774
+            },
+            {
+              "date": "2025-09-18",
+              "score": 10.4844
+            },
+            {
+              "date": "2025-10-10",
+              "score": 12.478
+            },
+            {
+              "date": "2025-10-31",
+              "score": 14.7881
+            },
+            {
+              "date": "2025-11-22",
+              "score": 17.4405
+            },
+            {
+              "date": "2025-12-14",
+              "score": 20.4546
+            },
+            {
+              "date": "2026-01-04",
+              "score": 23.8391
+            },
+            {
+              "date": "2026-01-26",
+              "score": 27.5894
+            },
+            {
+              "date": "2026-02-17",
+              "score": 31.6842
+            },
+            {
+              "date": "2026-03-11",
+              "score": 36.084
+            },
+            {
+              "date": "2026-04-01",
+              "score": 40.7304
+            },
+            {
+              "date": "2026-04-23",
+              "score": 45.5488
+            }
+          ],
+          "leader_trendline": [
+            {
+              "date": "2024-06-20",
+              "score": 2.0116
+            },
+            {
+              "date": "2024-07-18",
+              "score": 2.401
+            },
+            {
+              "date": "2024-08-15",
+              "score": 2.8637
+            },
+            {
+              "date": "2024-09-12",
+              "score": 3.4124
+            },
+            {
+              "date": "2024-10-10",
+              "score": 4.0619
+            },
+            {
+              "date": "2024-11-07",
+              "score": 4.8288
+            },
+            {
+              "date": "2024-12-05",
+              "score": 5.7319
+            },
+            {
+              "date": "2025-01-02",
+              "score": 6.7917
+            },
+            {
+              "date": "2025-01-30",
+              "score": 8.0309
+            },
+            {
+              "date": "2025-02-27",
+              "score": 9.4732
+            },
+            {
+              "date": "2025-03-27",
+              "score": 11.1431
+            },
+            {
+              "date": "2025-04-24",
+              "score": 13.0648
+            },
+            {
+              "date": "2025-05-22",
+              "score": 15.2611
+            },
+            {
+              "date": "2025-06-19",
+              "score": 17.7512
+            },
+            {
+              "date": "2025-07-17",
+              "score": 20.5491
+            },
+            {
+              "date": "2025-08-14",
+              "score": 23.6611
+            },
+            {
+              "date": "2025-09-11",
+              "score": 27.0838
+            },
+            {
+              "date": "2025-10-09",
+              "score": 30.8018
+            },
+            {
+              "date": "2025-11-06",
+              "score": 34.7867
+            },
+            {
+              "date": "2025-12-04",
+              "score": 38.9965
+            },
+            {
+              "date": "2026-01-01",
+              "score": 43.377
+            },
+            {
+              "date": "2026-01-29",
+              "score": 47.8635
+            },
+            {
+              "date": "2026-02-26",
+              "score": 52.3847
+            },
+            {
+              "date": "2026-03-26",
+              "score": 56.8672
+            },
+            {
+              "date": "2026-04-23",
+              "score": 61.2399
+            }
+          ],
+          "laggard_trend_level": 45.5488,
+          "leader_reached_level_date": "2026-01-15"
+        }
       },
       "historical_gaps": [
         {
@@ -40398,6 +44647,23 @@
             "end": "2026-04-23T00:00:00",
             "n_days": 484
           },
+          "headline_gap": {
+            "months": 6.8,
+            "range_90": [
+              4.5,
+              8.8
+            ],
+            "score_gap": 20.2,
+            "score_gap_range_90": [
+              12.8,
+              23.9
+            ],
+            "window_start": "2025-04-23T00:00:00",
+            "window_end": "2026-04-23T00:00:00",
+            "n_days": 366,
+            "window_months": 12,
+            "full_history": false
+          },
           "total_matched": 13,
           "total_unmatched": 4,
           "current_gap_estimate": {
@@ -40663,7 +44929,344 @@
             "model": "gpt-5.5-pro-pre-release_high",
             "score": 52.4
           },
-          "n_boot_valid": 2000
+          "n_boot_valid": 2000,
+          "plot": {
+            "laggard_points": [
+              {
+                "model": "DeepSeek-V3",
+                "date": "2024-12-26",
+                "score": 1.72
+              },
+              {
+                "model": "qwen-plus-2025-04-28",
+                "date": "2025-04-28",
+                "score": 1.72
+              },
+              {
+                "model": "Qwen/Qwen3-235B-A22B-Thinking-2507",
+                "date": "2025-07-25",
+                "score": 8.48
+              },
+              {
+                "model": "moonshotai/Kimi-K2-Thinking",
+                "date": "2025-11-06",
+                "score": 21.4
+              },
+              {
+                "model": "fireworks/deepseek-v3p2",
+                "date": "2025-12-01",
+                "score": 22.1
+              },
+              {
+                "model": "fireworks/kimi-k2p5",
+                "date": "2026-01-27",
+                "score": 27.9
+              },
+              {
+                "model": "glm-5.1",
+                "date": "2026-04-07",
+                "score": 33.45
+              },
+              {
+                "model": "kimi-k2.6",
+                "date": "2026-04-20",
+                "score": 38.97
+              }
+            ],
+            "leader_points": [
+              {
+                "model": "claude-3-5-sonnet-20240620",
+                "date": "2024-06-20",
+                "score": 1.03
+              },
+              {
+                "model": "o1-mini-2024-09-12_medium",
+                "date": "2024-09-12",
+                "score": 1.72
+              },
+              {
+                "model": "claude-3-5-sonnet-20241022",
+                "date": "2024-10-22",
+                "score": 2.07
+              },
+              {
+                "model": "o1-2024-12-17_high",
+                "date": "2024-12-17",
+                "score": 9.31
+              },
+              {
+                "model": "o3-mini-2025-01-31_high",
+                "date": "2025-01-31",
+                "score": 12.41
+              },
+              {
+                "model": "o4-mini-2025-04-16_high",
+                "date": "2025-04-16",
+                "score": 24.83
+              },
+              {
+                "model": "o4-mini-2025-04-16_medium",
+                "date": "2025-04-16",
+                "score": 18.97
+              },
+              {
+                "model": "o3-2025-04-16_high",
+                "date": "2025-04-16",
+                "score": 18.69
+              },
+              {
+                "model": "gemini-2.5-deep-think-2025-08-01-webapp",
+                "date": "2025-08-01",
+                "score": 29.0
+              },
+              {
+                "model": "gpt-5-2025-08-07_high",
+                "date": "2025-08-07",
+                "score": 32.41
+              },
+              {
+                "model": "gemini-3-pro-preview",
+                "date": "2025-11-18",
+                "score": 37.6
+              },
+              {
+                "model": "gpt-5.2-2025-12-11_xhigh",
+                "date": "2025-12-11",
+                "score": 40.7
+              },
+              {
+                "model": "claude-opus-4-6_max",
+                "date": "2026-02-05",
+                "score": 40.7
+              },
+              {
+                "model": "gpt-5.4-2026-03-05_xhigh",
+                "date": "2026-03-05",
+                "score": 47.6
+              },
+              {
+                "model": "gpt-5.4-pro-2026-03-05_xhigh",
+                "date": "2026-03-05",
+                "score": 50.0
+              },
+              {
+                "model": "gpt-5.5-pro-pre-release_xhigh",
+                "date": "2026-04-23",
+                "score": 51.0
+              },
+              {
+                "model": "gpt-5.5-pro-pre-release_high",
+                "date": "2026-04-23",
+                "score": 52.4
+              }
+            ],
+            "laggard_trendline": [
+              {
+                "date": "2024-12-26",
+                "score": 1.3342
+              },
+              {
+                "date": "2025-01-15",
+                "score": 1.5722
+              },
+              {
+                "date": "2025-02-04",
+                "score": 1.8519
+              },
+              {
+                "date": "2025-02-24",
+                "score": 2.1803
+              },
+              {
+                "date": "2025-03-16",
+                "score": 2.5653
+              },
+              {
+                "date": "2025-04-06",
+                "score": 3.0163
+              },
+              {
+                "date": "2025-04-26",
+                "score": 3.5436
+              },
+              {
+                "date": "2025-05-16",
+                "score": 4.1592
+              },
+              {
+                "date": "2025-06-05",
+                "score": 4.8764
+              },
+              {
+                "date": "2025-06-25",
+                "score": 5.7098
+              },
+              {
+                "date": "2025-07-15",
+                "score": 6.6756
+              },
+              {
+                "date": "2025-08-04",
+                "score": 7.7913
+              },
+              {
+                "date": "2025-08-25",
+                "score": 9.0754
+              },
+              {
+                "date": "2025-09-14",
+                "score": 10.5469
+              },
+              {
+                "date": "2025-10-04",
+                "score": 12.2248
+              },
+              {
+                "date": "2025-10-24",
+                "score": 14.1276
+              },
+              {
+                "date": "2025-11-13",
+                "score": 16.2717
+              },
+              {
+                "date": "2025-12-03",
+                "score": 18.6704
+              },
+              {
+                "date": "2025-12-23",
+                "score": 21.3326
+              },
+              {
+                "date": "2026-01-12",
+                "score": 24.2611
+              },
+              {
+                "date": "2026-02-01",
+                "score": 27.4514
+              },
+              {
+                "date": "2026-02-22",
+                "score": 30.8902
+              },
+              {
+                "date": "2026-03-14",
+                "score": 34.5545
+              },
+              {
+                "date": "2026-04-03",
+                "score": 38.4119
+              },
+              {
+                "date": "2026-04-23",
+                "score": 42.4208
+              }
+            ],
+            "leader_trendline": [
+              {
+                "date": "2024-06-20",
+                "score": 2.0116
+              },
+              {
+                "date": "2024-07-18",
+                "score": 2.401
+              },
+              {
+                "date": "2024-08-15",
+                "score": 2.8637
+              },
+              {
+                "date": "2024-09-12",
+                "score": 3.4124
+              },
+              {
+                "date": "2024-10-10",
+                "score": 4.0619
+              },
+              {
+                "date": "2024-11-07",
+                "score": 4.8288
+              },
+              {
+                "date": "2024-12-05",
+                "score": 5.7319
+              },
+              {
+                "date": "2025-01-02",
+                "score": 6.7917
+              },
+              {
+                "date": "2025-01-30",
+                "score": 8.0309
+              },
+              {
+                "date": "2025-02-27",
+                "score": 9.4732
+              },
+              {
+                "date": "2025-03-27",
+                "score": 11.1431
+              },
+              {
+                "date": "2025-04-24",
+                "score": 13.0648
+              },
+              {
+                "date": "2025-05-22",
+                "score": 15.2611
+              },
+              {
+                "date": "2025-06-19",
+                "score": 17.7512
+              },
+              {
+                "date": "2025-07-17",
+                "score": 20.5491
+              },
+              {
+                "date": "2025-08-14",
+                "score": 23.6611
+              },
+              {
+                "date": "2025-09-11",
+                "score": 27.0838
+              },
+              {
+                "date": "2025-10-09",
+                "score": 30.8018
+              },
+              {
+                "date": "2025-11-06",
+                "score": 34.7867
+              },
+              {
+                "date": "2025-12-04",
+                "score": 38.9965
+              },
+              {
+                "date": "2026-01-01",
+                "score": 43.377
+              },
+              {
+                "date": "2026-01-29",
+                "score": 47.8635
+              },
+              {
+                "date": "2026-02-26",
+                "score": 52.3847
+              },
+              {
+                "date": "2026-03-26",
+                "score": 56.8672
+              },
+              {
+                "date": "2026-04-23",
+                "score": 61.2399
+              }
+            ],
+            "laggard_trend_level": 42.4208,
+            "leader_reached_level_date": "2025-12-26"
+          }
         },
         "gap_timeline": {
           "method": "epoch_daily",
@@ -43544,6 +48147,23 @@
           "end": "2026-10-15T00:00:00",
           "n_days": 448
         },
+        "headline_gap": {
+          "months": 12.3,
+          "range_90": [
+            9.1,
+            15.6
+          ],
+          "score_gap": 23.7,
+          "score_gap_range_90": [
+            9.7,
+            33.1
+          ],
+          "window_start": "2025-10-15T00:00:00",
+          "window_end": "2026-10-15T00:00:00",
+          "n_days": 366,
+          "window_months": 12,
+          "full_history": false
+        },
         "total_matched": 5,
         "total_unmatched": 4,
         "current_gap_estimate": {
@@ -43663,7 +48283,289 @@
           "model": "gemini-4-argon_high",
           "score": 76.0
         },
-        "n_boot_valid": 0
+        "n_boot_valid": 0,
+        "plot": {
+          "laggard_points": [
+            {
+              "model": "Qwen3-235B-A22B-Thinking-2507",
+              "date": "2025-07-25",
+              "score": 40.44
+            },
+            {
+              "model": "deepseek-v4-pro_max",
+              "date": "2026-04-24",
+              "score": 46.99
+            },
+            {
+              "model": "kimi-k3_max",
+              "date": "2026-07-16",
+              "score": 50.6
+            },
+            {
+              "model": "deepseek-v4-pro-0813_max",
+              "date": "2026-08-13",
+              "score": 52.91
+            },
+            {
+              "model": "Muse-Spark-Open-816B-A42B_xhigh",
+              "date": "2026-10-15",
+              "score": 56.6
+            }
+          ],
+          "leader_points": [
+            {
+              "model": "claude-3-opus-20240229",
+              "date": "2024-02-29",
+              "score": 12.6
+            },
+            {
+              "model": "gpt-4o-2024-08-06",
+              "date": "2024-08-06",
+              "score": 26.0
+            },
+            {
+              "model": "o1-2024-12-17_high",
+              "date": "2024-12-17",
+              "score": 41.1
+            },
+            {
+              "model": "o3-2025-04-16_high",
+              "date": "2025-04-16",
+              "score": 49.4
+            },
+            {
+              "model": "gpt-5-2025-08-07_high",
+              "date": "2025-08-07",
+              "score": 50.1
+            },
+            {
+              "model": "gemini-3-flash-preview_high",
+              "date": "2025-12-17",
+              "score": 66.8
+            },
+            {
+              "model": "gemini-3.1-pro-preview_high",
+              "date": "2026-02-19",
+              "score": 73.5
+            },
+            {
+              "model": "gpt-6-astra_max",
+              "date": "2026-09-03",
+              "score": 75.6
+            },
+            {
+              "model": "gemini-4-argon_high",
+              "date": "2026-09-30",
+              "score": 76.0
+            }
+          ],
+          "laggard_trendline": [
+            {
+              "date": "2025-07-25",
+              "score": 39.5668
+            },
+            {
+              "date": "2025-08-13",
+              "score": 40.1834
+            },
+            {
+              "date": "2025-08-31",
+              "score": 40.8031
+            },
+            {
+              "date": "2025-09-19",
+              "score": 41.4258
+            },
+            {
+              "date": "2025-10-08",
+              "score": 42.0512
+            },
+            {
+              "date": "2025-10-26",
+              "score": 42.6792
+            },
+            {
+              "date": "2025-11-14",
+              "score": 43.3095
+            },
+            {
+              "date": "2025-12-02",
+              "score": 43.9421
+            },
+            {
+              "date": "2025-12-21",
+              "score": 44.5766
+            },
+            {
+              "date": "2026-01-09",
+              "score": 45.2128
+            },
+            {
+              "date": "2026-01-27",
+              "score": 45.8507
+            },
+            {
+              "date": "2026-02-15",
+              "score": 46.4899
+            },
+            {
+              "date": "2026-03-05",
+              "score": 47.1302
+            },
+            {
+              "date": "2026-03-24",
+              "score": 47.7715
+            },
+            {
+              "date": "2026-04-12",
+              "score": 48.4136
+            },
+            {
+              "date": "2026-04-30",
+              "score": 49.0561
+            },
+            {
+              "date": "2026-05-19",
+              "score": 49.699
+            },
+            {
+              "date": "2026-06-07",
+              "score": 50.342
+            },
+            {
+              "date": "2026-06-25",
+              "score": 50.9848
+            },
+            {
+              "date": "2026-07-14",
+              "score": 51.6274
+            },
+            {
+              "date": "2026-08-02",
+              "score": 52.2694
+            },
+            {
+              "date": "2026-08-20",
+              "score": 52.9106
+            },
+            {
+              "date": "2026-09-08",
+              "score": 53.5509
+            },
+            {
+              "date": "2026-09-26",
+              "score": 54.19
+            },
+            {
+              "date": "2026-10-15",
+              "score": 54.8278
+            }
+          ],
+          "leader_trendline": [
+            {
+              "date": "2024-02-29",
+              "score": 17.5272
+            },
+            {
+              "date": "2024-04-09",
+              "score": 19.4221
+            },
+            {
+              "date": "2024-05-19",
+              "score": 21.4685
+            },
+            {
+              "date": "2024-06-28",
+              "score": 23.6672
+            },
+            {
+              "date": "2024-08-07",
+              "score": 26.0165
+            },
+            {
+              "date": "2024-09-16",
+              "score": 28.5118
+            },
+            {
+              "date": "2024-10-26",
+              "score": 31.1458
+            },
+            {
+              "date": "2024-12-05",
+              "score": 33.9076
+            },
+            {
+              "date": "2025-01-14",
+              "score": 36.7836
+            },
+            {
+              "date": "2025-02-23",
+              "score": 39.7567
+            },
+            {
+              "date": "2025-04-04",
+              "score": 42.8074
+            },
+            {
+              "date": "2025-05-14",
+              "score": 45.9138
+            },
+            {
+              "date": "2025-06-22",
+              "score": 49.0523
+            },
+            {
+              "date": "2025-08-01",
+              "score": 52.1982
+            },
+            {
+              "date": "2025-09-10",
+              "score": 55.3269
+            },
+            {
+              "date": "2025-10-20",
+              "score": 58.4139
+            },
+            {
+              "date": "2025-11-29",
+              "score": 61.4362
+            },
+            {
+              "date": "2026-01-08",
+              "score": 64.3729
+            },
+            {
+              "date": "2026-02-17",
+              "score": 67.2053
+            },
+            {
+              "date": "2026-03-29",
+              "score": 69.9178
+            },
+            {
+              "date": "2026-05-08",
+              "score": 72.4977
+            },
+            {
+              "date": "2026-06-17",
+              "score": 74.9357
+            },
+            {
+              "date": "2026-07-27",
+              "score": 77.2255
+            },
+            {
+              "date": "2026-09-05",
+              "score": 79.3636
+            },
+            {
+              "date": "2026-10-15",
+              "score": 81.3496
+            }
+          ],
+          "laggard_trend_level": 54.8278,
+          "leader_reached_level_date": "2025-09-04"
+        }
       },
       "historical_gaps": [
         {
@@ -44752,6 +49654,23 @@
             "end": "2026-09-30T00:00:00",
             "n_days": 433
           },
+          "headline_gap": {
+            "months": 7.8,
+            "range_90": [
+              2.4,
+              13.2
+            ],
+            "score_gap": 15.9,
+            "score_gap_range_90": [
+              1.4,
+              24.8
+            ],
+            "window_start": "2025-09-30T00:00:00",
+            "window_end": "2026-09-30T00:00:00",
+            "n_days": 366,
+            "window_months": 12,
+            "full_history": false
+          },
           "total_matched": 5,
           "total_unmatched": 4,
           "current_gap_estimate": {
@@ -44951,7 +49870,284 @@
             "model": "gemini-4-argon_high",
             "score": 76.0
           },
-          "n_boot_valid": 0
+          "n_boot_valid": 0,
+          "plot": {
+            "laggard_points": [
+              {
+                "model": "Qwen3-235B-A22B-Thinking-2507",
+                "date": "2025-07-25",
+                "score": 40.44
+              },
+              {
+                "model": "qwen3-max-2025-09-23",
+                "date": "2025-09-24",
+                "score": 48.75
+              },
+              {
+                "model": "qwen3.6-max-preview",
+                "date": "2026-04-20",
+                "score": 52.0
+              },
+              {
+                "model": "qwen3.7-max",
+                "date": "2026-05-19",
+                "score": 55.77
+              }
+            ],
+            "leader_points": [
+              {
+                "model": "claude-3-opus-20240229",
+                "date": "2024-02-29",
+                "score": 12.6
+              },
+              {
+                "model": "gpt-4o-2024-08-06",
+                "date": "2024-08-06",
+                "score": 26.0
+              },
+              {
+                "model": "o1-2024-12-17_high",
+                "date": "2024-12-17",
+                "score": 41.1
+              },
+              {
+                "model": "o3-2025-04-16_high",
+                "date": "2025-04-16",
+                "score": 49.4
+              },
+              {
+                "model": "gpt-5-2025-08-07_high",
+                "date": "2025-08-07",
+                "score": 50.1
+              },
+              {
+                "model": "gemini-3-flash-preview_high",
+                "date": "2025-12-17",
+                "score": 66.8
+              },
+              {
+                "model": "gemini-3.1-pro-preview_high",
+                "date": "2026-02-19",
+                "score": 73.5
+              },
+              {
+                "model": "gpt-6-astra_max",
+                "date": "2026-09-03",
+                "score": 75.6
+              },
+              {
+                "model": "gemini-4-argon_high",
+                "date": "2026-09-30",
+                "score": 76.0
+              }
+            ],
+            "laggard_trendline": [
+              {
+                "date": "2025-07-25",
+                "score": 42.9153
+              },
+              {
+                "date": "2025-08-12",
+                "score": 43.6301
+              },
+              {
+                "date": "2025-08-30",
+                "score": 44.3475
+              },
+              {
+                "date": "2025-09-17",
+                "score": 45.0673
+              },
+              {
+                "date": "2025-10-05",
+                "score": 45.7892
+              },
+              {
+                "date": "2025-10-23",
+                "score": 46.5129
+              },
+              {
+                "date": "2025-11-10",
+                "score": 47.238
+              },
+              {
+                "date": "2025-11-28",
+                "score": 47.9643
+              },
+              {
+                "date": "2025-12-16",
+                "score": 48.6914
+              },
+              {
+                "date": "2026-01-03",
+                "score": 49.4191
+              },
+              {
+                "date": "2026-01-21",
+                "score": 50.1471
+              },
+              {
+                "date": "2026-02-08",
+                "score": 50.875
+              },
+              {
+                "date": "2026-02-26",
+                "score": 51.6025
+              },
+              {
+                "date": "2026-03-16",
+                "score": 52.3293
+              },
+              {
+                "date": "2026-04-03",
+                "score": 53.0552
+              },
+              {
+                "date": "2026-04-21",
+                "score": 53.7797
+              },
+              {
+                "date": "2026-05-09",
+                "score": 54.5027
+              },
+              {
+                "date": "2026-05-27",
+                "score": 55.2238
+              },
+              {
+                "date": "2026-06-14",
+                "score": 55.9427
+              },
+              {
+                "date": "2026-07-02",
+                "score": 56.6591
+              },
+              {
+                "date": "2026-07-20",
+                "score": 57.3727
+              },
+              {
+                "date": "2026-08-07",
+                "score": 58.0833
+              },
+              {
+                "date": "2026-08-25",
+                "score": 58.7905
+              },
+              {
+                "date": "2026-09-12",
+                "score": 59.4941
+              },
+              {
+                "date": "2026-09-30",
+                "score": 60.1939
+              }
+            ],
+            "leader_trendline": [
+              {
+                "date": "2024-02-29",
+                "score": 17.5272
+              },
+              {
+                "date": "2024-04-08",
+                "score": 19.3913
+              },
+              {
+                "date": "2024-05-18",
+                "score": 21.4022
+              },
+              {
+                "date": "2024-06-26",
+                "score": 23.5606
+              },
+              {
+                "date": "2024-08-04",
+                "score": 25.8651
+              },
+              {
+                "date": "2024-09-13",
+                "score": 28.3115
+              },
+              {
+                "date": "2024-10-22",
+                "score": 30.8929
+              },
+              {
+                "date": "2024-11-30",
+                "score": 33.5994
+              },
+              {
+                "date": "2025-01-09",
+                "score": 36.418
+              },
+              {
+                "date": "2025-02-17",
+                "score": 39.333
+              },
+              {
+                "date": "2025-03-28",
+                "score": 42.326
+              },
+              {
+                "date": "2025-05-07",
+                "score": 45.3764
+              },
+              {
+                "date": "2025-06-15",
+                "score": 48.4619
+              },
+              {
+                "date": "2025-07-24",
+                "score": 51.5591
+              },
+              {
+                "date": "2025-09-02",
+                "score": 54.6445
+              },
+              {
+                "date": "2025-10-11",
+                "score": 57.6946
+              },
+              {
+                "date": "2025-11-19",
+                "score": 60.6871
+              },
+              {
+                "date": "2025-12-29",
+                "score": 63.6015
+              },
+              {
+                "date": "2026-02-06",
+                "score": 66.4194
+              },
+              {
+                "date": "2026-03-17",
+                "score": 69.125
+              },
+              {
+                "date": "2026-04-26",
+                "score": 71.7055
+              },
+              {
+                "date": "2026-06-04",
+                "score": 74.151
+              },
+              {
+                "date": "2026-07-13",
+                "score": 76.4545
+              },
+              {
+                "date": "2026-08-22",
+                "score": 78.612
+              },
+              {
+                "date": "2026-09-30",
+                "score": 80.6219
+              }
+            ],
+            "laggard_trend_level": 60.1939,
+            "leader_reached_level_date": "2025-11-13"
+          }
         },
         "gap_timeline": {
           "method": "epoch_daily",
@@ -48257,6 +53453,23 @@
           "end": "2026-09-09T00:00:00",
           "n_days": 262
         },
+        "headline_gap": {
+          "months": 13.2,
+          "range_90": [
+            9.7,
+            17.0
+          ],
+          "score_gap": 37.5,
+          "score_gap_range_90": [
+            22.0,
+            42.0
+          ],
+          "window_start": "2025-12-22T00:00:00",
+          "window_end": "2026-09-09T00:00:00",
+          "n_days": 262,
+          "window_months": 12,
+          "full_history": true
+        },
         "total_matched": 12,
         "total_unmatched": 5,
         "current_gap_estimate": {
@@ -48377,7 +53590,334 @@
           "model": "gpt-6-astra_promax",
           "score": 76.0
         },
-        "n_boot_valid": 0
+        "n_boot_valid": 0,
+        "plot": {
+          "laggard_points": [
+            {
+              "model": "glm-4.7",
+              "date": "2025-12-22",
+              "score": 21.0
+            },
+            {
+              "model": "glm-5.2_max",
+              "date": "2026-06-16",
+              "score": 22.0
+            },
+            {
+              "model": "kimi-k3_high",
+              "date": "2026-07-16",
+              "score": 37.0
+            },
+            {
+              "model": "kimi-k3_max",
+              "date": "2026-07-16",
+              "score": 36.0
+            },
+            {
+              "model": "deepseek-v4-pro-0813_max",
+              "date": "2026-08-13",
+              "score": 46.0
+            },
+            {
+              "model": "deepseek-v4.1-flash_max",
+              "date": "2026-09-09",
+              "score": 48.0
+            }
+          ],
+          "leader_points": [
+            {
+              "model": "claude-3-opus-20240229",
+              "date": "2024-02-29",
+              "score": 3.0
+            },
+            {
+              "model": "gpt-4o-mini-2024-07-18",
+              "date": "2024-07-18",
+              "score": 3.0
+            },
+            {
+              "model": "gpt-4o-2024-08-06",
+              "date": "2024-08-06",
+              "score": 6.0
+            },
+            {
+              "model": "o1-2024-12-17_high",
+              "date": "2024-12-17",
+              "score": 10.0
+            },
+            {
+              "model": "o3-mini-2025-01-31_medium",
+              "date": "2025-01-31",
+              "score": 11.0
+            },
+            {
+              "model": "o3-mini-2025-01-31_high",
+              "date": "2025-01-31",
+              "score": 15.0
+            },
+            {
+              "model": "o3-2025-04-16_medium",
+              "date": "2025-04-16",
+              "score": 37.0
+            },
+            {
+              "model": "o3-2025-04-16_high",
+              "date": "2025-04-16",
+              "score": 36.0
+            },
+            {
+              "model": "o3-2025-04-16_low",
+              "date": "2025-04-16",
+              "score": 36.0
+            },
+            {
+              "model": "o4-mini-2025-04-16_medium",
+              "date": "2025-04-16",
+              "score": 22.0
+            },
+            {
+              "model": "gpt-5-pro-2025-10-06_high",
+              "date": "2025-10-07",
+              "score": 48.0
+            },
+            {
+              "model": "gpt-5.2-pro-2025-12-11_xhigh",
+              "date": "2025-12-11",
+              "score": 60.0
+            },
+            {
+              "model": "gpt-5.2-2025-12-11_xhigh",
+              "date": "2025-12-11",
+              "score": 48.0
+            },
+            {
+              "model": "gpt-5.5-pro_xhigh",
+              "date": "2026-04-23",
+              "score": 62.0
+            },
+            {
+              "model": "gpt-5.5_xhigh",
+              "date": "2026-04-23",
+              "score": 63.0
+            },
+            {
+              "model": "gpt-5.6-sol_promax",
+              "date": "2026-07-09",
+              "score": 68.0
+            },
+            {
+              "model": "gpt-6-astra_promax",
+              "date": "2026-09-03",
+              "score": 76.0
+            }
+          ],
+          "laggard_trendline": [
+            {
+              "date": "2025-12-22",
+              "score": 18.275
+            },
+            {
+              "date": "2026-01-02",
+              "score": 19.0443
+            },
+            {
+              "date": "2026-01-13",
+              "score": 19.8382
+            },
+            {
+              "date": "2026-01-24",
+              "score": 20.6567
+            },
+            {
+              "date": "2026-02-03",
+              "score": 21.4999
+            },
+            {
+              "date": "2026-02-14",
+              "score": 22.3678
+            },
+            {
+              "date": "2026-02-25",
+              "score": 23.2604
+            },
+            {
+              "date": "2026-03-08",
+              "score": 24.1775
+            },
+            {
+              "date": "2026-03-19",
+              "score": 25.119
+            },
+            {
+              "date": "2026-03-30",
+              "score": 26.0845
+            },
+            {
+              "date": "2026-04-10",
+              "score": 27.0737
+            },
+            {
+              "date": "2026-04-21",
+              "score": 28.0861
+            },
+            {
+              "date": "2026-05-02",
+              "score": 29.1213
+            },
+            {
+              "date": "2026-05-12",
+              "score": 30.1786
+            },
+            {
+              "date": "2026-05-23",
+              "score": 31.2574
+            },
+            {
+              "date": "2026-06-03",
+              "score": 32.3569
+            },
+            {
+              "date": "2026-06-14",
+              "score": 33.4762
+            },
+            {
+              "date": "2026-06-25",
+              "score": 34.6144
+            },
+            {
+              "date": "2026-07-06",
+              "score": 35.7705
+            },
+            {
+              "date": "2026-07-17",
+              "score": 36.9434
+            },
+            {
+              "date": "2026-07-27",
+              "score": 38.132
+            },
+            {
+              "date": "2026-08-07",
+              "score": 39.3349
+            },
+            {
+              "date": "2026-08-18",
+              "score": 40.5509
+            },
+            {
+              "date": "2026-08-29",
+              "score": 41.7786
+            },
+            {
+              "date": "2026-09-09",
+              "score": 43.0166
+            }
+          ],
+          "leader_trendline": [
+            {
+              "date": "2024-02-29",
+              "score": 3.0484
+            },
+            {
+              "date": "2024-04-07",
+              "score": 3.7142
+            },
+            {
+              "date": "2024-05-16",
+              "score": 4.5188
+            },
+            {
+              "date": "2024-06-23",
+              "score": 5.4876
+            },
+            {
+              "date": "2024-08-01",
+              "score": 6.6497
+            },
+            {
+              "date": "2024-09-08",
+              "score": 8.037
+            },
+            {
+              "date": "2024-10-17",
+              "score": 9.6838
+            },
+            {
+              "date": "2024-11-24",
+              "score": 11.6252
+            },
+            {
+              "date": "2025-01-02",
+              "score": 13.896
+            },
+            {
+              "date": "2025-02-09",
+              "score": 16.5274
+            },
+            {
+              "date": "2025-03-20",
+              "score": 19.544
+            },
+            {
+              "date": "2025-04-27",
+              "score": 22.9598
+            },
+            {
+              "date": "2025-06-04",
+              "score": 26.7738
+            },
+            {
+              "date": "2025-07-13",
+              "score": 30.9668
+            },
+            {
+              "date": "2025-08-20",
+              "score": 35.4981
+            },
+            {
+              "date": "2025-09-28",
+              "score": 40.3053
+            },
+            {
+              "date": "2025-11-05",
+              "score": 45.3063
+            },
+            {
+              "date": "2025-12-14",
+              "score": 50.4038
+            },
+            {
+              "date": "2026-01-21",
+              "score": 55.493
+            },
+            {
+              "date": "2026-03-01",
+              "score": 60.4695
+            },
+            {
+              "date": "2026-04-08",
+              "score": 65.2381
+            },
+            {
+              "date": "2026-05-17",
+              "score": 69.7196
+            },
+            {
+              "date": "2026-06-24",
+              "score": 73.8548
+            },
+            {
+              "date": "2026-08-02",
+              "score": 77.6067
+            },
+            {
+              "date": "2026-09-09",
+              "score": 80.959
+            }
+          ],
+          "laggard_trend_level": 43.0166,
+          "leader_reached_level_date": "2025-10-19"
+        }
       },
       "historical_gaps": [
         {
@@ -49394,6 +54934,23 @@
             "end": "2026-09-09T00:00:00",
             "n_days": 262
           },
+          "headline_gap": {
+            "months": 11.3,
+            "range_90": [
+              8.6,
+              14.5
+            ],
+            "score_gap": 36.1,
+            "score_gap_range_90": [
+              22.0,
+              42.0
+            ],
+            "window_start": "2025-12-22T00:00:00",
+            "window_end": "2026-09-09T00:00:00",
+            "n_days": 262,
+            "window_months": 12,
+            "full_history": true
+          },
           "total_matched": 12,
           "total_unmatched": 5,
           "current_gap_estimate": {
@@ -49549,7 +55106,339 @@
             "model": "gpt-6-astra_promax",
             "score": 76.0
           },
-          "n_boot_valid": 0
+          "n_boot_valid": 0,
+          "plot": {
+            "laggard_points": [
+              {
+                "model": "glm-4.7",
+                "date": "2025-12-22",
+                "score": 21.0
+              },
+              {
+                "model": "qwen3.7-max",
+                "date": "2026-05-19",
+                "score": 26.0
+              },
+              {
+                "model": "kimi-k3_max",
+                "date": "2026-07-16",
+                "score": 36.0
+              },
+              {
+                "model": "kimi-k3_high",
+                "date": "2026-07-16",
+                "score": 37.0
+              },
+              {
+                "model": "qwen3.8-max_xhigh",
+                "date": "2026-08-02",
+                "score": 46.0
+              },
+              {
+                "model": "deepseek-v4-pro-0813_max",
+                "date": "2026-08-13",
+                "score": 46.0
+              },
+              {
+                "model": "deepseek-v4.1-flash_max",
+                "date": "2026-09-09",
+                "score": 48.0
+              }
+            ],
+            "leader_points": [
+              {
+                "model": "claude-3-opus-20240229",
+                "date": "2024-02-29",
+                "score": 3.0
+              },
+              {
+                "model": "gpt-4o-mini-2024-07-18",
+                "date": "2024-07-18",
+                "score": 3.0
+              },
+              {
+                "model": "gpt-4o-2024-08-06",
+                "date": "2024-08-06",
+                "score": 6.0
+              },
+              {
+                "model": "o1-2024-12-17_high",
+                "date": "2024-12-17",
+                "score": 10.0
+              },
+              {
+                "model": "o3-mini-2025-01-31_medium",
+                "date": "2025-01-31",
+                "score": 11.0
+              },
+              {
+                "model": "o3-mini-2025-01-31_high",
+                "date": "2025-01-31",
+                "score": 15.0
+              },
+              {
+                "model": "o4-mini-2025-04-16_medium",
+                "date": "2025-04-16",
+                "score": 22.0
+              },
+              {
+                "model": "o3-2025-04-16_low",
+                "date": "2025-04-16",
+                "score": 36.0
+              },
+              {
+                "model": "o3-2025-04-16_high",
+                "date": "2025-04-16",
+                "score": 36.0
+              },
+              {
+                "model": "o3-2025-04-16_medium",
+                "date": "2025-04-16",
+                "score": 37.0
+              },
+              {
+                "model": "gpt-5-pro-2025-10-06_high",
+                "date": "2025-10-07",
+                "score": 48.0
+              },
+              {
+                "model": "gpt-5.2-2025-12-11_xhigh",
+                "date": "2025-12-11",
+                "score": 48.0
+              },
+              {
+                "model": "gpt-5.2-pro-2025-12-11_xhigh",
+                "date": "2025-12-11",
+                "score": 60.0
+              },
+              {
+                "model": "gpt-5.5-pro_xhigh",
+                "date": "2026-04-23",
+                "score": 62.0
+              },
+              {
+                "model": "gpt-5.5_xhigh",
+                "date": "2026-04-23",
+                "score": 63.0
+              },
+              {
+                "model": "gpt-5.6-sol_promax",
+                "date": "2026-07-09",
+                "score": 68.0
+              },
+              {
+                "model": "gpt-6-astra_promax",
+                "date": "2026-09-03",
+                "score": 76.0
+              }
+            ],
+            "laggard_trendline": [
+              {
+                "date": "2025-12-22",
+                "score": 18.69
+              },
+              {
+                "date": "2026-01-02",
+                "score": 19.5335
+              },
+              {
+                "date": "2026-01-13",
+                "score": 20.4055
+              },
+              {
+                "date": "2026-01-24",
+                "score": 21.3061
+              },
+              {
+                "date": "2026-02-03",
+                "score": 22.2353
+              },
+              {
+                "date": "2026-02-14",
+                "score": 23.1931
+              },
+              {
+                "date": "2026-02-25",
+                "score": 24.1794
+              },
+              {
+                "date": "2026-03-08",
+                "score": 25.1939
+              },
+              {
+                "date": "2026-03-19",
+                "score": 26.2361
+              },
+              {
+                "date": "2026-03-30",
+                "score": 27.3058
+              },
+              {
+                "date": "2026-04-10",
+                "score": 28.4023
+              },
+              {
+                "date": "2026-04-21",
+                "score": 29.5249
+              },
+              {
+                "date": "2026-05-02",
+                "score": 30.6729
+              },
+              {
+                "date": "2026-05-12",
+                "score": 31.8454
+              },
+              {
+                "date": "2026-05-23",
+                "score": 33.0413
+              },
+              {
+                "date": "2026-06-03",
+                "score": 34.2595
+              },
+              {
+                "date": "2026-06-14",
+                "score": 35.4989
+              },
+              {
+                "date": "2026-06-25",
+                "score": 36.758
+              },
+              {
+                "date": "2026-07-06",
+                "score": 38.0354
+              },
+              {
+                "date": "2026-07-17",
+                "score": 39.3297
+              },
+              {
+                "date": "2026-07-27",
+                "score": 40.6391
+              },
+              {
+                "date": "2026-08-07",
+                "score": 41.9619
+              },
+              {
+                "date": "2026-08-18",
+                "score": 43.2964
+              },
+              {
+                "date": "2026-08-29",
+                "score": 44.6406
+              },
+              {
+                "date": "2026-09-09",
+                "score": 45.9928
+              }
+            ],
+            "leader_trendline": [
+              {
+                "date": "2024-02-29",
+                "score": 3.0484
+              },
+              {
+                "date": "2024-04-07",
+                "score": 3.7142
+              },
+              {
+                "date": "2024-05-16",
+                "score": 4.5188
+              },
+              {
+                "date": "2024-06-23",
+                "score": 5.4876
+              },
+              {
+                "date": "2024-08-01",
+                "score": 6.6497
+              },
+              {
+                "date": "2024-09-08",
+                "score": 8.037
+              },
+              {
+                "date": "2024-10-17",
+                "score": 9.6838
+              },
+              {
+                "date": "2024-11-24",
+                "score": 11.6252
+              },
+              {
+                "date": "2025-01-02",
+                "score": 13.896
+              },
+              {
+                "date": "2025-02-09",
+                "score": 16.5274
+              },
+              {
+                "date": "2025-03-20",
+                "score": 19.544
+              },
+              {
+                "date": "2025-04-27",
+                "score": 22.9598
+              },
+              {
+                "date": "2025-06-04",
+                "score": 26.7738
+              },
+              {
+                "date": "2025-07-13",
+                "score": 30.9668
+              },
+              {
+                "date": "2025-08-20",
+                "score": 35.4981
+              },
+              {
+                "date": "2025-09-28",
+                "score": 40.3053
+              },
+              {
+                "date": "2025-11-05",
+                "score": 45.3063
+              },
+              {
+                "date": "2025-12-14",
+                "score": 50.4038
+              },
+              {
+                "date": "2026-01-21",
+                "score": 55.493
+              },
+              {
+                "date": "2026-03-01",
+                "score": 60.4695
+              },
+              {
+                "date": "2026-04-08",
+                "score": 65.2381
+              },
+              {
+                "date": "2026-05-17",
+                "score": 69.7196
+              },
+              {
+                "date": "2026-06-24",
+                "score": 73.8548
+              },
+              {
+                "date": "2026-08-02",
+                "score": 77.6067
+              },
+              {
+                "date": "2026-09-09",
+                "score": 80.959
+              }
+            ],
+            "laggard_trend_level": 45.9928,
+            "leader_reached_level_date": "2025-11-11"
+          }
         },
         "gap_timeline": {
           "method": "epoch_daily",
@@ -54736,6 +60625,23 @@
           "end": "2026-09-30T00:00:00",
           "n_days": 1171
         },
+        "headline_gap": {
+          "months": 2.2,
+          "range_90": [
+            0.2,
+            4.7
+          ],
+          "score_gap": 3.7,
+          "score_gap_range_90": [
+            1.4,
+            7.2
+          ],
+          "window_start": "2025-09-30T00:00:00",
+          "window_end": "2026-09-30T00:00:00",
+          "n_days": 366,
+          "window_months": 12,
+          "full_history": false
+        },
         "total_matched": 27,
         "total_unmatched": 8,
         "current_gap_estimate": {
@@ -54871,7 +60777,484 @@
           "model": "gpt-5.5-pro-pre-release_xhigh",
           "score": 100.0
         },
-        "n_boot_valid": 2000
+        "n_boot_valid": 2000,
+        "plot": {
+          "laggard_points": [
+            {
+              "model": "Llama-2-70b-chat-hf",
+              "date": "2023-07-18",
+              "score": 0.0
+            },
+            {
+              "model": "deepseek-llm-67b-chat",
+              "date": "2023-11-29",
+              "score": 0.83
+            },
+            {
+              "model": "Meta-Llama-3-70B-Instruct",
+              "date": "2024-04-18",
+              "score": 4.31
+            },
+            {
+              "model": "Meta-Llama-3-8B-Instruct",
+              "date": "2024-04-18",
+              "score": 1.94
+            },
+            {
+              "model": "Llama-3.1-405B-Instruct",
+              "date": "2024-07-23",
+              "score": 9.72
+            },
+            {
+              "model": "phi-4",
+              "date": "2024-12-12",
+              "score": 13.75
+            },
+            {
+              "model": "DeepSeek-V3",
+              "date": "2024-12-26",
+              "score": 15.83
+            },
+            {
+              "model": "DeepSeek-R1-Distill-Qwen-32B",
+              "date": "2025-01-20",
+              "score": 55.56
+            },
+            {
+              "model": "QwQ-32B",
+              "date": "2025-03-05",
+              "score": 59.17
+            },
+            {
+              "model": "Qwen3-32B",
+              "date": "2025-04-29",
+              "score": 66.94
+            },
+            {
+              "model": "Qwen3-235B-A22B-Thinking-2507",
+              "date": "2025-07-25",
+              "score": 86.67
+            },
+            {
+              "model": "openai/gpt-oss-120b_high",
+              "date": "2025-08-05",
+              "score": 88.89
+            },
+            {
+              "model": "fireworks/kimi-k2p5",
+              "date": "2026-01-27",
+              "score": 92.2
+            },
+            {
+              "model": "glm-5.1",
+              "date": "2026-04-07",
+              "score": 93.33
+            },
+            {
+              "model": "kimi-k2.6",
+              "date": "2026-04-20",
+              "score": 96.11
+            },
+            {
+              "model": "deepseek-v4-pro_max",
+              "date": "2026-04-24",
+              "score": 96.67
+            },
+            {
+              "model": "kimi-k3_max",
+              "date": "2026-07-16",
+              "score": 97.22
+            },
+            {
+              "model": "deepseek-v4-pro-0813_max",
+              "date": "2026-08-13",
+              "score": 98.61
+            }
+          ],
+          "leader_points": [
+            {
+              "model": "gpt-4-0314",
+              "date": "2023-03-14",
+              "score": 0.56
+            },
+            {
+              "model": "gpt-4-0613",
+              "date": "2023-06-13",
+              "score": 1.11
+            },
+            {
+              "model": "claude-2.0",
+              "date": "2023-07-11",
+              "score": 2.5
+            },
+            {
+              "model": "claude-3-opus-20240229",
+              "date": "2024-02-29",
+              "score": 4.72
+            },
+            {
+              "model": "claude-3-sonnet-20240229",
+              "date": "2024-02-29",
+              "score": 2.5
+            },
+            {
+              "model": "gpt-4-turbo-2024-04-09",
+              "date": "2024-04-09",
+              "score": 6.67
+            },
+            {
+              "model": "gemini-1.5-pro-001",
+              "date": "2024-05-14",
+              "score": 6.81
+            },
+            {
+              "model": "gpt-4o-mini-2024-07-18",
+              "date": "2024-07-18",
+              "score": 6.94
+            },
+            {
+              "model": "o1-mini-2024-09-12_high",
+              "date": "2024-09-12",
+              "score": 46.94
+            },
+            {
+              "model": "o1-preview-2024-09-12",
+              "date": "2024-09-12",
+              "score": 31.11
+            },
+            {
+              "model": "o1-2024-12-17_medium",
+              "date": "2024-12-17",
+              "score": 73.33
+            },
+            {
+              "model": "o1-2024-12-17_low",
+              "date": "2024-12-17",
+              "score": 53.33
+            },
+            {
+              "model": "o1-2024-12-17_high",
+              "date": "2024-12-17",
+              "score": 73.33
+            },
+            {
+              "model": "o3-mini-2025-01-31_high",
+              "date": "2025-01-31",
+              "score": 76.94
+            },
+            {
+              "model": "grok-3-mini-beta_high",
+              "date": "2025-04-09",
+              "score": 77.78
+            },
+            {
+              "model": "o3-2025-04-16_medium",
+              "date": "2025-04-16",
+              "score": 84.44
+            },
+            {
+              "model": "gpt-5-mini-2025-08-07_high",
+              "date": "2025-08-07",
+              "score": 86.67
+            },
+            {
+              "model": "gpt-5-2025-08-07_high",
+              "date": "2025-08-07",
+              "score": 91.39
+            },
+            {
+              "model": "gemini-3-pro-preview",
+              "date": "2025-11-18",
+              "score": 91.39
+            },
+            {
+              "model": "gpt-5.2-2025-12-11_xhigh",
+              "date": "2025-12-11",
+              "score": 96.1
+            },
+            {
+              "model": "gpt-5.2-2025-12-11_high",
+              "date": "2025-12-11",
+              "score": 96.11
+            },
+            {
+              "model": "gpt-5.4-2026-03-05_high",
+              "date": "2026-03-05",
+              "score": 97.78
+            },
+            {
+              "model": "claude-opus-4-7_xhigh",
+              "date": "2026-04-16",
+              "score": 97.8
+            },
+            {
+              "model": "gpt-5.5-pro-pre-release_xhigh",
+              "date": "2026-04-23",
+              "score": 100.0
+            },
+            {
+              "model": "gpt-5.5-pre-release_xhigh",
+              "date": "2026-04-23",
+              "score": 100.0
+            },
+            {
+              "model": "claude-fable-5_high",
+              "date": "2026-06-09",
+              "score": 100.0
+            },
+            {
+              "model": "gpt-5.6-sol_max",
+              "date": "2026-07-09",
+              "score": 100.0
+            },
+            {
+              "model": "qwen3.8-max-0902_xhigh",
+              "date": "2026-09-01",
+              "score": 100.0
+            },
+            {
+              "model": "claude-fable-5-1_max",
+              "date": "2026-09-01",
+              "score": 100.0
+            },
+            {
+              "model": "gpt-6-astra_max",
+              "date": "2026-09-03",
+              "score": 100.0
+            },
+            {
+              "model": "gpt-6-sol_max",
+              "date": "2026-09-22",
+              "score": 100.0
+            },
+            {
+              "model": "claude-opus-5-5_max",
+              "date": "2026-09-22",
+              "score": 100.0
+            },
+            {
+              "model": "claude-sonnet-5-5_max",
+              "date": "2026-09-28",
+              "score": 100.0
+            },
+            {
+              "model": "gpt-6.1-sol_max",
+              "date": "2026-09-29",
+              "score": 100.0
+            },
+            {
+              "model": "gemini-4-argon_high",
+              "date": "2026-09-30",
+              "score": 100.0
+            }
+          ],
+          "laggard_trendline": [
+            {
+              "date": "2023-07-18",
+              "score": 0.2528
+            },
+            {
+              "date": "2023-09-05",
+              "score": 0.3984
+            },
+            {
+              "date": "2023-10-23",
+              "score": 0.6271
+            },
+            {
+              "date": "2023-12-11",
+              "score": 0.986
+            },
+            {
+              "date": "2024-01-29",
+              "score": 1.5469
+            },
+            {
+              "date": "2024-03-18",
+              "score": 2.4193
+            },
+            {
+              "date": "2024-05-06",
+              "score": 3.7648
+            },
+            {
+              "date": "2024-06-23",
+              "score": 5.814
+            },
+            {
+              "date": "2024-08-11",
+              "score": 8.8757
+            },
+            {
+              "date": "2024-09-29",
+              "score": 13.3217
+            },
+            {
+              "date": "2024-11-16",
+              "score": 19.5178
+            },
+            {
+              "date": "2025-01-04",
+              "score": 27.6756
+            },
+            {
+              "date": "2025-02-22",
+              "score": 37.6481
+            },
+            {
+              "date": "2025-04-12",
+              "score": 48.7899
+            },
+            {
+              "date": "2025-05-31",
+              "score": 60.0533
+            },
+            {
+              "date": "2025-07-18",
+              "score": 70.3451
+            },
+            {
+              "date": "2025-09-05",
+              "score": 78.9162
+            },
+            {
+              "date": "2025-10-24",
+              "score": 85.52
+            },
+            {
+              "date": "2025-12-11",
+              "score": 90.3093
+            },
+            {
+              "date": "2026-01-29",
+              "score": 93.6325
+            },
+            {
+              "date": "2026-03-19",
+              "score": 95.8683
+            },
+            {
+              "date": "2026-05-07",
+              "score": 97.3413
+            },
+            {
+              "date": "2026-06-25",
+              "score": 98.2985
+            },
+            {
+              "date": "2026-08-12",
+              "score": 98.9149
+            },
+            {
+              "date": "2026-09-30",
+              "score": 99.3096
+            }
+          ],
+          "leader_trendline": [
+            {
+              "date": "2023-03-14",
+              "score": 0.2161
+            },
+            {
+              "date": "2023-05-07",
+              "score": 0.3718
+            },
+            {
+              "date": "2023-06-30",
+              "score": 0.6389
+            },
+            {
+              "date": "2023-08-23",
+              "score": 1.0958
+            },
+            {
+              "date": "2023-10-16",
+              "score": 1.8733
+            },
+            {
+              "date": "2023-12-09",
+              "score": 3.1845
+            },
+            {
+              "date": "2024-02-01",
+              "score": 5.3635
+            },
+            {
+              "date": "2024-03-26",
+              "score": 8.8964
+            },
+            {
+              "date": "2024-05-19",
+              "score": 14.4023
+            },
+            {
+              "date": "2024-07-12",
+              "score": 22.475
+            },
+            {
+              "date": "2024-09-04",
+              "score": 33.3117
+            },
+            {
+              "date": "2024-10-28",
+              "score": 46.2559
+            },
+            {
+              "date": "2024-12-21",
+              "score": 59.7253
+            },
+            {
+              "date": "2025-02-13",
+              "score": 71.8718
+            },
+            {
+              "date": "2025-04-08",
+              "score": 81.4903
+            },
+            {
+              "date": "2025-06-01",
+              "score": 88.3527
+            },
+            {
+              "date": "2025-07-25",
+              "score": 92.8928
+            },
+            {
+              "date": "2025-09-17",
+              "score": 95.7483
+            },
+            {
+              "date": "2025-11-10",
+              "score": 97.4876
+            },
+            {
+              "date": "2026-01-03",
+              "score": 98.5263
+            },
+            {
+              "date": "2026-02-26",
+              "score": 99.1394
+            },
+            {
+              "date": "2026-04-21",
+              "score": 99.4987
+            },
+            {
+              "date": "2026-06-14",
+              "score": 99.7085
+            },
+            {
+              "date": "2026-08-07",
+              "score": 99.8306
+            },
+            {
+              "date": "2026-09-30",
+              "score": 99.9016
+            }
+          ],
+          "laggard_trend_level": 99.3096,
+          "leader_reached_level_date": "2026-03-20"
+        }
       },
       "historical_gaps": [
         {
@@ -58018,6 +64401,23 @@
             "end": "2026-09-30T00:00:00",
             "n_days": 1037
           },
+          "headline_gap": {
+            "months": 2.7,
+            "range_90": [
+              0.3,
+              5.2
+            ],
+            "score_gap": 4.0,
+            "score_gap_range_90": [
+              0.0,
+              8.3
+            ],
+            "window_start": "2025-09-30T00:00:00",
+            "window_end": "2026-09-30T00:00:00",
+            "n_days": 366,
+            "window_months": 12,
+            "full_history": false
+          },
           "total_matched": 28,
           "total_unmatched": 7,
           "current_gap_estimate": {
@@ -58407,7 +64807,479 @@
             "model": "gpt-5.5-pre-release_xhigh",
             "score": 100.0
           },
-          "n_boot_valid": 2000
+          "n_boot_valid": 2000,
+          "plot": {
+            "laggard_points": [
+              {
+                "model": "deepseek-llm-67b-chat",
+                "date": "2023-11-29",
+                "score": 0.83
+              },
+              {
+                "model": "qwen2.5-32b-instruct",
+                "date": "2024-09-17",
+                "score": 7.36
+              },
+              {
+                "model": "qwen2.5-72b-instruct",
+                "date": "2024-09-19",
+                "score": 8.06
+              },
+              {
+                "model": "DeepSeek-V3",
+                "date": "2024-12-26",
+                "score": 15.83
+              },
+              {
+                "model": "DeepSeek-R1-Distill-Qwen-32B",
+                "date": "2025-01-20",
+                "score": 55.56
+              },
+              {
+                "model": "QwQ-32B",
+                "date": "2025-03-05",
+                "score": 59.17
+              },
+              {
+                "model": "Qwen3-32B",
+                "date": "2025-04-29",
+                "score": 66.94
+              },
+              {
+                "model": "Qwen3-235B-A22B-Thinking-2507",
+                "date": "2025-07-25",
+                "score": 86.67
+              },
+              {
+                "model": "deepseek-reasoner",
+                "date": "2025-12-01",
+                "score": 87.82
+              },
+              {
+                "model": "fireworks/kimi-k2p5",
+                "date": "2026-01-27",
+                "score": 92.2
+              },
+              {
+                "model": "qwen3.6-plus",
+                "date": "2026-03-31",
+                "score": 93.33
+              },
+              {
+                "model": "glm-5.1",
+                "date": "2026-04-07",
+                "score": 93.33
+              },
+              {
+                "model": "kimi-k2.6",
+                "date": "2026-04-20",
+                "score": 96.11
+              },
+              {
+                "model": "deepseek-v4-pro_max",
+                "date": "2026-04-24",
+                "score": 96.67
+              },
+              {
+                "model": "kimi-k3_max",
+                "date": "2026-07-16",
+                "score": 97.22
+              },
+              {
+                "model": "qwen3.8-max_xhigh",
+                "date": "2026-08-02",
+                "score": 99.44
+              },
+              {
+                "model": "qwen3.8-max-0902_xhigh",
+                "date": "2026-09-01",
+                "score": 100.0
+              }
+            ],
+            "leader_points": [
+              {
+                "model": "gpt-4-0314",
+                "date": "2023-03-14",
+                "score": 0.56
+              },
+              {
+                "model": "gpt-4-0613",
+                "date": "2023-06-13",
+                "score": 1.11
+              },
+              {
+                "model": "claude-2.0",
+                "date": "2023-07-11",
+                "score": 2.5
+              },
+              {
+                "model": "claude-3-opus-20240229",
+                "date": "2024-02-29",
+                "score": 4.72
+              },
+              {
+                "model": "claude-3-sonnet-20240229",
+                "date": "2024-02-29",
+                "score": 2.5
+              },
+              {
+                "model": "gpt-4-turbo-2024-04-09",
+                "date": "2024-04-09",
+                "score": 6.67
+              },
+              {
+                "model": "gemini-1.5-pro-001",
+                "date": "2024-05-14",
+                "score": 6.81
+              },
+              {
+                "model": "gpt-4o-mini-2024-07-18",
+                "date": "2024-07-18",
+                "score": 6.94
+              },
+              {
+                "model": "Llama-3.1-405B-Instruct",
+                "date": "2024-07-23",
+                "score": 9.72
+              },
+              {
+                "model": "o1-preview-2024-09-12",
+                "date": "2024-09-12",
+                "score": 31.11
+              },
+              {
+                "model": "o1-mini-2024-09-12_high",
+                "date": "2024-09-12",
+                "score": 46.94
+              },
+              {
+                "model": "o1-2024-12-17_medium",
+                "date": "2024-12-17",
+                "score": 73.33
+              },
+              {
+                "model": "o1-2024-12-17_high",
+                "date": "2024-12-17",
+                "score": 73.33
+              },
+              {
+                "model": "o1-2024-12-17_low",
+                "date": "2024-12-17",
+                "score": 53.33
+              },
+              {
+                "model": "o3-mini-2025-01-31_high",
+                "date": "2025-01-31",
+                "score": 76.94
+              },
+              {
+                "model": "grok-3-mini-beta_high",
+                "date": "2025-04-09",
+                "score": 77.78
+              },
+              {
+                "model": "o3-2025-04-16_medium",
+                "date": "2025-04-16",
+                "score": 84.44
+              },
+              {
+                "model": "openai/gpt-oss-120b_high",
+                "date": "2025-08-05",
+                "score": 88.89
+              },
+              {
+                "model": "gpt-5-2025-08-07_high",
+                "date": "2025-08-07",
+                "score": 91.39
+              },
+              {
+                "model": "gemini-3-pro-preview",
+                "date": "2025-11-18",
+                "score": 91.39
+              },
+              {
+                "model": "gpt-5.2-2025-12-11_xhigh",
+                "date": "2025-12-11",
+                "score": 96.1
+              },
+              {
+                "model": "gpt-5.2-2025-12-11_high",
+                "date": "2025-12-11",
+                "score": 96.11
+              },
+              {
+                "model": "gpt-5.4-2026-03-05_high",
+                "date": "2026-03-05",
+                "score": 97.78
+              },
+              {
+                "model": "claude-opus-4-7_xhigh",
+                "date": "2026-04-16",
+                "score": 97.8
+              },
+              {
+                "model": "gpt-5.5-pre-release_xhigh",
+                "date": "2026-04-23",
+                "score": 100.0
+              },
+              {
+                "model": "gpt-5.5-pro-pre-release_xhigh",
+                "date": "2026-04-23",
+                "score": 100.0
+              },
+              {
+                "model": "claude-fable-5_high",
+                "date": "2026-06-09",
+                "score": 100.0
+              },
+              {
+                "model": "gpt-5.6-sol_max",
+                "date": "2026-07-09",
+                "score": 100.0
+              },
+              {
+                "model": "claude-fable-5-1_max",
+                "date": "2026-09-01",
+                "score": 100.0
+              },
+              {
+                "model": "gpt-6-astra_max",
+                "date": "2026-09-03",
+                "score": 100.0
+              },
+              {
+                "model": "gpt-6-sol_max",
+                "date": "2026-09-22",
+                "score": 100.0
+              },
+              {
+                "model": "claude-opus-5-5_max",
+                "date": "2026-09-22",
+                "score": 100.0
+              },
+              {
+                "model": "claude-sonnet-5-5_max",
+                "date": "2026-09-28",
+                "score": 100.0
+              },
+              {
+                "model": "gpt-6.1-sol_max",
+                "date": "2026-09-29",
+                "score": 100.0
+              },
+              {
+                "model": "gemini-4-argon_high",
+                "date": "2026-09-30",
+                "score": 100.0
+              }
+            ],
+            "laggard_trendline": [
+              {
+                "date": "2023-11-29",
+                "score": 0.7822
+              },
+              {
+                "date": "2024-01-11",
+                "score": 1.185
+              },
+              {
+                "date": "2024-02-23",
+                "score": 1.7914
+              },
+              {
+                "date": "2024-04-06",
+                "score": 2.6995
+              },
+              {
+                "date": "2024-05-20",
+                "score": 4.0492
+              },
+              {
+                "date": "2024-07-02",
+                "score": 6.0317
+              },
+              {
+                "date": "2024-08-14",
+                "score": 8.895
+              },
+              {
+                "date": "2024-09-26",
+                "score": 12.9304
+              },
+              {
+                "date": "2024-11-08",
+                "score": 18.4264
+              },
+              {
+                "date": "2024-12-22",
+                "score": 25.5722
+              },
+              {
+                "date": "2025-02-03",
+                "score": 34.3232
+              },
+              {
+                "date": "2025-03-18",
+                "score": 44.2869
+              },
+              {
+                "date": "2025-04-30",
+                "score": 54.7326
+              },
+              {
+                "date": "2025-06-12",
+                "score": 64.7775
+              },
+              {
+                "date": "2025-07-25",
+                "score": 73.6658
+              },
+              {
+                "date": "2025-09-06",
+                "score": 80.9701
+              },
+              {
+                "date": "2025-10-20",
+                "score": 86.6165
+              },
+              {
+                "date": "2025-12-02",
+                "score": 90.7784
+              },
+              {
+                "date": "2026-01-14",
+                "score": 93.7396
+              },
+              {
+                "date": "2026-02-26",
+                "score": 95.7939
+              },
+              {
+                "date": "2026-04-10",
+                "score": 97.1943
+              },
+              {
+                "date": "2026-05-24",
+                "score": 98.1375
+              },
+              {
+                "date": "2026-07-06",
+                "score": 98.7677
+              },
+              {
+                "date": "2026-08-18",
+                "score": 99.1864
+              },
+              {
+                "date": "2026-09-30",
+                "score": 99.4636
+              }
+            ],
+            "leader_trendline": [
+              {
+                "date": "2023-03-14",
+                "score": 0.2014
+              },
+              {
+                "date": "2023-05-07",
+                "score": 0.3473
+              },
+              {
+                "date": "2023-06-30",
+                "score": 0.5985
+              },
+              {
+                "date": "2023-08-23",
+                "score": 1.0293
+              },
+              {
+                "date": "2023-10-16",
+                "score": 1.7647
+              },
+              {
+                "date": "2023-12-09",
+                "score": 3.0097
+              },
+              {
+                "date": "2024-02-01",
+                "score": 5.0874
+              },
+              {
+                "date": "2024-03-26",
+                "score": 8.4742
+              },
+              {
+                "date": "2024-05-19",
+                "score": 13.788
+              },
+              {
+                "date": "2024-07-12",
+                "score": 21.6459
+              },
+              {
+                "date": "2024-09-04",
+                "score": 32.3041
+              },
+              {
+                "date": "2024-10-28",
+                "score": 45.1839
+              },
+              {
+                "date": "2024-12-21",
+                "score": 58.7428
+              },
+              {
+                "date": "2025-02-13",
+                "score": 71.0936
+              },
+              {
+                "date": "2025-04-08",
+                "score": 80.9462
+              },
+              {
+                "date": "2025-06-01",
+                "score": 88.0072
+              },
+              {
+                "date": "2025-07-25",
+                "score": 92.6878
+              },
+              {
+                "date": "2025-09-17",
+                "score": 95.6323
+              },
+              {
+                "date": "2025-11-10",
+                "score": 97.4241
+              },
+              {
+                "date": "2026-01-03",
+                "score": 98.4924
+              },
+              {
+                "date": "2026-02-26",
+                "score": 99.1216
+              },
+              {
+                "date": "2026-04-21",
+                "score": 99.4896
+              },
+              {
+                "date": "2026-06-14",
+                "score": 99.7039
+              },
+              {
+                "date": "2026-08-07",
+                "score": 99.8284
+              },
+              {
+                "date": "2026-09-30",
+                "score": 99.9006
+              }
+            ],
+            "laggard_trend_level": 99.4636,
+            "leader_reached_level_date": "2026-04-16"
+          }
         },
         "gap_timeline": {
           "method": "epoch_daily",
@@ -63491,5 +70363,5 @@
     },
     "source": "open_closed_gap threshold-crossing methodology"
   },
-  "last_updated": "2026-10-19T21:19:00.585704"
+  "last_updated": "2026-10-19T21:41:29.697847"
 }

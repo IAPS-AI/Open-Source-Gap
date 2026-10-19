@@ -474,6 +474,12 @@ def compute_trend_gap(
             "score": round(leader_best_score, 2),
         },
         "n_boot_valid": int(len(boot_backward)),
+        # What the trend chart draws: the fitted records, both lines up to the
+        # evaluation date, and the horizontal backward-gap marker.
+        "plot": _trend_plot(
+            laggard, leader, score_col, model_col, transform,
+            (m_lag, b_lag), (m_lead, b_lead), t_eval,
+        ),
     }
 
 
@@ -486,6 +492,52 @@ def _inverse_transform(t: float, transform: str) -> float:
     if transform == "log":
         return float(np.exp(t))
     raise ValueError(f"Unknown transform: {transform}")
+
+
+def _plot_points(rows: pd.DataFrame, score_col: str, model_col: str) -> list[dict]:
+    return [
+        {
+            "model": r.get(model_col, r.get("model")),
+            "date": r["date"].date().isoformat(),
+            "score": round(float(r[score_col]), 4),
+        }
+        for _, r in rows.iterrows()
+    ]
+
+
+def _sample_trendline(
+    slope: float, intercept: float, t0: float, t1: float, transform: str
+) -> list[dict]:
+    """A fitted line sampled in raw score units. Sampled rather than two
+    endpoints because logit/log fits are curves in raw units."""
+    return [
+        {
+            "date": datetime.fromordinal(int(round(t))).date().isoformat(),
+            "score": round(_inverse_transform(slope * t + intercept, transform), 4),
+        }
+        for t in np.linspace(t0, t1, TRENDLINE_SAMPLES)
+    ]
+
+
+def _trend_plot(laggard, leader, score_col, model_col, transform,
+                fit_lag, fit_lead, t_eval) -> dict:
+    (m_lag, b_lag), (m_lead, b_lead) = fit_lag, fit_lead
+    level_t = m_lag * t_eval + b_lag
+    t_reach = (level_t - b_lead) / m_lead
+    first_lag = float(laggard["date"].iloc[0].toordinal())
+    first_lead = float(leader["date"].iloc[0].toordinal())
+    return {
+        "laggard_points": _plot_points(laggard, score_col, model_col),
+        "leader_points": _plot_points(leader, score_col, model_col),
+        "laggard_trendline": _sample_trendline(m_lag, b_lag, first_lag, t_eval, transform),
+        "leader_trendline": _sample_trendline(m_lead, b_lead, first_lead, t_eval, transform),
+        "laggard_trend_level": round(_inverse_transform(level_t, transform), 4),
+        "leader_reached_level_date": (
+            datetime.fromordinal(int(round(t_reach))).date().isoformat()
+            if 1 <= t_reach <= _MAX_ORDINAL
+            else None
+        ),
+    }
 
 
 def country_frontier(
@@ -587,25 +639,9 @@ def compute_country_trend_lag(
         front = fronts[name]
         x, y, (m, b) = fits[name]
         r2 = _r_squared(x, y, m, b)
-        # Sampled (not two endpoints) because logit/log fits are curves in
-        # raw score units.
-        line_t = np.linspace(x[0], t_end, TRENDLINE_SAMPLES)
         return {
-            "points": [
-                {
-                    "model": r["model"],
-                    "date": r["date"].date().isoformat(),
-                    "score": round(float(r[score_col]), 4),
-                }
-                for _, r in front.iterrows()
-            ],
-            "trendline": [
-                {
-                    "date": datetime.fromordinal(int(round(t))).date().isoformat(),
-                    "score": round(_inverse_transform(m * t + b, transform), 4),
-                }
-                for t in line_t
-            ],
+            "points": _plot_points(front, score_col, "model"),
+            "trendline": _sample_trendline(m, b, x[0], t_end, transform),
             "n_points": int(len(front)),
             "first_model": front.iloc[0]["model"],
             "first_date": front.iloc[0]["date"].date().isoformat(),

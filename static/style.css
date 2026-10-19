@@ -1004,3 +1004,54 @@ details.explainer-panel[open] .explainer-summary::before {
     font-size: 13px;
     line-height: 1;
 }
+/* "How to read this chart": the method note sits behind a disclosure. */
+.chart-help {
+    margin-top: var(--spacing-sm);
+    text-align: center;
+}
+.chart-help > summary {
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    display: inline-block;
+}
+.chart-help > summary:hover { color: var(--color-text); }
+.chart-help #chart-note {
+    text-align: center;
+    margin-top: var(--spacing-xs);
+}
+
+/* Gap Over Time: "More detail" switch (a lone toggle, not a group). */
+.toggle-btn.detail-toggle {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    padding: 6px 10px;
+}
+
+/* Phones: two-up cards and tiles instead of one long column, and the SVG
+   Gap Over Time chart scrolls sideways at a legible size instead of
+   shrinking its text to a few pixels. */
+@media (max-width: 640px) {
+    #historical-chart-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    #historical-chart .gap-chart {
+        min-width: 720px;
+    }
+}
+@media (max-width: 480px) {
+    .stats-panel {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .stat-card {
+        padding: var(--spacing-md);
+    }
+    .stat-value {
+        font-size: 1.35rem;
+    }
+    .gap-context__tiles {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

@@ -35,6 +35,13 @@ EPOCH_UA = (
 )
 ECI_MATCH_THRESHOLD = 1.0  # ECI points - model is "matched" if within this range
 DAYS_PER_MONTH = 365.25 / 12  # 30.4375 - accurate average days per month accounting for leap years
+# Headline window: the day-by-day gap averaged over the trailing 12 months to
+# the latest record-setting release, a rolling version of the stated window
+# Epoch AI uses for its open-vs-closed figure ("Since January 2026, ... by an
+# average of four months"; data insight of 2026-05-29). Ending at the latest
+# release, as Epoch's window ends at its data date, keeps a benchmark with no
+# recent scores from counting calendar time as lag.
+HEADLINE_WINDOW_MONTHS = 12
 
 # Shared accessibility classification (open/closed/None-excluded); see
 # docs/audits/2026-07-01-calculation-logic-audit.md findings F1/F2.
@@ -1272,6 +1279,7 @@ def calculate_statistics(
             "vertical_gap_ci_90_low": 0,
             "vertical_gap_ci_90_high": 0,
             "gap_window": None,
+            "headline_gap": None,
             "total_matched": len(matched_gaps),
             "total_unmatched": len(gaps) - len(matched_gaps),
             "current_gap_estimate": {
@@ -1310,6 +1318,36 @@ def calculate_statistics(
         avg_vertical = vertical_ci_low = vertical_ci_high = 0
         gap_window = None
 
+    # Headline: the same day-by-day series averaged over the trailing
+    # HEADLINE_WINDOW_MONTHS to the end of the full window (the latest
+    # release), unless the caller fixed a window. A benchmark with less
+    # history than that uses all of it, flagged as full_history.
+    headline = None
+    full_history = True
+    if window_start is None and metrics is not None:
+        h_end = pd.Timestamp(metrics["window_end"])
+        h_start = h_end - pd.DateOffset(months=HEADLINE_WINDOW_MONTHS)
+        if h_start > pd.Timestamp(metrics["window_start"]):
+            headline = calculate_gap_metrics(
+                df, score_col=score_col, threshold=threshold,
+                window_start=h_start, window_end=h_end, bootstrap=bootstrap)
+            full_history = headline is None
+    if full_history:
+        headline = metrics
+    headline_gap = None if headline is None else {
+        "months": round(headline["avg_time_gap_months"], 1),
+        "range_90": [round(headline["time_gap_ci_90_low"], 1),
+                     round(headline["time_gap_ci_90_high"], 1)],
+        "score_gap": round(headline["avg_vertical_gap"], 1),
+        "score_gap_range_90": [round(headline["vertical_gap_ci_90_low"], 1),
+                               round(headline["vertical_gap_ci_90_high"], 1)],
+        "window_start": headline["window_start"],
+        "window_end": headline["window_end"],
+        "n_days": headline["n_days"],
+        "window_months": HEADLINE_WINDOW_MONTHS,
+        "full_history": full_history,
+    }
+
     # Current ("vertical") gap snapshot: today's best closed minus best open.
     # Kept alongside the windowed average for back-compatibility.
     best_open_score = df_open[score_col].max() if len(df_open) > 0 else 0
@@ -1334,6 +1372,7 @@ def calculate_statistics(
         "vertical_gap_ci_90_low": round(vertical_ci_low, 1),
         "vertical_gap_ci_90_high": round(vertical_ci_high, 1),
         "gap_window": gap_window,
+        "headline_gap": headline_gap,
         "total_matched": len(matched_gaps),
         "total_unmatched": len(gaps) - len(matched_gaps),
         "current_gap_estimate": current_gap_estimate,

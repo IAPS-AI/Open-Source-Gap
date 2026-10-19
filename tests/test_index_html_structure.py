@@ -185,8 +185,50 @@ def test_country_lag_wired_in_js():
         "china_framing.country_trend_lag",
         "applyCountryLagHeadline(currentData)",
         "function updateFramingCaveats",
-        "function addCountryFitTraces",
-        "addCountryFitTraces(traces, annotations, trendAnnotationMap, countryFit, isTrendMetr)",
+        "function addFitTraces",
+        "addFitTraces(traces, annotations, trendAnnotationMap, fit, isTrendMetr)",
         "headline-method-note",
     ):
         assert needle in js, f"Missing in script.js: {needle}"
+
+
+HEADLINE_ANCHORS = (
+    'id="headline-verb"',
+    'id="headline-suffix"',
+    'id="stat-score-gap"',
+    'id="stat-today"',
+    'id="gap-detail-toggle"',
+    'class="chart-help"',
+)
+
+
+def test_headline_and_detail_anchors_in_both_templates(client):
+    """Epoch-style windowed headline, the reworked stat cards, the Gap Over
+    Time detail switch and the chart-help disclosure, in both page copies.
+    The retired Gap Metric toggle and 'Live Data' badge must stay gone."""
+    served = client.get("/").get_data(as_text=True)
+    root_html = (Path(__file__).parent.parent / "index.html").read_text(
+        encoding="utf-8"
+    )
+    for html, name in ((served, "templates/index.html"), (root_html, "index.html")):
+        for anchor in HEADLINE_ANCHORS:
+            assert anchor in html, f"Missing in {name}: {anchor}"
+        assert 'id="gap-toggle"' not in html, f"Gap Metric toggle still in {name}"
+        assert "Live Data" not in html and "Real-time" not in html, f"Stale live claim in {name}"
+
+
+def test_headline_and_trend_fit_wired_in_js():
+    js = (Path(__file__).parent.parent / "static" / "script.js").read_text(
+        encoding="utf-8"
+    )
+    for needle in (
+        "function updateHeadline",
+        "headline_gap",
+        "function getTrendFit",
+        "function addFitTraces",
+        "tg.plot",
+        "gapDetail",
+        "gap-detail-toggle",
+    ):
+        assert needle in js, f"Missing in script.js: {needle}"
+    assert "gapMetric" not in js

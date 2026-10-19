@@ -903,6 +903,47 @@ class TestFrontierMatchMap:
         assert m == {"CN1": "US_new"}
 
 
+class TestHeadlineGapWindow:
+    """The headline averages the day-by-day gap over the trailing
+    HEADLINE_WINDOW_MONTHS to the latest release, falling back to the full
+    history when a benchmark has less history than that."""
+
+    @staticmethod
+    def _df(dates_closed, dates_open, scores_closed, scores_open):
+        return pd.DataFrame({
+            "Model": [f"C{i}" for i in range(len(dates_closed))] + [f"O{i}" for i in range(len(dates_open))],
+            "eci": scores_closed + scores_open,
+            "date": pd.to_datetime(dates_closed + dates_open),
+            "Open": [False] * len(dates_closed) + [True] * len(dates_open),
+        })
+
+    def test_headline_is_trailing_window_to_latest_release(self):
+        from update_data import HEADLINE_WINDOW_MONTHS
+        df = self._df(["2024-01-01", "2025-06-01", "2026-03-01"],
+                      ["2024-01-15", "2025-07-01", "2026-03-10"],
+                      [100.0, 110.0, 120.0], [80.0, 111.0, 121.0])
+        stats = calculate_statistics(df, [], score_col="eci", threshold=1.0)
+        h = stats["headline_gap"]
+        assert h["full_history"] is False
+        assert h["window_months"] == HEADLINE_WINDOW_MONTHS
+        assert h["window_end"][:10] == "2026-03-10"
+        expected_start = pd.Timestamp("2026-03-10") - pd.DateOffset(months=HEADLINE_WINDOW_MONTHS)
+        assert pd.Timestamp(h["window_start"]) == expected_start
+        assert h["months"] != stats["avg_horizontal_gap_months"]
+        metrics = calculate_gap_metrics(df, score_col="eci", threshold=1.0,
+                                        window_start=expected_start, window_end="2026-03-10")
+        assert h["months"] == round(metrics["avg_time_gap_months"], 1)
+        assert h["score_gap"] == round(metrics["avg_vertical_gap"], 1)
+
+    def test_headline_uses_full_history_when_shorter_than_window(self):
+        df = self._df(["2025-01-01", "2025-06-01"], ["2025-03-01", "2025-08-01"],
+                      [100.0, 120.0], [99.5, 119.5])
+        stats = calculate_statistics(df, [], score_col="eci", threshold=1.0)
+        h = stats["headline_gap"]
+        assert h["full_history"] is True
+        assert h["months"] == stats["avg_horizontal_gap_months"]
+
+
 class TestChinaFramingAllBenchmarks:
     """Every benchmark ships a China-vs-US framing with the appendix
     trendline lag (the China view's headline)."""

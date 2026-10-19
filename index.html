@@ -23,14 +23,13 @@
         <div class="title-bar-content">
             <div class="title-row">
                 <h1 class="site-title">Open Source Gap</h1>
-                <span class="title-badge">Live Data</span>
             </div>
-            <p class="site-tagline">Real-time tracking of the capability gap between open and closed AI models</p>
+            <p class="site-tagline">Tracking the capability gap between open and closed AI models · updated daily from Epoch AI and METR</p>
         </div>
     </div>
     <div class="container">
         <header class="header">
-            <h1 id="main-title">The performance gap between frontier <span class="text-open" id="category-open">open</span> and <span class="text-closed" id="category-closed">closed-source</span> models on <span id="benchmark-name">ECI</span> is around <span id="gap-value">--</span> months</h1>
+            <h1 id="main-title">The performance gap between frontier <span class="text-open" id="category-open">open</span> and <span class="text-closed" id="category-closed">closed-source</span> models on <span id="benchmark-name">ECI</span> <span id="headline-verb">is around</span> <span id="gap-value">--</span> months<span id="headline-suffix"></span></h1>
             <p class="subtitle" id="benchmark-source">Source: Epoch AI Epoch Capabilities Index (Frontier Models only).</p>
             <p class="subtitle" id="headline-method-note" hidden></p>
         </header>
@@ -42,13 +41,6 @@
                     <option value="eci">Epoch Capabilities Index (ECI)</option>
                     <!-- Additional options will be populated by script.js -->
                 </select>
-            </div>
-            <div class="control-group">
-                <span class="control-label">Gap Metric:</span>
-                <div class="toggle-buttons" id="gap-toggle">
-                    <button class="toggle-btn active" data-value="average">Average Gap</button>
-                    <button class="toggle-btn" data-value="current">Current Gap (Est.)</button>
-                </div>
             </div>
             <div class="control-group">
                 <span class="control-label">Framing:</span>
@@ -84,11 +76,14 @@
                 <p>Loading ECI data...</p>
             </div>
             <div id="chart"></div>
-            <p class="subtitle" id="chart-note" style="text-align: center; margin-top: var(--spacing-sm);">
+            <details class="chart-help">
+                <summary>How to read this chart</summary>
+                <p class="subtitle" id="chart-note">
                 Note: A model is deemed to have caught up if its score is <strong>within the threshold</strong> of the reference model.<br>
-                <em>Average gap is computed by sampling 100 score levels and measuring time-to-match at each level, starting from the level where reference models first appear.<br>
+                <em>The average gap is measured day by day over the window named in the headline.<br>
                 Matched/Unmatched counts reflect all reference models shown on the chart.</em>
             </p>
+            </details>
         </div>
 
                 <div class="stats-panel">
@@ -101,12 +96,12 @@
                 <div class="stat-label">Average Gap</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="stat-ci">--</div>
-                <div class="stat-label">90% Range (Daily Gap)</div>
+                <div class="stat-value" id="stat-score-gap">--</div>
+                <div class="stat-label">Average Score Gap</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="stat-matched">--</div>
-                <div class="stat-label">Matched Models</div>
+                <div class="stat-value" id="stat-today">--</div>
+                <div class="stat-label">Gap Today</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="stat-unmatched">--</div>
@@ -122,7 +117,7 @@
         </details>
 
         <details id="current-gap-explainer" class="explainer-panel hidden">
-            <summary class="explainer-summary">How is the current gap estimated?</summary>
+            <summary class="explainer-summary">Other estimates of the current gap</summary>
             <div class="explainer-content">
                 <!-- Populated dynamically by script.js -->
             </div>
@@ -155,6 +150,7 @@
                     <button type="button" class="toggle-btn" data-value="score">Score gap</button>
                     <button type="button" class="toggle-btn" data-value="matches">Time to match each release</button>
                 </div>
+                <button type="button" class="toggle-btn detail-toggle" id="gap-detail-toggle" aria-pressed="false">More detail</button>
             </div>
             <div id="gap-context" class="gap-context" hidden></div>
             <div id="historical-legend" class="gap-legend" hidden></div>

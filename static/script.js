@@ -13,8 +13,10 @@ const COLORS = {
     connector: '#5c6bc0',
     annotation: '#6b7280',
     gridline: '#e5e7eb',
-    china: '#e53935',  // Red for China
-    us: '#5c6bc0',     // Blue for US/other
+    // Colours follow the role, as in the headline and main chart: the
+    // leader (closed / US) is red, the laggard (open / China) indigo.
+    china: '#5c6bc0',
+    us: '#e53935',
 };
 
 /**
@@ -73,11 +75,13 @@ function linearRegression(dates, scores, useLog = false) {
 // Global state
 let appState = {
     data: null,
-    gapMetric: 'average', // 'average' or 'current'
     framing: 'open', // 'open' or 'china'
     // Gap Over Time view: 'timeline' = months behind on each date (default),
     // 'matches' = months until each leader release was matched.
     historicalView: 'timeline',
+    // Gap Over Time: false = the simple default (core tiles, no forecast
+    // line, no drop labels); true = every tile and annotation.
+    gapDetail: false,
     currentBenchmark: 'eci', // Current selected benchmark
     tableSort: { key: 'date', dir: 'desc' }, // raw-data table sort state
     tableData: null, // last-rendered table inputs, for re-sorting
@@ -105,6 +109,22 @@ function getBenchmarkMetadata() {
     const benchmarks = appState.data?.benchmarks;
     if (!benchmarks) return null;
     return benchmarks[appState.currentBenchmark]?.metadata || null;
+}
+
+/** Date-axis range for the Plotly charts: first model (less a month) to today plus ~6 weeks. */
+function dateAxisRange(models, today) {
+    const times = (models || []).map(m => parseUTCDate(m.date).getTime()).filter(Number.isFinite);
+    if (!times.length) return undefined;
+    const DAY = 86400000;
+    const iso = (t) => new Date(t).toISOString().slice(0, 10);
+    return [iso(Math.min(...times) - 30 * DAY), iso(Math.max(parseUTCDate(today).getTime(), Math.max(...times)) + 45 * DAY)];
+}
+
+/** Short benchmark name for chart titles ("ECI", "SWE-Bench Verified"). */
+function benchmarkShortName() {
+    if (appState.currentBenchmark === 'eci') return 'ECI';
+    if (appState.currentBenchmark === 'metr_time_horizon') return 'METR Time Horizon';
+    return getBenchmarkMetadata()?.name || 'Score';
 }
 
 /**
@@ -232,6 +252,12 @@ function updateBenchmarkDisplay() {
         } else {
             sourceEl.textContent = `Source: Epoch AI ${metadata.name} (Frontier Models only).`;
         }
+        // Updated daily, but a benchmark only moves when a new model is scored.
+        const bench = appState.data?.benchmarks?.[appState.currentBenchmark];
+        const dates = (bench?.trend_models || bench?.models || []).map(m => m.date).filter(Boolean).sort();
+        if (dates.length) {
+            sourceEl.textContent += ` Latest scored release: ${fmtDayLong(parseUTCDate(dates[dates.length - 1]))}.`;
+        }
     }
 
     // Update score column header
@@ -278,12 +304,12 @@ function updateBenchmarkDisplay() {
         } else if (appState.currentBenchmark === 'eci') {
             // ECI uses Epoch AI's paired-bootstrap criterion, not a fixed threshold.
             chartNote.innerHTML = `Note: A model is deemed to have <strong>caught up</strong> when its capability exceeds the reference model's in at least 5% of Epoch AI's paired bootstrap resamples (their published criterion).<br>
-                <em>The average gap is measured day by day across the overlapping history &mdash; the ${getFramingLabels().open} frontier versus the most recent ${getFramingLabels().closed} record it has caught up to. Plotted scores are Epoch's published ECI point estimates.<br>
+                <em>The average gap is measured day by day &mdash; the ${getFramingLabels().open} frontier versus the most recent ${getFramingLabels().closed} record it has caught up to &mdash; over the window named in the headline. Plotted scores are Epoch's published ECI point estimates.<br>
                 Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
         } else {
             const thresholdDesc = `${thresholdValue} percentage point${thresholdValue !== 1 ? 's' : ''}`;
             chartNote.innerHTML = `Note: A model is deemed to have caught up if its score is <strong>within ${thresholdDesc}</strong> of the reference model.<br>
-                <em>The average gap is measured day by day across the overlapping history &mdash; the ${getFramingLabels().open} frontier versus the most recent ${getFramingLabels().closed} record it has caught up to.<br>
+                <em>The average gap is measured day by day &mdash; the ${getFramingLabels().open} frontier versus the most recent ${getFramingLabels().closed} record it has caught up to &mdash; over the window named in the headline.<br>
                 Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
         }
     }
@@ -293,15 +319,18 @@ function updateBenchmarkDisplay() {
  * Set up toggle button event handlers
  */
 function setupToggleHandlers() {
-    // Gap metric toggle
-    document.querySelectorAll('#gap-toggle .toggle-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#gap-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            appState.gapMetric = this.dataset.value;
-            updateDisplay();
+    // Gap Over Time: simple default vs every tile and annotation
+    const detailBtn = document.getElementById('gap-detail-toggle');
+    if (detailBtn) {
+        detailBtn.addEventListener('click', () => {
+            appState.gapDetail = !appState.gapDetail;
+            detailBtn.setAttribute('aria-pressed', String(appState.gapDetail));
+            detailBtn.classList.toggle('active', appState.gapDetail);
+            detailBtn.textContent = appState.gapDetail ? 'Less detail' : 'More detail';
+            const currentData = getCurrentData();
+            if (currentData) renderHistoricalChart(currentData);
         });
-    });
+    }
 
     // Framing toggle
     document.querySelectorAll('#framing-toggle .toggle-btn').forEach(btn => {
@@ -445,24 +474,55 @@ function getCurrentData() {
  */
 function updateDisplay() {
     const currentData = getCurrentData();
-    const stats = currentData.statistics;
-    const gaps = currentData.gaps;
+    const stats = currentData.statistics || {};
 
-    if (appState.gapMetric === 'current') {
-        const estimate = stats.current_gap_estimate || {};
-        const gapValue = estimate.estimated_current_gap || stats.avg_horizontal_gap_months;
-        updateTitle(gapValue);
-        updateStatsCurrentGap(stats);
-        showExplainer(stats, gaps);
-    } else {
-        updateTitle(stats.avg_horizontal_gap_months);
-        updateStats(stats);
-        hideExplainer();
-    }
+    updateHeadline(currentData);
+    updateStats(currentData);
+    // Survival estimate, release-lag bracket and trend gap: collapsed under
+    // "Other estimates of the current gap".
+    showExplainer(stats, currentData.gaps || []);
     applyCountryLagHeadline(currentData);
 
-    // Re-render historical chart to reflect gap metric mode
     renderHistoricalChart(currentData);
+}
+
+/**
+ * Headline sentence, framed the way Epoch AI frames its open-vs-closed
+ * figure: the day-by-day gap averaged over a stated window, here the
+ * trailing 12 months to the latest record-setting release ("has averaged X
+ * months over the 12 months to Sep 2026"). The China view replaces the
+ * number with the trendline lag in applyCountryLagHeadline.
+ */
+/**
+ * " over the 12 months to Sep 2026", or " since Mar 2025" when the
+ * benchmark's whole (shorter) history is used. Empty without a window.
+ */
+function headlineWindowPhrase(h, long) {
+    if (!h) return '';
+    if (h.full_history) return ` since ${fmtMonthYear(parseUTCDate(h.window_start), long)}`;
+    return ` over the ${h.window_months || 12} months to ${fmtMonthYear(parseUTCDate(h.window_end), long)}`;
+}
+
+function updateHeadline(currentData) {
+    const stats = currentData.statistics || {};
+    const h = stats.headline_gap;
+    const verb = document.getElementById('headline-verb');
+    const suffix = document.getElementById('headline-suffix');
+    const note = document.getElementById('headline-method-note');
+    const value = h ? h.months : stats.avg_horizontal_gap_months;
+    updateTitle(value != null ? Number(value).toFixed(1) : '--');
+    if (verb) verb.textContent = 'has averaged';
+    if (suffix) suffix.textContent = headlineWindowPhrase(h, true);
+    if (note) {
+        const labels = getFramingLabels();
+        note.hidden = !h;
+        note.textContent = h
+            ? `Epoch AI's method: on each day, months since the most recent ${labels.closed} record the best ${labels.open} model `
+              + `had caught up to, averaged from ${fmtDayLong(parseUTCDate(h.window_start))} to `
+              + `${fmtDayLong(parseUTCDate(h.window_end))} (the latest record-setting release).`
+              + (h.full_history ? ` This benchmark has less than ${h.window_months || 12} months of history, so all of it is used.` : '')
+            : '';
+    }
 }
 
 /**
@@ -480,28 +540,30 @@ function applyCountryLagHeadline(currentData) {
     if (card) card.hidden = !lag;
     if (explainer) explainer.classList.toggle('hidden', !isChina);
     updateFramingCaveats(isChina, Boolean(lag));
-    const note = document.getElementById('headline-method-note');
-    if (note) {
-        note.hidden = !lag;
-        note.textContent = lag
-            ? 'Headline: how many months earlier the US trendline reached the Chinese trendline\'s level '
-              + '(record-setting releases since 2024). The Gap Metric toggle changes the cards below, not the headline.'
-            : '';
-    }
     if (!isChina) return;
 
     const content = explainer?.querySelector('.explainer-content');
     if (!lag) {
-        const fallback = appState.gapMetric === 'current' ? 'estimated current gap' : 'average gap';
+        // updateHeadline's Epoch-style average stays in the headline.
         if (content) {
             content.innerHTML = `<p>This benchmark has too few US or Chinese record-setting releases
                 since 2024 to fit both trendlines (at least three each), so the headline shows the
-                ${fallback} instead.</p>`;
+                average gap over the stated window instead.</p>`;
         }
         return;
     }
     const lagText = lag.lag_months.toFixed(1);
     updateTitle(lagText);
+    const verb = document.getElementById('headline-verb');
+    const suffix = document.getElementById('headline-suffix');
+    if (verb) verb.textContent = 'is around';
+    if (suffix) suffix.textContent = '';
+    const note = document.getElementById('headline-method-note');
+    if (note) {
+        note.hidden = false;
+        note.textContent = 'Headline: how many months earlier the US trendline reached the level of the Chinese '
+            + 'trendline at the latest Chinese record (record-setting releases since 2024).';
+    }
     document.getElementById('stat-country-lag').textContent = `${lagText} mo`;
     if (content) content.innerHTML = buildCountryLagHtml(lag);
 }
@@ -680,7 +742,7 @@ function showExplainer(stats, gaps) {
     const content = explainer.querySelector('.explainer-content');
     if (!content) return;
 
-    const avgGap = stats.avg_horizontal_gap_months?.toFixed(1) || '--';
+    const avgGap = (stats.headline_gap?.months ?? stats.avg_horizontal_gap_months)?.toFixed(1) || '--';
     const minBoundVal = estimate.min_current_gap || '--';
     const priorFiltered = estimate.prior_from_first_match;
 
@@ -715,7 +777,7 @@ function showExplainer(stats, gaps) {
     } else {
         // Standard survival analysis explanation
         content.innerHTML = `
-            <p>The <strong>average gap</strong> (${avgGap} months) is based on historical matched pairs, but this may underestimate the <em>current</em> gap because it doesn't fully account for models that haven't been matched yet.</p>
+            <p>The <strong>headline average</strong> (${avgGap} months) counts only ${getFramingLabels().closed} models that have already been matched, so it can understate the <em>current</em> gap after a run of unmatched releases.</p>
             <p>The <strong>estimated current gap</strong> treats unmatched frontier models as <strong>censored observations</strong> &mdash; they tell us the gap is <em>at least</em> as long as their age:</p>
             <ul>${unmatchedListHtml}</ul>
             <p><strong>Methodology:</strong> We use survival analysis with Maximum Likelihood Estimation:</p>
@@ -875,16 +937,6 @@ function renderDistributionChart(estimate) {
 }
 
 /**
- * Hide the current gap explainer panel
- */
-function hideExplainer() {
-    const explainer = document.getElementById('current-gap-explainer');
-    if (explainer) {
-        explainer.classList.add('hidden');
-    }
-}
-
-/**
  * Render all charts and update all displays
  */
 function renderAll() {
@@ -908,15 +960,53 @@ function renderAll() {
  * Render the trend chart with dynamic trend lines based on benchmark data
  */
 /**
- * China-view trend chart overlay: the headline fit's record-setting points,
- * its trendlines (sampled server-side in raw units, so logit/log fits curve
- * correctly), and a horizontal marker from the date the US trendline reached
- * the Chinese trendline's level to the date of the latest Chinese record.
+ * The published fit the trend chart draws, in one shape for both framings:
+ * the China view's headline trendline lag (country_trend_lag) or, otherwise,
+ * the frontier trend gap (trend_gap.plot). Null when neither is published.
  */
-function addCountryFitTraces(traces, annotations, trendAnnotationMap, fit, logAxis) {
+function getTrendFit(data) {
+    const isChina = appState.framing === 'china';
+    const lag = isChina ? data.country_trend_lag : null;
+    if (lag && lag.leader && lag.leader.points) {
+        return {
+            source: 'country',
+            leaderName: 'US', laggardName: 'China',
+            leader: lag.leader, laggard: lag.laggard,
+            level: lag.laggard_trend_level,
+            reachDate: lag.leader_reached_level_date,
+            evalDate: lag.eval_date,
+            lagMonths: lag.lag_months,
+            windowStart: lag.window_start,
+        };
+    }
+    const tg = data.trend_gap;
+    if (tg && tg.plot && tg.backward_gap_months != null) {
+        const p = tg.plot;
+        return {
+            source: 'trend_gap',
+            leaderName: isChina ? 'US' : 'Closed', laggardName: isChina ? 'China' : 'Open',
+            leader: { points: p.leader_points, trendline: p.leader_trendline },
+            laggard: { points: p.laggard_points, trendline: p.laggard_trendline },
+            level: p.laggard_trend_level,
+            reachDate: p.leader_reached_level_date,
+            evalDate: String(tg.as_of).slice(0, 10),
+            lagMonths: tg.backward_gap_months,
+            windowStart: null,
+        };
+    }
+    return null;
+}
+
+/**
+ * Trend chart overlay for a published fit: each side's record-setting
+ * points, its trendline (sampled server-side in raw units, so logit/log fits
+ * curve correctly), and a horizontal marker from the date the leader's
+ * trendline reached the laggard trendline's level to the evaluation date.
+ */
+function addFitTraces(traces, annotations, trendAnnotationMap, fit, logAxis) {
     const groups = [
-        { g: fit.leader, name: 'US', color: COLORS.us, dash: 'solid' },
-        { g: fit.laggard, name: 'China', color: COLORS.china, dash: 'dot' },
+        { g: fit.leader, name: fit.leaderName, color: COLORS.closed, dash: 'solid' },
+        { g: fit.laggard, name: fit.laggardName, color: COLORS.open, dash: 'dot' },
     ];
     for (const { g, name, color, dash } of groups) {
         if (!g.points || !g.trendline) continue;
@@ -940,11 +1030,11 @@ function addCountryFitTraces(traces, annotations, trendAnnotationMap, fit, logAx
             hoverinfo: 'skip',
         });
     }
-    if (!fit.leader_reached_level_date) return;
-    const level = fit.laggard_trend_level;
-    const lagName = `Headline lag (${fit.lag_months.toFixed(1)} mo)`;
+    if (!fit.reachDate) return;
+    const level = fit.level;
+    const lagName = `${fit.source === 'country' ? 'Headline lag' : 'Trend gap'} (${fit.lagMonths.toFixed(1)} mo)`;
     traces.push({
-        x: [fit.leader_reached_level_date, fit.eval_date],
+        x: [fit.reachDate, fit.evalDate],
         y: [level, level],
         mode: 'lines+markers',
         type: 'scatter',
@@ -953,16 +1043,16 @@ function addCountryFitTraces(traces, annotations, trendAnnotationMap, fit, logAx
         marker: {
             color: '#111827',
             size: [12, 11],
-            symbol: ['line-ns-open', fit.lag_months >= 0 ? 'triangle-right' : 'triangle-left'],
+            symbol: ['line-ns-open', fit.lagMonths >= 0 ? 'triangle-right' : 'triangle-left'],
         },
         hoverinfo: 'skip',
     });
     trendAnnotationMap[lagName] = annotations.length;
     annotations.push({
-        x: fit.eval_date,
+        x: fit.evalDate,
         // Annotation positions on a log axis are given in log10 units.
         y: logAxis ? Math.log10(level) : level,
-        text: `<b>${fit.lag_months.toFixed(1)} mo</b>`,
+        text: `<b>${fit.lagMonths.toFixed(1)} mo</b>`,
         showarrow: false,
         xanchor: 'left',
         xshift: 10,
@@ -988,11 +1078,11 @@ function renderTrendChart(data) {
     const getScore = (m) => m[scoreField] ?? m.eci ?? m.score;
     const benchmarkMetadata = getBenchmarkMetadata();
     const unitName = appState.currentBenchmark === 'eci' ? 'ECI points' : (benchmarkMetadata?.unit || 'points');
-    // China view with a published headline fit: draw that fit (each
-    // country's record-setters since 2024 and the trendlines behind the
-    // headline) over faded context points, instead of client-side raw fits
-    // over all models, which can disagree with the headline.
-    const countryFit = appState.framing === 'china' ? data.country_trend_lag : null;
+    // Draw the published fit the trend box describes (record-setters and the
+    // trendlines behind the headline / trend gap) over faded context points,
+    // instead of client-side raw fits over all models, which can disagree
+    // with the published numbers.
+    const fit = getTrendFit(data);
 
     // Filter models based on current framing
     let category1Models, category2Models;
@@ -1001,15 +1091,15 @@ function renderTrendChart(data) {
     if (appState.framing === 'china') {
         category1Models = models.filter(m => m.is_china && m.date && getScore(m) !== undefined);
         category2Models = models.filter(m => !m.is_china && m.date && getScore(m) !== undefined);
-        cat1Name = countryFit ? 'All Chinese models' : 'China';
-        cat2Name = countryFit ? 'All other models' : 'US/Other';
+        cat1Name = fit ? 'All Chinese models' : 'China';
+        cat2Name = fit ? 'All other models' : 'US/Other';
         cat1Color = COLORS.china;
         cat2Color = COLORS.us;
     } else {
         category1Models = models.filter(m => !m.is_open && m.date && getScore(m) !== undefined);
         category2Models = models.filter(m => m.is_open && m.date && getScore(m) !== undefined);
-        cat1Name = 'Closed';
-        cat2Name = 'Open';
+        cat1Name = fit ? 'All closed models' : 'Closed';
+        cat2Name = fit ? 'All open models' : 'Open';
         cat1Color = COLORS.closed;
         cat2Color = COLORS.open;
     }
@@ -1025,7 +1115,7 @@ function renderTrendChart(data) {
         mode: 'markers',
         type: 'scatter',
         name: cat1Name,
-        marker: { color: cat1Color, size: 8, opacity: countryFit ? 0.2 : 0.6 },
+        marker: { color: cat1Color, size: 8, opacity: fit ? 0.2 : 0.6 },
         text: category1Models.map(m => m.display_name),
     });
 
@@ -1035,16 +1125,16 @@ function renderTrendChart(data) {
         mode: 'markers',
         type: 'scatter',
         name: cat2Name,
-        marker: { color: cat2Color, size: 8, opacity: countryFit ? 0.2 : 0.6 },
+        marker: { color: cat2Color, size: 8, opacity: fit ? 0.2 : 0.6 },
         text: category2Models.map(m => m.display_name),
     });
 
     // Calculate trend lines for each category
     // For METR (log-scale axis), use log-linear regression so the trend line is straight
-    const cat1Regression = !countryFit && category1Models.length >= 3
+    const cat1Regression = !fit && category1Models.length >= 3
         ? linearRegression(category1Models.map(m => m.date), category1Models.map(m => getScore(m)), isTrendMetr)
         : null;
-    const cat2Regression = !countryFit && category2Models.length >= 3
+    const cat2Regression = !fit && category2Models.length >= 3
         ? linearRegression(category2Models.map(m => m.date), category2Models.map(m => getScore(m)), isTrendMetr)
         : null;
 
@@ -1148,21 +1238,26 @@ function renderTrendChart(data) {
         });
     }
 
-    if (countryFit) {
-        addCountryFitTraces(traces, annotations, trendAnnotationMap, countryFit, isTrendMetr);
+    if (fit) {
+        addFitTraces(traces, annotations, trendAnnotationMap, fit, isTrendMetr);
     }
 
     // Update trend chart title based on framing
     const trendTitle = document.getElementById('trend-title');
     const trendSubtitle = document.getElementById('trend-subtitle');
     if (trendTitle && trendSubtitle) {
-        const scoreLabel = appState.currentBenchmark === 'eci' ? 'ECI' : 'Score';
+        const scoreLabel = benchmarkShortName();
         const scoreLabelLower = appState.currentBenchmark === 'eci' ? 'ECI' : 'score';
-        if (countryFit) {
-            const since = parseUTCDate(countryFit.window_start).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+        if (fit && fit.source === 'country') {
+            const since = parseUTCDate(fit.windowStart).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
             trendTitle.textContent = `${scoreLabel} Frontier Trends: China vs US`;
             trendSubtitle.textContent = `Each country's record-setting releases since ${since} and the trendlines behind the headline; `
                 + `the black marker is the headline lag. Faded points are all models, other countries included.`;
+        } else if (fit) {
+            const framingLabel = appState.framing === 'china' ? 'China vs US' : 'Open vs Closed';
+            trendTitle.textContent = `${scoreLabel} Frontier Trends: ${framingLabel}`;
+            trendSubtitle.textContent = `Record-setting ${fit.leaderName.toLowerCase()} and ${fit.laggardName.toLowerCase()} releases and the `
+                + `trendlines behind the trend gap; the black marker is that gap. Faded points are all models.`;
         } else {
             const framingLabel = appState.framing === 'china' ? 'China vs US/Other' : 'Open vs Closed';
             trendTitle.textContent = `${scoreLabel} Growth Trends: ${framingLabel}`;
@@ -1194,43 +1289,6 @@ function renderTrendChart(data) {
     const yAxisTitle = appState.currentBenchmark === 'eci' ? 'ECI Score' :
                        appState.currentBenchmark === 'metr_time_horizon' ? 'p50 Time Horizon (minutes)' :
                        (benchmarkMetadata?.unit || 'Score');
-
-    // ECI-specific reference annotations (only show for ECI benchmark)
-    const eciAnnotations = appState.currentBenchmark === 'eci' ? [
-        {
-            x: 1,
-            y: 130,
-            xref: 'paper',
-            yref: 'y',
-            text: 'Claude 3.5 Sonnet (130)',
-            showarrow: false,
-            xanchor: 'right',
-            yanchor: 'bottom',
-            font: { size: 10, color: '#888' }
-        },
-        {
-            x: 1,
-            y: 150,
-            xref: 'paper',
-            yref: 'y',
-            text: 'GPT-5 (150)',
-            showarrow: false,
-            xanchor: 'right',
-            yanchor: 'bottom',
-            font: { size: 10, color: '#888' }
-        },
-        {
-            x: 1,
-            y: 160.87,
-            xref: 'paper',
-            yref: 'y',
-            text: 'Claude Fable 5 (161)',
-            showarrow: false,
-            xanchor: 'right',
-            yanchor: 'bottom',
-            font: { size: 10, color: '#888' }
-        }
-    ] : [];
 
     // Trend-gap summary box: horizontal offset between the two fitted
     // frontier trend lines (backward-looking), its velocity, and the
@@ -1266,12 +1324,12 @@ function renderTrendChart(data) {
                 boxText += `<br>90% CI ${fmtD(trendGap.projected_catchup_ci_90[0])} – ${fmtD(trendGap.projected_catchup_ci_90[1])}`;
             }
         }
-        // The drawn dotted lines are client-side raw-space fits over ALL
-        // models; this box quantifies the frontier-only fit in transform
-        // space, so say so.
         boxText += `<br><i>frontier-model fit, ${trendGap.transform} space</i>`;
     }
-    if (boxText) {
+    // On a phone the box would cover most of the plot; the subtitle and
+    // legend already name the marker.
+    const trendNarrow = (document.getElementById('trend-chart')?.clientWidth || 1000) < 640;
+    if (boxText && !trendNarrow) {
         annotations.push({
             x: 0.02,
             y: 0.98,
@@ -1294,7 +1352,10 @@ function renderTrendChart(data) {
         title: { text: '', font: { size: 16 } },
         margin: { l: 60, r: 60, t: 40, b: 60 },
         height: 500,
-        xaxis: { title: 'Model Release Date' },
+        // Stop shortly after today: autorange otherwise pads out to empty
+        // future quarters.
+        xaxis: { title: 'Model Release Date', range: dateAxisRange(models, today) },
+        ...(trendNarrow ? { legend: { orientation: 'h', y: -0.25 } } : {}),
         yaxis: {
             title: yAxisTitle,
             ...(isTrendMetr ? {
@@ -1303,53 +1364,8 @@ function renderTrendChart(data) {
                 dtick: 1, // Show only powers of 10
             } : {}),
         },
-        annotations: [
-            ...annotations,
-            ...eciAnnotations
-        ],
+        annotations,
         shapes: [
-            // ECI-specific reference lines (only for ECI benchmark)
-            ...(appState.currentBenchmark === 'eci' ? [
-                {
-                    type: 'line',
-                    y0: 130,
-                    y1: 130,
-                    x0: 0,
-                    x1: 1,
-                    xref: 'paper',
-                    line: {
-                        color: 'rgba(150, 150, 150, 0.4)',
-                        width: 1,
-                        dash: 'dot'
-                    }
-                },
-                {
-                    type: 'line',
-                    y0: 150,
-                    y1: 150,
-                    x0: 0,
-                    x1: 1,
-                    xref: 'paper',
-                    line: {
-                        color: 'rgba(150, 150, 150, 0.4)',
-                        width: 1,
-                        dash: 'dot'
-                    }
-                },
-                {
-                    type: 'line',
-                    y0: 160.87,
-                    y1: 160.87,
-                    x0: 0,
-                    x1: 1,
-                    xref: 'paper',
-                    line: {
-                        color: 'rgba(150, 150, 150, 0.4)',
-                        width: 1,
-                        dash: 'dot'
-                    }
-                }
-            ] : []),
             // Today marker (always show)
             {
                 type: 'line',
@@ -1535,7 +1551,27 @@ function renderChart(data) {
     const gapLabelY = [];
     const gapLabelText = [];
     const sortedMatchedGaps = [...matchedGaps].sort((a, b) => getGapClosedScore(a) - getGapClosedScore(b));
-    let lastLabelledLogScore = -Infinity;
+    // Label only the most recent matches on the chart (one on a phone); the
+    // rest stay readable on hover over the matching open model's square.
+    // Labelling every connector made the early-2024 cluster unreadable.
+    const narrowChart = (document.getElementById('chart')?.clientWidth || 1000) < 640;
+    const labelledGaps = new Set();
+    {
+        const scores = matchedGaps.map(getGapClosedScore).filter(Number.isFinite);
+        const span = isMetr
+            ? Math.log10(Math.max(...scores)) - Math.log10(Math.min(...scores))
+            : Math.max(...scores) - Math.min(...scores);
+        const pos = (g) => (isMetr ? Math.log10(getGapClosedScore(g)) : getGapClosedScore(g));
+        const kept = [];
+        // Most recent first; skip a label that would sit on top of one
+        // already kept (within ~6% of the score range).
+        for (const g of [...matchedGaps].sort((a, b) => new Date(b.closed_date) - new Date(a.closed_date))) {
+            if (kept.length >= (narrowChart ? 1 : 4)) break;
+            if (kept.some(k => Math.abs(pos(k) - pos(g)) < span * 0.06)) continue;
+            kept.push(g);
+            labelledGaps.add(g);
+        }
+    }
 
     sortedMatchedGaps.forEach(gap => {
         const closedDate = new Date(gap.closed_date);
@@ -1556,16 +1592,12 @@ function renderChart(data) {
             },
         });
 
+        if (!labelledGaps.has(gap)) return;
         if (isMetr) {
-            // For log-scale, skip labels too close together (< 0.4 decades apart)
-            const logScore = Math.log10(closedScore);
-            if ((logScore - lastLabelledLogScore) >= 0.4) {
-                lastLabelledLogScore = logScore;
-                // Offset the label Y upward by a factor (multiply score for log-scale offset)
-                gapLabelX.push(midDate.toISOString().split('T')[0]);
-                gapLabelY.push(closedScore * 1.8);
-                gapLabelText.push(`${gap.gap_months} mo`);
-            }
+            // Text trace on the log axis, offset upward by a factor.
+            gapLabelX.push(midDate.toISOString().split('T')[0]);
+            gapLabelY.push(closedScore * 1.8);
+            gapLabelText.push(`${gap.gap_months} mo`);
         } else {
             annotations.push({
                 x: midDate.toISOString().split('T')[0],
@@ -1640,7 +1672,13 @@ function renderChart(data) {
         );
     }
 
-    gaps.filter(g => !g.matched).forEach(gap => {
+    // Every unmatched model gets its dotted line to today; only the oldest
+    // (it sets the minimum current gap) is labelled, as the stacked labels
+    // of the rest collided at today's edge. Hover gives each one's age.
+    const unmatchedGaps = gaps.filter(g => !g.matched);
+    const oldestUnmatched = unmatchedGaps.reduce(
+        (best, g) => (best == null || g.gap_months > best.gap_months ? g : best), null);
+    unmatchedGaps.forEach(gap => {
         const closedScore = getGapClosedScore(gap);
         shapes.push({
             type: 'line',
@@ -1655,7 +1693,7 @@ function renderChart(data) {
             },
         });
 
-        // Annotation for unmatched
+        if (gap !== oldestUnmatched) return;
         annotations.push({
             x: today,
             y: closedScore,
@@ -1706,35 +1744,35 @@ function renderChart(data) {
     if (appState.currentBenchmark === 'eci') {
         annotations.push(
             {
-                x: 1,
+                x: 0.01,
                 y: 130,
                 xref: 'paper',
                 yref: 'y',
                 text: 'Claude 3.5 Sonnet (130)',
                 showarrow: false,
-                xanchor: 'right',
+                xanchor: 'left',
                 yanchor: 'bottom',
                 font: { size: 10, color: '#aaa' }
             },
             {
-                x: 1,
+                x: 0.01,
                 y: 150,
                 xref: 'paper',
                 yref: 'y',
                 text: 'GPT-5 (150)',
                 showarrow: false,
-                xanchor: 'right',
+                xanchor: 'left',
                 yanchor: 'bottom',
                 font: { size: 10, color: '#aaa' }
             },
             {
-                x: 1,
+                x: 0.01,
                 y: 160.87,
                 xref: 'paper',
                 yref: 'y',
                 text: 'Claude Fable 5 (161)',
                 showarrow: false,
-                xanchor: 'right',
+                xanchor: 'left',
                 yanchor: 'bottom',
                 font: { size: 10, color: '#aaa' }
             }
@@ -1752,6 +1790,7 @@ function renderChart(data) {
         margin: { l: 60, r: 100, t: 20, b: 60 },
         xaxis: {
             title: 'Model Release Date',
+            range: dateAxisRange(models, today),
             titlefont: { size: 12, color: COLORS.annotation },
             tickfont: { size: 11, color: COLORS.annotation },
             gridcolor: COLORS.gridline,
@@ -1837,9 +1876,9 @@ function escapeHTML(s) {
 }
 
 function getLaggardAccent(framing) {
-    return framing === 'china'
-        ? { dot: '#e53935', area: 'rgba(229, 57, 53, 0.18)' }   // red (China laggard)
-        : { dot: '#5c6bc0', area: 'rgba(92, 107, 192, 0.18)' }; // indigo (open laggard)
+    // The laggard is indigo in both framings (open models, Chinese models),
+    // matching the headline text and the main chart.
+    return { dot: '#5c6bc0', area: 'rgba(92, 107, 192, 0.18)' };
 }
 
 function getHistoricalLabels(framing) {
@@ -1995,7 +2034,7 @@ function drawGapChartAxes(svg, g, titles) {
  * culled left to right so they never overlap. `events` carry `_d` (Date)
  * and `display`.
  */
-function drawReleaseTicks(svg, events, g) {
+function drawReleaseTicks(svg, events, g, withLabels = true) {
     const { M, innerH, W, x } = g;
     const tickTopY = M.top + innerH;
     const ROT_DEG = 40;
@@ -2011,6 +2050,7 @@ function drawReleaseTicks(svg, events, g) {
             class: 'us-tick',
             x1: xp, x2: xp, y1: TICK_TOP, y2: TICK_BOTTOM,
         }));
+        if (!withLabels) continue;
         // The bottom margin fits ~23 rotated characters before the label
         // reaches the x-axis title; verbose names are truncated.
         const fullText = shortenModelName(ev.display);
@@ -2115,6 +2155,7 @@ function setHistoricalMethodNote(text) {
 function scoreUnitLabels() {
     const meta = getBenchmarkMetadata() || {};
     if (appState.currentBenchmark === 'eci') return { long: 'ECI points', short: 'ECI pts' };
+    if (appState.currentBenchmark === 'metr_time_horizon') return { long: 'minutes', short: 'min' };
     if (meta.scale === 100) return { long: 'percentage points', short: 'pp' };
     const u = meta.unit || 'points';
     return { long: u, short: u };
@@ -2301,7 +2342,7 @@ function renderGapContext(tl, data, mode) {
                 `${escapeHTML(labels.laggard)} model (${name(c.current_laggard_model)}, ${escapeHTML(mys(c.current_laggard_date))}) ` +
                 `has not yet caught up to any of them.`;
         }
-        if (estVal != null && nUnmatched > 0) {
+        if (appState.gapDetail && estVal != null && nUnmatched > 0) {
             lead += ` Counting the ${nUnmatched} unmatched ${escapeHTML(labels.leader)} frontier model${nUnmatched === 1 ? '' : 's'} ` +
                 `by age, the expected eventual lead is <strong>${estVal.toFixed(1)} months</strong> (survival analysis, a forecast).`;
         }
@@ -2343,7 +2384,7 @@ function renderGapContext(tl, data, mode) {
     const median = c[`median_${vk}`];
     const belowMedian = median != null && cur < Number(median);
     let small = '';
-    if (!belowMedian && !c.is_record_low) {
+    if (!appState.gapDetail || (!belowMedian && !c.is_record_low)) {
         small = '';
     } else if (c.is_record_low) {
         small = `This is the smallest ${noun} in the tracked period.`;
@@ -2364,25 +2405,22 @@ function renderGapContext(tl, data, mode) {
             sub: `${name(c.current_leader_model)} vs ${name(c.current_laggard_model)} · since ${escapeHTML(mys(c.current_since))}`,
         });
     } else {
+        // One "today" tile: the matched lead, as a range when an unmatched
+        // leader release sets a lower bound (the shaded band on the chart).
+        const lowerToday = c.current_lower_months != null ? Number(c.current_lower_months) : null;
+        const rangeToday = lowerToday != null && c.current_next_leader_model && lowerToday < cur - 0.05;
         tiles.push({
-            label: 'Matched lead',
-            value: fmtS(cur),
+            label: 'Gap today',
+            value: rangeToday ? `${lowerToday.toFixed(1)}–${cur.toFixed(1)} mo` : fmtS(cur),
             sub: staleDays > STALE_AFTER_DAYS
                 ? `scores through ${escapeHTML(mys(tl.last_model_date))}`
-                : `rising since ${escapeHTML(mys(c.current_since))}`,
+                : (rangeToday
+                    ? `${name(c.current_laggard_model)} has matched ${name(c.current_reference_model)}, not ${name(c.current_next_leader_model)}`
+                    : `rising since ${escapeHTML(mys(c.current_since))}`),
         });
-        if (c.current_lower_months != null) {
-            const lower = Number(c.current_lower_months);
-            tiles.push({
-                label: 'Measured range',
-                value: c.current_next_leader_model ? `${lower.toFixed(1)} to ${cur.toFixed(1)} mo` : `${cur.toFixed(1)} mo`,
-                sub: c.current_next_leader_model
-                    ? `oldest unmatched: ${name(c.current_next_leader_model)} (${escapeHTML(mys(c.current_next_leader_date))})`
-                    : `every ${escapeHTML(labels.leader)} frontier model has been matched`,
-            });
-        }
         if (estVal != null) {
             tiles.push({
+                detail: true,
                 label: 'Expected lead',
                 value: `${estVal.toFixed(1)} mo`,
                 sub: nUnmatched > 0
@@ -2410,7 +2448,7 @@ function renderGapContext(tl, data, mode) {
         tiles.push({ label: 'Peak', value: fmtS(c.peak[vk]), sub: `${escapeHTML(mys(c.peak.date))} · ${pair(c.peak)}` });
     }
     if (c.trough) {
-        tiles.push({ label: 'Low', value: fmtS(c.trough[vk]), sub: `${escapeHTML(mys(c.trough.date))} · ${pair(c.trough)}` });
+        tiles.push({ detail: true, label: 'Low', value: fmtS(c.trough[vk]), sub: `${escapeHTML(mys(c.trough.date))} · ${pair(c.trough)}` });
     }
     const t12 = c.trailing_12m;
     if (t12 && t12[`mean_${vk}`] != null) {
@@ -2420,10 +2458,14 @@ function renderGapContext(tl, data, mode) {
             const sign = ch > 0 ? '+' : (ch < 0 ? '−' : '±');
             sub = `${sign}${Math.abs(ch).toFixed(1)} ${unitShort} vs. the 12 months before (${fmtS(t12[`prior_mean_${vk}`])})`;
         }
-        tiles.push({ label: 'Last 12 months, average', value: fmtS(t12[`mean_${vk}`]), sub });
+        // Detail only: the headline is already a 12-month average (to the
+        // latest release rather than today), so two near-identical figures
+        // would sit side by side.
+        tiles.push({ detail: true, label: 'Last 12 months, average', value: fmtS(t12[`mean_${vk}`]), sub });
     }
     if (median != null) {
         tiles.push({
+            detail: true,
             label: 'Median since tracking began',
             value: fmtS(median),
             sub: `today is at or above ${escapeHTML(String(c.percentile_of_current))}% of tracked days`,
@@ -2435,7 +2477,7 @@ function renderGapContext(tl, data, mode) {
         ${staleNote ? `<p class="gap-context__note is-warning">${staleNote}</p>` : ''}
         ${small ? `<p class="gap-context__note">${small}</p>` : ''}
         <div class="gap-context__tiles">
-            ${tiles.map(t => `
+            ${tiles.filter(t => appState.gapDetail || !t.detail).map(t => `
                 <div class="gap-tile">
                     <div class="gap-tile__label">${t.label}</div>
                     <div class="gap-tile__value">${t.value}</div>
@@ -2469,7 +2511,8 @@ function renderGapTimelineChart(data, tl) {
     }
 
     const stats = data.statistics || {};
-    const currentEstimate = appState.gapMetric === 'current' ? (stats.current_gap_estimate || null) : null;
+    // The survival forecast is drawn only in the detail view.
+    const currentEstimate = appState.gapDetail ? (stats.current_gap_estimate || null) : null;
     const ctx = tl.context || {};
     const asOf = parseUTCDate(tl.as_of);
     const startDate = parseUTCDate(tl.start);
@@ -2532,7 +2575,7 @@ function renderGapTimelineChart(data, tl) {
     setHistoricalMethodNote(
         `Gap on each date: months since the most recent ${labels.leader} frontier model that the best ${labels.laggard} model ` +
         `available that day had plausibly caught up to (Epoch AI's day-by-day method` +
-        `${usesBootstrap ? '; paired-bootstrap criterion for ECI' : ''}). The headline average gap is the mean of this line. ` +
+        `${usesBootstrap ? '; paired-bootstrap criterion for ECI' : ''}). The headline average is this line averaged over its stated window. ` +
         `It counts only ${labels.leader} models the ${labels.laggard} frontier has already matched, so it can sit below the ` +
         `survival-analysis current-gap estimate after a run of unmatched ${labels.leader} releases. ` +
         `Drops mark ${labels.laggard} releases that matched a newer ${labels.leader} model, or ${labels.leader} releases ` +
@@ -2549,7 +2592,7 @@ function renderGapTimelineChart(data, tl) {
         ];
         if (hasReversal) items.push(['is-reversal', `Criterion reversal: new ${labels.laggard} record not significantly ahead of a model the previous one had matched`]);
         items.push(['is-band', `Measured range: from the age of the oldest unmatched ${labels.leader} model up to the matched lead`]);
-        if (expectedPts.length) items.push(['is-expected', `Expected lead: survival analysis counting unmatched ${labels.leader} models by age (a forecast)`]);
+        if (appState.gapDetail && expectedPts.length) items.push(['is-expected', `Expected lead: survival analysis counting unmatched ${labels.leader} models by age (a forecast)`]);
         items.push(['is-tick', `${cap(labels.leader)} frontier release`]);
         items.push(['is-lookback', "Last date the matched lead was at least today's"]);
         // Only worth a legend entry once the dashed tail is visible (~2 weeks).
@@ -2563,21 +2606,30 @@ function renderGapTimelineChart(data, tl) {
 
     // ---- geometry (same conventions as the per-release view, plus a
     // caption line at the top so the PNG export carries the numbers) ----
+    // The simple default drops the two-row drop-label band (top) and the
+    // rotated release names (bottom), so its margins, and height, shrink;
+    // the plot area itself is the same size in both modes.
+    const detail = appState.gapDetail;
     const W = 1200;
-    const H = 680;
     // Wider right margin than the per-release view: the today block
     // carries up to three short lines of text.
-    const M = { top: 100, right: 132, bottom: 175, left: 84 };
+    const M = detail
+        ? { top: 100, right: 132, bottom: 175, left: 84 }
+        : { top: 44, right: 132, bottom: 95, left: 84 };
+    const H = M.top + 405 + M.bottom;
     const innerW = W - M.left - M.right;
     const innerH = H - M.top - M.bottom;
     const pad = (asOf - startDate) * 0.03;
     const xMin = new Date(startDate.getTime() - pad);
     const xMax = new Date(asOf.getTime() + pad);
     const yValues = segs.flatMap(s => [s.gapStart, s.gapEnd]);
-    if (currentEstimate && Number.isFinite(currentEstimate.estimated_current_gap)) {
-        yValues.push(currentEstimate.estimated_current_gap);
+    // The forecast only stretches the axis when it is drawn.
+    if (detail) {
+        if (currentEstimate && Number.isFinite(currentEstimate.estimated_current_gap)) {
+            yValues.push(currentEstimate.estimated_current_gap);
+        }
+        for (const p of expectedPts) yValues.push(p.v);
     }
-    for (const p of expectedPts) yValues.push(p.v);
     const yMax = Math.ceil(Math.max(...yValues, 1) / 3) * 3 + 1;
     const yMin = 0;
     const x = (d) => M.left + (innerW * (d - xMin)) / (xMax - xMin);
@@ -2594,6 +2646,7 @@ function renderGapTimelineChart(data, tl) {
         'aria-label': `Months the ${labels.laggard} frontier trailed the ${labels.leader} frontier, by date`,
     });
     svg.dataset.view = 'timeline';
+    svg.style.aspectRatio = `${W} / ${H}`;
 
     // Caption + <title>: the exported PNG and screen readers get the
     // framing, benchmark, date and headline numbers without the page.
@@ -2677,7 +2730,7 @@ function renderGapTimelineChart(data, tl) {
     svg.appendChild(svgEl('polyline', { class: 'gap-line is-lower', points: lowerPts.map(fmt).join(' ') }));
 
     // ---- expected lead: survival estimate recomputed over time ----
-    if (expectedPts.length >= 2) {
+    if (detail && expectedPts.length >= 2) {
         svg.appendChild(svgEl('polyline', {
             class: 'expected-line',
             points: expectedPts.map(p => fmt([x(p._d), y(p.v)])).join(' '),
@@ -2708,9 +2761,9 @@ function renderGapTimelineChart(data, tl) {
     const leaderEvents = (tl.leader_frontier || [])
         .map(r => ({ _d: parseUTCDate(r.date), display: r.model }))
         .sort((a, b) => a._d - b._d);
-    drawReleaseTicks(svg, leaderEvents, geom);
+    drawReleaseTicks(svg, leaderEvents, geom, detail);
 
-    // ---- drop events: dots + 2-row labels ----
+    // ---- drop events: dots + 2-row labels (labels only with detail) ----
     const items = (tl.events || [])
         .map(ev => {
             const d = parseUTCDate(ev.date);
@@ -2726,7 +2779,9 @@ function renderGapTimelineChart(data, tl) {
         })
         .filter(it => it.xp >= M.left && it.xp <= W - M.right)
         .sort((a, b) => a.xp - b.xp);
-    const { placed, upperRowY } = placeLabelBand(items, M);
+    const { placed, upperRowY } = detail
+        ? placeLabelBand(items, M)
+        : { placed: items.map(it => ({ ...it, labelY: null })), upperRowY: null };
     drawLabelBand(svg, placed, upperRowY, M, 'cn-dot');
 
     // ---- today marker + text block in the right margin ----
@@ -2760,7 +2815,7 @@ function renderGapTimelineChart(data, tl) {
     const estFallback = currentEstimate && Number.isFinite(currentEstimate.estimated_current_gap)
         ? currentEstimate.estimated_current_gap : null;
     const est = estFromSeries != null ? estFromSeries : estFallback;
-    if (est != null) {
+    if (detail && est != null) {
         const yEst = y(est);
         if (estFromSeries != null) {
             svg.appendChild(svgEl('circle', { class: 'expected-dot', cx: xToday, cy: yEst, r: 4.5 }));
@@ -3153,7 +3208,7 @@ function renderHistoricalMatchesChart(data) {
     }
 
     const stats = data.statistics || {};
-    const isCurrentGapMode = appState.gapMetric === 'current';
+    const isCurrentGapMode = appState.gapDetail;
     const currentEstimate = isCurrentGapMode ? (stats.current_gap_estimate || null) : null;
 
     // ---- datapoints: the server-computed per-reference-model matches ----
@@ -3570,55 +3625,44 @@ function inlineComputedStyles(source, target) {
 }
 
 /**
- * Update statistics display
+ * Stat cards: the headline average and its score-gap counterpart (both
+ * over the headline window), the gap today (the same measured range as the
+ * Gap Over Time chart), and how many leader releases are still unmatched.
  */
-function updateStats(stats) {
-    document.getElementById('stat-avg-gap').textContent =
-        `${stats.avg_horizontal_gap_months} mo`;
-    document.getElementById('stat-ci').textContent =
-        `${stats.ci_90_low} - ${stats.ci_90_high} mo`;
-    document.getElementById('stat-matched').textContent =
-        stats.total_matched;
-    document.getElementById('stat-unmatched').textContent =
-        stats.total_unmatched;
+function updateStats(currentData) {
+    const stats = currentData.statistics || {};
+    const h = stats.headline_gap;
+    const labels = getFramingLabels();
+    const unit = scoreUnitLabels();
+    const since = !h ? ''
+        : (h.full_history
+            ? ` since ${fmtMonthYear(parseUTCDate(h.window_start), false)}`
+            : `, ${h.window_months || 12} months to ${fmtMonthYear(parseUTCDate(h.window_end), false)}`);
+    const setCard = (id, value, label) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = value;
+        const lab = el.closest('.stat-card')?.querySelector('.stat-label');
+        if (lab) lab.textContent = label;
+    };
 
-    // Update stat labels for average gap view. The interval is the 5th-95th
-    // percentile spread of the day-by-day gap series (dispersion), not a
-    // confidence interval for the average -- label it honestly.
-    document.querySelector('#stat-avg-gap').closest('.stat-card').querySelector('.stat-label').textContent = 'Average Gap';
-    document.querySelector('#stat-ci').closest('.stat-card').querySelector('.stat-label').textContent = '90% Range (Daily Gap)';
-}
+    const avg = h ? h.months : stats.avg_horizontal_gap_months;
+    setCard('stat-avg-gap', avg != null ? `${Number(avg).toFixed(1)} mo` : '--', `Average gap${since}`);
+    const scoreGap = h ? h.score_gap : stats.avg_vertical_gap;
+    setCard('stat-score-gap', scoreGap != null ? `${Number(scoreGap).toFixed(1)} ${unit.short}` : '--',
+        `Average score gap${since}`);
 
-/**
- * Update statistics display for current gap view
- */
-function updateStatsCurrentGap(stats) {
-    const estimate = stats.current_gap_estimate || {};
-    const bracket = stats.current_lag_bracket || null;
-
-    document.getElementById('stat-avg-gap').textContent =
-        `${estimate.estimated_current_gap || '--'} mo`;
-
-    // Prefer the adjacent-release lag bracket [under, over] when available:
-    // it bounds the instantaneous gap between the two leader releases that
-    // flank the laggard's current level.
-    const ciEl = document.getElementById('stat-ci');
-    const ciLabel = ciEl.closest('.stat-card').querySelector('.stat-label');
-    if (bracket && bracket.under_months !== null && bracket.over_months !== null) {
-        ciEl.textContent = `${bracket.under_months} – ${bracket.over_months} mo`;
-        ciLabel.textContent = 'Release-Lag Bracket';
-    } else {
-        ciEl.textContent = `≥ ${estimate.min_current_gap || '--'} mo`;
-        ciLabel.textContent = 'Minimum Bound';
+    const c = currentData.gap_timeline?.context;
+    let today = '--';
+    if (c && c.current_gap_months != null) {
+        const cur = Number(c.current_gap_months);
+        const lower = c.current_lower_months != null ? Number(c.current_lower_months) : null;
+        today = lower != null && c.current_next_leader_model && lower < cur - 0.05
+            ? `${lower.toFixed(1)}–${cur.toFixed(1)} mo`
+            : `${cur.toFixed(1)} mo`;
     }
-
-    document.getElementById('stat-matched').textContent =
-        stats.total_matched;
-    document.getElementById('stat-unmatched').textContent =
-        stats.total_unmatched;
-
-    // Update stat label for current gap view
-    document.querySelector('#stat-avg-gap').closest('.stat-card').querySelector('.stat-label').textContent = 'Est. Current Gap';
+    setCard('stat-today', today, 'Gap today');
+    setCard('stat-unmatched', String(stats.total_unmatched ?? '--'), `Unmatched ${labels.closed} models`);
 }
 
 /**

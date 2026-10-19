@@ -309,6 +309,20 @@ def test_trend_gap_ci_suppressed_for_small_groups():
     assert tg["n_boot_valid"] == 0
 
 
+def test_trend_gap_publishes_plot_fields():
+    # Laggard follows the identical trajectory 6 months later: the marker
+    # level is the laggard trend at as_of and the leader reached it ~6 mo earlier.
+    lead = linear_series("2024-01-01", 13, 100.0, 1.0, False, "closed")
+    lag = [(m, d + pd.Timedelta(days=183), s, True)
+           for m, d, s, _ in linear_series("2024-01-01", 13, 100.0, 1.0, True, "open")]
+    tg = compute_trend_gap(make_df(lead + lag), n_boot=0)
+    p = tg["plot"]
+    assert len(p["leader_points"]) == 13 and len(p["laggard_points"]) == 13
+    assert p["leader_trendline"][-1]["date"] == p["laggard_trendline"][-1]["date"] == tg["as_of"][:10]
+    reach, as_of = pd.Timestamp(p["leader_reached_level_date"]), pd.Timestamp(tg["as_of"])
+    assert (as_of - reach).days / DAYS_PER_MONTH == pytest.approx(tg["backward_gap_months"], abs=0.05)
+
+
 def test_trend_gap_reported_fields_json_safe():
     lead = linear_series("2024-01-01", 13, 100.0, 1.0, False, "closed")
     lag = linear_series("2024-01-01", 13, 92.0, 1.0, True, "open")
