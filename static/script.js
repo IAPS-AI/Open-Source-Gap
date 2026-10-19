@@ -946,14 +946,25 @@ function renderAll() {
         return;
     }
 
-    updateBenchmarkDisplay();
-    updateFramingLabels();
-    renderChart(currentData);
-    renderTrendChart(currentData);
-    renderHistoricalChart(currentData);
-    updateDisplay();
-    updateLastUpdated(currentData.last_updated);
-    renderTable(currentData.trend_models || currentData.models);
+    // Each section renders on its own: one failing (e.g. a script/HTML
+    // version mismatch) must not blank the table and timestamp after it.
+    const steps = [
+        ['benchmark display', () => updateBenchmarkDisplay()],
+        ['framing labels', () => updateFramingLabels()],
+        ['main chart', () => renderChart(currentData)],
+        ['trend chart', () => renderTrendChart(currentData)],
+        ['gap over time', () => renderHistoricalChart(currentData)],
+        ['headline and stats', () => updateDisplay()],
+        ['last updated', () => updateLastUpdated(currentData.last_updated)],
+        ['data table', () => renderTable(currentData.trend_models || currentData.models)],
+    ];
+    for (const [name, step] of steps) {
+        try {
+            step();
+        } catch (err) {
+            console.error(`Rendering ${name} failed:`, err);
+        }
+    }
 }
 
 /**

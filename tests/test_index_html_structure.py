@@ -232,3 +232,34 @@ def test_headline_and_trend_fit_wired_in_js():
     ):
         assert needle in js, f"Missing in script.js: {needle}"
     assert "gapMetric" not in js
+
+
+def test_asset_urls_versioned_and_cache_busted_on_deploy():
+    """A deploy once served new HTML against a browser-cached old
+    script.js?v=31 (the version was never bumped): the old script threw on a
+    removed stat card and the table and 'Last updated' stayed empty. Both
+    page copies version both assets identically, and the Pages deploy
+    stamps them with the commit so a stale pairing cannot recur."""
+    import re
+    root = Path(__file__).parent.parent
+    versions = []
+    for name in ("index.html", "templates/index.html"):
+        html = (root / name).read_text(encoding="utf-8")
+        js = re.search(r'static/script\.js\?v=([^"]+)"', html)
+        css = re.search(r'static/style\.css\?v=([^"]+)"', html)
+        assert js and css, f"Unversioned asset URL in {name}"
+        versions.append((js.group(1), css.group(1)))
+    assert versions[0] == versions[1]
+    workflow = (root / ".github" / "workflows" / "deploy_pages.yml").read_text(encoding="utf-8")
+    assert "Cache-bust static assets" in workflow
+    assert "GITHUB_SHA" in workflow
+
+
+def test_render_all_isolates_sections():
+    js = (Path(__file__).parent.parent / "static" / "script.js").read_text(
+        encoding="utf-8"
+    )
+    body = js[js.index("function renderAll()"):]
+    body = body[:body.index("\n}\n")]
+    assert "try {" in body and "catch (err)" in body
+    assert "renderTable(" in body and "updateLastUpdated(" in body

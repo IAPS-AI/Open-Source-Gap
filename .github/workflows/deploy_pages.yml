@@ -27,6 +27,19 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      # Pages lets browsers cache assets for 10 minutes. Stamping the asset
+      # URLs with the commit means a deploy never pairs new HTML with a
+      # browser-cached old script or stylesheet.
+      - name: Cache-bust static assets
+        run: |
+          v="${GITHUB_SHA::8}"
+          sed -i -E \
+            -e "s#static/script\.js(\?v=[^\"]*)?\"#static/script.js?v=${v}\"#" \
+            -e "s#static/style\.css(\?v=[^\"]*)?\"#static/style.css?v=${v}\"#" \
+            index.html
+          grep -q "static/script.js?v=${v}\"" index.html
+          grep -q "static/style.css?v=${v}\"" index.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
