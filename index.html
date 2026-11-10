@@ -1,209 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Open Source Gap</title>
-    <meta name="description" content="Interactive visualization of the performance gap between frontier open and closed-source AI models across various benchmarks including ECI, GPQA, MATH, SWE-Bench, and more.">
-    
-    <!-- Fonts -->
+    <meta name="description" content="How many months open-weight AI models trail the most capable closed models, and Chinese models trail U.S. ones, on the Epoch Capabilities Index. Updated daily from Epoch AI data.">
+    <meta name="color-scheme" content="light dark">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Open Source Gap">
+    <meta property="og:description" content="How many months open-weight AI models trail the most capable closed models, and Chinese models trail U.S. ones, on the Epoch Capabilities Index. Updated daily.">
+    <meta property="og:url" content="https://os-gap.theo-bearman.com/">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='8' cy='16' r='6' fill='%23101828'/%3E%3Ccircle cx='24' cy='16' r='4.5' fill='%23fff' stroke='%232f55ff' stroke-width='3'/%3E%3C/svg%3E">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Plotly.js -->
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    
-    <!-- Styles -->
-    <link rel="stylesheet" href="static/style.css?v=32">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/style.css?v=35">
 </head>
 <body>
-    <div class="title-bar">
-        <div class="title-bar-bg"></div>
-        <div class="title-bar-content">
-            <div class="title-row">
-                <h1 class="site-title">Open Source Gap</h1>
-            </div>
-            <p class="site-tagline">Tracking the capability gap between open and closed AI models · updated daily from Epoch AI and METR</p>
-        </div>
-    </div>
-    <div class="container">
-        <header class="header">
-            <h1 id="main-title">The performance gap between frontier <span class="text-open" id="category-open">open</span> and <span class="text-closed" id="category-closed">closed-source</span> models on <span id="benchmark-name">ECI</span> <span id="headline-verb">is around</span> <span id="gap-value">--</span> months<span id="headline-suffix"></span></h1>
-            <p class="subtitle" id="benchmark-source">Source: Epoch AI Epoch Capabilities Index (Frontier Models only).</p>
-            <p class="subtitle" id="headline-method-note" hidden></p>
+    <div class="page">
+        <header class="masthead">
+            <a class="wordmark" href="./" aria-label="Open Source Gap, home">
+                <svg class="wordmark-glyph" viewBox="0 0 34 12" aria-hidden="true">
+                    <circle class="glyph-leader" cx="6" cy="6" r="5"/>
+                    <circle class="glyph-laggard" cx="28" cy="6" r="4"/>
+                </svg>
+                Open Source Gap
+            </a>
+            <nav class="views" aria-label="Comparison">
+                <a href="#open-closed" data-view-link="open_closed" aria-current="true">Open vs closed</a>
+                <a href="#china-us" data-view-link="china_us">China vs U.S.</a>
+            </nav>
+            <p class="updated">Updated <time id="updated">daily</time></p>
         </header>
 
-        <div class="controls-panel">
-            <div class="control-group">
-                <span class="control-label">Benchmark:</span>
-                <select id="benchmark-select" class="benchmark-select">
-                    <option value="eci">Epoch Capabilities Index (ECI)</option>
-                    <!-- Additional options will be populated by script.js -->
-                </select>
-            </div>
-            <div class="control-group">
-                <span class="control-label">Framing:</span>
-                <div class="toggle-buttons" id="framing-toggle">
-                    <button class="toggle-btn active" data-value="open">Open vs Closed</button>
-                    <button class="toggle-btn" data-value="china">China vs US</button>
+        <main>
+            <section class="lead" aria-labelledby="headline">
+                <h1 id="headline"><span id="headline-who">Open-weight models</span> are <span class="figure-value" id="headline-months">months</span> <span id="headline-side">behind</span> <span id="headline-whom">the closed frontier</span>.</h1>
+                <p class="lede" id="lede">The gap is how long the best open-weight AI model takes to match the most capable closed models on the Epoch Capabilities Index (ECI), which combines many benchmarks into one score. The latest figures are loading. If they do not appear, turn on JavaScript or read <a href="data.json">data.json</a>.</p>
+            </section>
+
+            <figure class="figure" id="figure">
+                <div class="figure-head">
+                    <p class="readout" id="readout">
+                        <span class="readout-value" id="readout-value"></span>
+                        <span class="readout-detail" id="readout-detail"></span>
+                    </p>
+                    <ul class="legend" aria-label="Legend">
+                        <li><svg class="key" viewBox="0 0 30 12" aria-hidden="true"><line class="key-line key-leader" x1="0" y1="6" x2="30" y2="6"/><circle class="key-dot-leader" cx="15" cy="6" r="4"/></svg><span id="legend-leader">Closed models</span></li>
+                        <li><svg class="key" viewBox="0 0 30 12" aria-hidden="true"><line class="key-line key-laggard" x1="0" y1="6" x2="30" y2="6"/><circle class="key-dot-laggard" cx="15" cy="6" r="4"/></svg><span id="legend-laggard">Open-weight models</span></li>
+                    </ul>
                 </div>
-            </div>
-        </div>
+                <div class="chart" id="chart" tabindex="0" role="group"
+                     aria-label="Charts of the two frontiers and the gap over time. Use the left and right arrow keys to move through time, Shift with an arrow to jump between releases, and Escape to return to the latest day."
+                     aria-describedby="readout"></div>
+                <figcaption id="chart-caption">
+                    Top: each dot is a model that set a new record on the Epoch Capabilities Index, and the bracket runs from the release of the newest closed model that the best open-weight model has matched to the selected day. Bottom: the gap on each day and its average over the 12 months before.
+                </figcaption>
+            </figure>
 
-        <div class="legend">
-            <div class="legend-item">
-                <span class="legend-marker closed-marker"></span>
-                <span id="legend-closed">Closed model</span>
+            <div class="notes" data-view="open_closed">
+                <section aria-labelledby="method-title">
+                    <h2 id="method-title">How the gap is measured</h2>
+                    <p>The method is <a href="https://epoch.ai/data-insights/open-closed-eci-gap">Epoch AI's</a>. Each day, it takes the open-weight model with the highest score on the <a href="https://epoch.ai/eci">Epoch Capabilities Index</a> (ECI) released so far and finds the newest record-setting closed model that it has plausibly caught up to. The gap is the time since that closed model's release.</p>
+                    <p>An open-weight model has caught up when it scores higher than the closed model in at least 5% of <span data-fill="resamples">500</span> paired bootstrap resamples of the benchmark results, which means the closed model is not significantly better. The headline is the daily gap averaged over the 12 months to the latest record-setting release.<span data-show="points" hidden> Over the same period, the best closed model led by an average of <span data-fill="eci-points"></span> ECI points.</span></p>
+                    <p data-show="fallback" hidden>Today's build could not rerun the bootstrap, so matches use a normal approximation from the published intervals, which is slightly more permissive.</p>
+                </section>
+                <section aria-labelledby="limits-title">
+                    <h2 id="limits-title">What it leaves out</h2>
+                    <p>The gap may understate how far open-weight models trail. Epoch AI notes that open-weight models tend to do worse against closed models on private benchmarks than on public ones, and that AI companies do not always release their most capable models.</p>
+                    <p>A matched score also says nothing about what a model costs to run, or about whether it reached that score by training on a closed model's outputs.</p>
+                </section>
             </div>
-            <div class="legend-item">
-                <span class="legend-marker closed-unmatched"></span>
-                <span id="legend-unmatched">Closed model not yet matched by open models</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-marker open-marker"></span>
-                <span id="legend-open">Open model</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-connector"></span>
-                <span id="legend-connector">First open model to match score</span>
-            </div>
-        </div>
 
-        <div id="chart-container">
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <p>Loading ECI data...</p>
+            <div class="notes" data-view="china_us" hidden>
+                <section aria-labelledby="method-title-country">
+                    <h2 id="method-title-country">How the gap is measured</h2>
+                    <p data-show="trend">The headline compares trendlines. Models are grouped by where Epoch AI records their developer as based, with open-weight and closed models counted alike. For each country, a straight line is fitted to the models released since 2024 that set a new record on the <a href="https://epoch.ai/eci">Epoch Capabilities Index</a> (ECI). The gap is how much earlier the U.S. line reached the level the Chinese line stood at on the date of the latest Chinese record.</p>
+                    <p data-show="no-trend" hidden>Models are grouped by where Epoch AI records their developer as based, with open-weight and closed models counted alike. There are too few record-setting models since 2024 to fit a trendline for each country, so the headline is the average of the daily gap described below, on the <a href="https://epoch.ai/eci">Epoch Capabilities Index</a> (ECI).</p>
+                    <p>The lower chart measures the gap model by model instead, with <a href="https://epoch.ai/data-insights/open-closed-eci-gap">Epoch AI's open-versus-closed method</a>. Each day, it is the time since the release of the newest record-setting U.S. model that the best Chinese model has plausibly caught up to, meaning that it scores higher in at least 5% of <span data-fill="resamples">500</span> paired bootstrap resamples of the benchmark results. That gap averaged <span data-fill="average-months">several</span> months over the 12 months to the latest record-setting release<span data-show="points" hidden>, and the best U.S. model led by an average of <span data-fill="eci-points"></span> ECI points</span>.</p>
+                    <p data-show="fallback" hidden>Today's build could not rerun the bootstrap, so matches use a normal approximation from the published intervals, which is slightly more permissive.</p>
+                </section>
+                <section aria-labelledby="limits-title-country">
+                    <h2 id="limits-title-country">What it leaves out</h2>
+                    <p data-show="trend">The trendline figure smooths over single releases and is read at the latest Chinese record, so it does not grow while no new Chinese record appears. It assumes steady progress on both sides, so it is slow to show a change of pace.</p>
+                    <p>Models from developers outside China and the U.S. are left out. Only released models with enough public benchmark results get an ECI score, and AI companies do not always release their most capable models. A matched score also says nothing about what a model costs to run, or about whether it reached that score by training on another model's outputs.</p>
+                </section>
             </div>
-            <div id="chart"></div>
-            <details class="chart-help">
-                <summary>How to read this chart</summary>
-                <p class="subtitle" id="chart-note">
-                Note: A model is deemed to have caught up if its score is <strong>within the threshold</strong> of the reference model.<br>
-                <em>The average gap is measured day by day over the window named in the headline.<br>
-                Matched/Unmatched counts reflect all reference models shown on the chart.</em>
-            </p>
-            </details>
-        </div>
 
-                <div class="stats-panel">
-            <div class="stat-card" id="stat-card-country-lag" hidden>
-                <div class="stat-value" id="stat-country-lag">--</div>
-                <div class="stat-label">Trendline Lag (China vs US)</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="stat-avg-gap">--</div>
-                <div class="stat-label">Average Gap</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="stat-score-gap">--</div>
-                <div class="stat-label">Average Score Gap</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="stat-today">--</div>
-                <div class="stat-label">Gap Today</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="stat-unmatched">--</div>
-                <div class="stat-label">Unmatched</div>
-            </div>
-        </div>
-
-        <details id="country-lag-explainer" class="explainer-panel hidden">
-            <summary class="explainer-summary">How is the China vs US headline calculated?</summary>
-            <div class="explainer-content">
-                <!-- Populated dynamically by script.js -->
-            </div>
-        </details>
-
-        <details id="current-gap-explainer" class="explainer-panel hidden">
-            <summary class="explainer-summary">Other estimates of the current gap</summary>
-            <div class="explainer-content">
-                <!-- Populated dynamically by script.js -->
-            </div>
-        </details>
-
-        <details id="caveats-panel" class="explainer-panel">
-            <summary class="explainer-summary">What this number does and does not measure</summary>
-            <div class="explainer-content">
-                <ul>
-                    <li id="caveat-backward"><strong>Backward-looking by default.</strong> Published gaps measure how long ago the closed frontier reached the open frontier's current level. Catch-up projections from trend extrapolation are forecasts with wider, assumption-laden uncertainty, and are labeled as such.</li>
-                    <li><strong>Benchmark composition shapes the answer.</strong> Capabilities are domain-dependent: a model family can close the gap on coding while lagging in mathematics or in aggregate. The cross-benchmark threshold aggregate here leans on math/science benchmarks; check per-benchmark views before generalizing.</li>
-                    <li><strong>Matched-on-score is not matched-in-practice.</strong> Model size, token/reasoning efficiency, and serving cost are not factored in; a model can match a score while being far more expensive to run.</li>
-                    <li id="caveat-release"><strong>Release dates embed safety-testing lag.</strong> Closed frontier models typically undergo longer pre-release evaluation, so release-date gaps understate the underlying development gap.</li>
-                    <li id="caveat-distillation"><strong>Distillation can inflate apparent catch-up.</strong> Open-weight models may train against closed-model outputs, so a short measured gap does not by itself imply independent capability parity.</li>
-                    <li id="caveat-country" hidden><strong>Country means the developer's headquarters.</strong> The China vs US view counts open- and closed-weight models alike and leaves out developers from other countries.</li>
-                    <li><strong>Benchmarks under-represent real-world tasks</strong> and rarely elicit maximum performance, for cost and time reasons.</li>
-                </ul>
-            </div>
-        </details>
-
-        <div class="header">
-            <h1>Gap Over Time</h1>
-            <p class="subtitle" id="historical-subtitle">How the performance gap has evolved historically.</p>
-        </div>
-        <div class="chart-card" id="historical-chart-card">
-            <div class="chart-card__head">
-                <span class="chart-card__title" id="historical-view-title">Gap on each date</span>
-                <div class="toggle-buttons" id="historical-view-toggle" role="group" aria-label="Gap Over Time view" hidden>
-                    <button type="button" class="toggle-btn active" data-value="timeline">Months behind</button>
-                    <button type="button" class="toggle-btn" data-value="score">Score gap</button>
-                    <button type="button" class="toggle-btn" data-value="matches">Time to match each release</button>
+            <section class="releases" aria-labelledby="releases-title" id="releases" hidden>
+                <h2 id="releases-title">Every closed record and the open-weight model that matched it</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col" id="releases-leader">Closed model</th>
+                                <th scope="col" class="num">ECI</th>
+                                <th scope="col">First matched by</th>
+                                <th scope="col" class="num">Lag (months)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="releases-body"></tbody>
+                    </table>
                 </div>
-                <button type="button" class="toggle-btn detail-toggle" id="gap-detail-toggle" aria-pressed="false">More detail</button>
-            </div>
-            <div id="gap-context" class="gap-context" hidden></div>
-            <div id="historical-legend" class="gap-legend" hidden></div>
-            <div id="historical-chart-container">
-                <div id="historical-chart"></div>
-                <div id="historical-tooltip" class="gap-tooltip" hidden></div>
-            </div>
-            <div class="card-foot">
-                <button type="button" class="chart-download" id="historical-chart-download" aria-label="Download high-resolution PNG">
-                    <span class="chart-download__arrow" aria-hidden="true">↓</span>
-                    <span class="chart-download__label">Download PNG</span>
-                </button>
-            </div>
-        </div>
+            </section>
+        </main>
 
-        <div class="header">
-            <h1 id="trend-title">Score Growth Trends</h1>
-            <p class="subtitle" id="trend-subtitle">Analyzing score growth rates over time.</p>
-        </div>
-        <div id="trend-chart-container" style="position: relative; min-height: 500px; margin-bottom: 2rem;">
-             <div id="trend-chart" style="width: 100%; height: 500px;"></div>
-        </div>
-
-        <details class="data-panel">
-            <summary class="data-summary" id="data-summary">View Raw Data (All Models)</summary>
-            <div class="table-container">
-                <table id="eci-table">
-                    <thead>
-                        <tr>
-                            <th class="sortable" data-sort-key="model">Model</th>
-                            <th class="sortable" data-sort-key="date">Release Date</th>
-                            <th class="sortable" data-sort-key="score" id="score-header">Score</th>
-                            <th class="sortable" data-sort-key="type">Type</th>
-                            <th class="sortable" data-sort-key="org">Organization</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Data will be populated by script.js -->
-                    </tbody>
-                </table>
-            </div>
-            <p class="subtitle" style="margin-top: var(--spacing-sm);">
-                <em>Click a column header to sort; click again to reverse.</em>
-            </p>
-        </details>
-
-        <footer class="footer">
-            <p>Data provided by <a href="https://epoch.ai" target="_blank" rel="noopener">Epoch AI</a> under the <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0 License</a>
-            and <a href="https://metr.org" target="_blank" rel="noopener">METR</a> (<a href="https://metr.org/blog/2026-1-29-time-horizon-1-1/" target="_blank" rel="noopener">Time Horizon v1.0 + v1.1</a>).</p>
-            <p style="font-size: 0.8em;">Last updated: <span id="last-updated">--</span></p>
+        <footer class="colophon">
+            <p>Data from <a href="https://epoch.ai">Epoch AI</a>, used under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Rebuilt daily. The figures are in <a href="data.json">data.json</a> and the code is on <a href="https://github.com/IAPS-AI/Open-Source-Gap">GitHub</a>.</p>
         </footer>
     </div>
 
-    <script src="static/script.js?v=32"></script>
+    <script src="static/script.js?v=35" defer></script>
 </body>
 </html>

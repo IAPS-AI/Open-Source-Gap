@@ -1,3804 +1,812 @@
-/**
- * ECI Accessibility Gap - Interactive Chart Visualization
- *
- * Creates a Plotly.js visualization showing the performance gap between
- * open and closed-source AI models on the Epoch AI ECI index.
- */
+/* Open Source Gap. Loads data.json and draws the page. No dependencies.
 
-// Color scheme matching reference image
-const COLORS = {
-    closed: '#e53935',
-    closedUnmatched: '#e53935',
-    open: '#5c6bc0',
-    connector: '#5c6bc0',
-    annotation: '#6b7280',
-    gridline: '#e5e7eb',
-    // Colours follow the role, as in the headline and main chart: the
-    // leader (closed / US) is red, the laggard (open / China) indigo.
-    china: '#5c6bc0',
-    us: '#e53935',
-};
+   data.json is built by scripts/update_data.py; the gap arithmetic lives in
+   scripts/gap.py. This file only reads the result: on any day the gap is the
+   time since the release of that day's reference model.
 
-/**
- * Simple linear regression calculation
- * Returns slope (per year), intercept, and helper to predict values
- */
-function linearRegression(dates, scores, useLog = false) {
-    if (dates.length < 2) return null;
+   The page shows one comparison at a time, chosen by the URL hash: a laggard
+   group (open-weight models, or Chinese models) against a leader group
+   (closed models, or U.S. models). */
+(() => {
+    'use strict';
 
-    // Filter out non-positive scores if using log
-    let filteredDates = dates;
-    let filteredScores = scores;
-    if (useLog) {
-        const valid = scores.map((s, i) => [s, i]).filter(([s]) => s > 0);
-        if (valid.length < 2) return null;
-        filteredDates = valid.map(([, i]) => dates[i]);
-        filteredScores = valid.map(([s]) => s);
-    }
-
-    // Convert dates to numeric (days since first date)
-    const firstDate = new Date(filteredDates[0]).getTime();
-    const x = filteredDates.map(d => (new Date(d).getTime() - firstDate) / (1000 * 60 * 60 * 24));
-    // For log mode, regress on ln(score) so the line is straight on a log axis
-    const y = useLog ? filteredScores.map(s => Math.log(s)) : filteredScores;
-
-    const n = x.length;
-    const sumX = x.reduce((a, b) => a + b, 0);
-    const sumY = y.reduce((a, b) => a + b, 0);
-    const sumXY = x.reduce((total, xi, i) => total + xi * y[i], 0);
-    const sumXX = x.reduce((total, xi) => total + xi * xi, 0);
-
-    const denominator = (n * sumXX - sumX * sumX);
-    if (denominator === 0) return null;
-
-    const slope = (n * sumXY - sumX * sumY) / denominator;
-    const intercept = (sumY - slope * sumX) / n;
-
-    // Convert slope to per-year (365.25 accounts for leap years, matching Python backend)
-    const slopePerYear = slope * 365.25;
-
-    return {
-        slope: useLog ? Math.exp(slopePerYear) : slopePerYear, // For log: multiplicative factor per year
-        slopeRaw: slopePerYear,
-        intercept,
-        useLog,
-        predict: (date) => {
-            const daysSinceFirst = (new Date(date).getTime() - firstDate) / (1000 * 60 * 60 * 24);
-            const val = intercept + slope * daysSinceFirst;
-            return useLog ? Math.exp(val) : val;
-        },
-        startDate: filteredDates[0],
-        endDate: filteredDates[filteredDates.length - 1]
-    };
-}
-
-// Global state
-let appState = {
-    data: null,
-    framing: 'open', // 'open' or 'china'
-    // Gap Over Time view: 'timeline' = months behind on each date (default),
-    // 'matches' = months until each leader release was matched.
-    historicalView: 'timeline',
-    // Gap Over Time: false = the simple default (core tiles, no forecast
-    // line, no drop labels); true = every tile and annotation.
-    gapDetail: false,
-    currentBenchmark: 'eci', // Current selected benchmark
-    tableSort: { key: 'date', dir: 'desc' }, // raw-data table sort state
-    tableData: null, // last-rendered table inputs, for re-sorting
-};
-
-/**
- * Get the score field name for the current benchmark
- * ECI uses 'eci', other benchmarks use 'score'
- */
-function getScoreField() {
-    return appState.currentBenchmark === 'eci' ? 'eci' : 'score';
-}
-
-/**
- * Get the score standard deviation field name for the current benchmark
- */
-function getScoreStdField() {
-    return appState.currentBenchmark === 'eci' ? 'eci_std' : 'score_std';
-}
-
-/**
- * Get the benchmark metadata
- */
-function getBenchmarkMetadata() {
-    const benchmarks = appState.data?.benchmarks;
-    if (!benchmarks) return null;
-    return benchmarks[appState.currentBenchmark]?.metadata || null;
-}
-
-/** Date-axis range for the Plotly charts: first model (less a month) to today plus ~6 weeks. */
-function dateAxisRange(models, today) {
-    const times = (models || []).map(m => parseUTCDate(m.date).getTime()).filter(Number.isFinite);
-    if (!times.length) return undefined;
+    const SCHEMA = 2;
     const DAY = 86400000;
-    const iso = (t) => new Date(t).toISOString().slice(0, 10);
-    return [iso(Math.min(...times) - 30 * DAY), iso(Math.max(parseUTCDate(today).getTime(), Math.max(...times)) + 45 * DAY)];
-}
+    const SVG_NS = 'http://www.w3.org/2000/svg';
 
-/** Short benchmark name for chart titles ("ECI", "SWE-Bench Verified"). */
-function benchmarkShortName() {
-    if (appState.currentBenchmark === 'eci') return 'ECI';
-    if (appState.currentBenchmark === 'metr_time_horizon') return 'METR Time Horizon';
-    return getBenchmarkMetadata()?.name || 'Score';
-}
-
-/**
- * Fetch data from the API and render the chart
- */
-async function init() {
-    try {
-        const url = 'data.json';
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error: ${response.status} ${response.statusText} at ${response.url}`);
-        }
-        const data = await response.json();
-
-        // Store data globally
-        appState.data = data;
-
-        // Set default benchmark
-        appState.currentBenchmark = data.default_benchmark || 'eci';
-
-        // Hide loading indicator
-        document.getElementById('loading').classList.add('hidden');
-
-        // Populate benchmark selector
-        populateBenchmarkSelector();
-
-        // Set up toggle button handlers
-        setupToggleHandlers();
-
-        // Column-sorting for the raw-data table
-        setupTableSorting();
-
-        // Wire PNG download for gap-over-time chart
-        setupHistoricalChartDownload();
-
-        // Render chart and update UI
-        if (data) {
-            renderAll();
-        }
-
-    } catch (error) {
-        console.error('Failed to load data:', error);
-
-        let errorMsg = 'Failed to load data.';
-        if (error.message.includes('HTTP error')) {
-            errorMsg += ` Server responded with ${error.message.replace('HTTP error:', 'Status')}.`;
-            errorMsg += '<br><br><b>Troubleshooting:</b><br>1. Check if data.json exists.<br>2. Check console for URL.<br>3. Hard refresh (Ctrl+F5).';
-        } else {
-            errorMsg += ` Error: ${error.message}`;
-        }
-
-        document.getElementById('loading').innerHTML = `
-            <div style="color: #e53935; text-align: center;">
-                <p><strong>${errorMsg}</strong></p>
-                <p style="font-size: 0.9em; margin-top: 10px; color: #666;">If this persists on GitHub Pages, verify the repository permissions and that the deployment action succeeded.</p>
-            </div>
-        `;
-    }
-}
-
-/**
- * Populate the benchmark selector dropdown with available benchmarks
- */
-function populateBenchmarkSelector() {
-    const select = document.getElementById('benchmark-select');
-    if (!select || !appState.data?.benchmarks) return;
-
-    // Clear existing options
-    select.innerHTML = '';
-
-    // Add options for each benchmark
-    const benchmarks = appState.data.benchmarks;
-    const benchmarkOrder = ['eci', 'metr_time_horizon', 'gpqa_diamond', 'math_level_5', 'otis_mock_aime', 'swe_bench_verified', 'simpleqa_verified', 'frontiermath_public', 'chess_puzzles'];
-
-    // Sort benchmarks with ECI first, then alphabetically
-    const sortedBenchmarks = Object.keys(benchmarks).sort((a, b) => {
-        const aIndex = benchmarkOrder.indexOf(a);
-        const bIndex = benchmarkOrder.indexOf(b);
-        if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
-        if (aIndex === -1) return 1;
-        if (bIndex === -1) return -1;
-        return aIndex - bIndex;
-    });
-
-    for (const benchmarkId of sortedBenchmarks) {
-        const benchmark = benchmarks[benchmarkId];
-        const metadata = benchmark.metadata;
-        const option = document.createElement('option');
-        option.value = benchmarkId;
-        option.textContent = metadata?.name || benchmarkId;
-        if (benchmarkId === appState.currentBenchmark) {
-            option.selected = true;
-        }
-        select.appendChild(option);
-    }
-
-    // Add change handler
-    select.addEventListener('change', function() {
-        appState.currentBenchmark = this.value;
-        updateBenchmarkDisplay();
-        renderAll();
-    });
-}
-
-/**
- * Update the UI elements that depend on the current benchmark
- */
-function updateBenchmarkDisplay() {
-    const metadata = getBenchmarkMetadata();
-    if (!metadata) return;
-
-    // Update title benchmark name
-    const benchmarkNameEl = document.getElementById('benchmark-name');
-    if (benchmarkNameEl) {
-        benchmarkNameEl.textContent = metadata.name || appState.currentBenchmark;
-    }
-
-    // Update source subtitle
-    const sourceEl = document.getElementById('benchmark-source');
-    if (sourceEl) {
-        if (appState.currentBenchmark === 'metr_time_horizon') {
-            const dt = metadata.post_2023_doubling_time_days;
-            const dtStr = dt ? ` Capability doubling time: ~${Math.round(dt)} days (post-2023).` : '';
-            sourceEl.textContent = `Source: METR Time Horizon v1.0 + v1.1 (Frontier Models only).${dtStr}`;
-        } else {
-            sourceEl.textContent = `Source: Epoch AI ${metadata.name} (Frontier Models only).`;
-        }
-        // Updated daily, but a benchmark only moves when a new model is scored.
-        const bench = appState.data?.benchmarks?.[appState.currentBenchmark];
-        const dates = (bench?.trend_models || bench?.models || []).map(m => m.date).filter(Boolean).sort();
-        if (dates.length) {
-            sourceEl.textContent += ` Latest scored release: ${fmtDayLong(parseUTCDate(dates[dates.length - 1]))}.`;
-        }
-    }
-
-    // Update score column header
-    const scoreHeader = document.getElementById('score-header');
-    if (scoreHeader) {
-        if (appState.currentBenchmark === 'eci') {
-            scoreHeader.textContent = 'ECI';
-        } else if (appState.currentBenchmark === 'metr_time_horizon') {
-            scoreHeader.textContent = 'p50 Horizon (min)';
-        } else {
-            scoreHeader.textContent = metadata.unit || 'Score';
-        }
-    }
-
-    // Update trend chart title
-    const trendTitle = document.getElementById('trend-title');
-    if (trendTitle) {
-        const unit = appState.currentBenchmark === 'eci' ? 'ECI' : 'Score';
-        trendTitle.textContent = `${unit} Growth Trends (Pre vs Post April 2024)`;
-    }
-
-    const trendSubtitle = document.getElementById('trend-subtitle');
-    if (trendSubtitle) {
-        const unit = appState.currentBenchmark === 'eci' ? 'ECI' : 'score';
-        trendSubtitle.textContent = `Comparing the rate of ${unit} increases before and after April 2024 (All Models).`;
-    }
-
-    // Update data summary
-    const dataSummary = document.getElementById('data-summary');
-    if (dataSummary) {
-        dataSummary.textContent = `View Raw ${metadata.name || 'Benchmark'} Data (All Models)`;
-    }
-
-    // Update chart note with actual threshold value and appropriate wording
-    const chartNote = document.getElementById('chart-note');
-    if (chartNote && metadata?.threshold !== undefined) {
-        const thresholdValue = metadata.threshold;
-
-        if (appState.currentBenchmark === 'metr_time_horizon') {
-            chartNote.innerHTML = `Note: Score is the <strong>p50 time horizon</strong> &mdash; the task duration (in human-expert minutes) where the model achieves 50% success probability.<br>
-                A model is deemed to have <strong>caught up</strong> if its p50 horizon meets or exceeds the reference model's.<br>
-                <em>Data merged from METR Time Horizon v1.0 and v1.1, with v1.1 taking precedence for shared models.<br>
-                Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
-        } else if (appState.currentBenchmark === 'eci') {
-            // ECI uses Epoch AI's paired-bootstrap criterion, not a fixed threshold.
-            chartNote.innerHTML = `Note: A model is deemed to have <strong>caught up</strong> when its capability exceeds the reference model's in at least 5% of Epoch AI's paired bootstrap resamples (their published criterion).<br>
-                <em>The average gap is measured day by day &mdash; the ${getFramingLabels().open} frontier versus the most recent ${getFramingLabels().closed} record it has caught up to &mdash; over the window named in the headline. Plotted scores are Epoch's published ECI point estimates.<br>
-                Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
-        } else {
-            const thresholdDesc = `${thresholdValue} percentage point${thresholdValue !== 1 ? 's' : ''}`;
-            chartNote.innerHTML = `Note: A model is deemed to have caught up if its score is <strong>within ${thresholdDesc}</strong> of the reference model.<br>
-                <em>The average gap is measured day by day &mdash; the ${getFramingLabels().open} frontier versus the most recent ${getFramingLabels().closed} record it has caught up to &mdash; over the window named in the headline.<br>
-                Matched/Unmatched counts reflect all reference models shown on the chart.</em>`;
-        }
-    }
-}
-
-/**
- * Set up toggle button event handlers
- */
-function setupToggleHandlers() {
-    // Gap Over Time: simple default vs every tile and annotation
-    const detailBtn = document.getElementById('gap-detail-toggle');
-    if (detailBtn) {
-        detailBtn.addEventListener('click', () => {
-            appState.gapDetail = !appState.gapDetail;
-            detailBtn.setAttribute('aria-pressed', String(appState.gapDetail));
-            detailBtn.classList.toggle('active', appState.gapDetail);
-            detailBtn.textContent = appState.gapDetail ? 'Less detail' : 'More detail';
-            const currentData = getCurrentData();
-            if (currentData) renderHistoricalChart(currentData);
-        });
-    }
-
-    // Framing toggle
-    document.querySelectorAll('#framing-toggle .toggle-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#framing-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            appState.framing = this.dataset.value;
-            updateFramingLabels();
-            renderAll();
-        });
-    });
-
-    // Gap Over Time view toggle (gap by date vs time-to-match per release)
-    document.querySelectorAll('#historical-view-toggle .toggle-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            appState.historicalView = this.dataset.value;
-            const currentData = getCurrentData();
-            if (currentData) renderHistoricalChart(currentData);
-        });
-    });
-}
-
-/**
- * Get labels based on current framing
- */
-function getFramingLabels() {
-    const metadata = getBenchmarkMetadata();
-    const scoreName = metadata?.name || 'score';
-
-    if (appState.framing === 'china') {
-        return {
-            open: 'Chinese',
-            closed: 'US',
-            openModel: 'Chinese model',
-            closedModel: 'US model',
-            unmatched: 'US model not yet matched by Chinese models',
-            connector: `First Chinese model to match ${scoreName}`,
-        };
-    } else {
-        return {
-            open: 'open',
-            closed: 'closed-source',
-            openModel: 'Open model',
-            closedModel: 'Closed model',
-            unmatched: 'Closed model not yet matched by open models',
-            connector: `First open model to match ${scoreName}`,
-        };
-    }
-}
-
-/**
- * Update the framing labels in the title and legend
- */
-function updateFramingLabels() {
-    const labels = getFramingLabels();
-
-    // Update title
-    const openLabel = document.getElementById('category-open');
-    const closedLabel = document.getElementById('category-closed');
-    if (openLabel) openLabel.textContent = labels.open;
-    if (closedLabel) closedLabel.textContent = labels.closed;
-
-    // Update legend
-    const legendClosed = document.getElementById('legend-closed');
-    const legendUnmatched = document.getElementById('legend-unmatched');
-    const legendOpen = document.getElementById('legend-open');
-    const legendConnector = document.getElementById('legend-connector');
-
-    if (legendClosed) legendClosed.textContent = labels.closedModel;
-    if (legendUnmatched) legendUnmatched.textContent = labels.unmatched;
-    if (legendOpen) legendOpen.textContent = labels.openModel;
-    if (legendConnector) legendConnector.textContent = labels.connector;
-}
-
-/**
- * Get the current data based on benchmark and framing selection
- */
-function getCurrentData() {
-    const data = appState.data;
-    if (!data) return null;
-
-    // Get benchmark-specific data
-    const benchmarkData = data.benchmarks?.[appState.currentBenchmark];
-    if (!benchmarkData) {
-        console.warn(`Benchmark ${appState.currentBenchmark} not found`);
-        return null;
-    }
-
-    // Base data from the selected benchmark
-    let result = {
-        models: benchmarkData.models,
-        trend_models: benchmarkData.trend_models,
-        gaps: benchmarkData.gaps,
-        statistics: benchmarkData.statistics,
-        trends: benchmarkData.trends,
-        trend_gap: benchmarkData.trend_gap || null,
-        historical_gaps: benchmarkData.historical_gaps,
-        gap_timeline: benchmarkData.gap_timeline || null,
-        score_gap_timeline: benchmarkData.score_gap_timeline || null,
-        country_trend_lag: null,
-        metadata: benchmarkData.metadata,
-        last_updated: data.last_updated,
+    const WORDS = {
+        open_closed: {
+            laggard: 'open-weight',
+            leader: 'closed',
+            laggards: 'Open-weight models',
+            leaders: 'Closed models',
+            frontier: 'the closed frontier',
+            title: 'Open Source Gap',
+        },
+        china_us: {
+            laggard: 'Chinese',
+            leader: 'U.S.',
+            laggards: 'Chinese models',
+            leaders: 'U.S. models',
+            frontier: 'the U.S. frontier',
+            title: 'China vs U.S. | Open Source Gap',
+        },
     };
+    const HASHES = { '#open-closed': 'open_closed', '#china-us': 'china_us' };
 
-    // Apply China framing if selected and available
-    if (appState.framing === 'china' && benchmarkData.china_framing) {
-        result = {
-            ...result,
-            gaps: benchmarkData.china_framing.gaps || result.gaps,
-            statistics: benchmarkData.china_framing.statistics || result.statistics,
-            historical_gaps: benchmarkData.china_framing.historical_gaps || result.historical_gaps,
-            // No fallback to the open-vs-closed trend gap or timeline: showing
-            // the other framing's numbers would be worse than showing none.
-            // When the headline trendline lag exists it replaces the older
-            // frontier trend gap, which fits a different window and date and
-            // would put a second, conflicting "trend" figure on screen.
-            trend_gap: benchmarkData.china_framing.country_trend_lag
-                ? null
-                : (benchmarkData.china_framing.trend_gap || null),
-            gap_timeline: benchmarkData.china_framing.gap_timeline || null,
-            score_gap_timeline: benchmarkData.china_framing.score_gap_timeline || null,
-            country_trend_lag: benchmarkData.china_framing.country_trend_lag || null,
-        };
-    } else if (appState.framing === 'china') {
-        // Benchmark ships no China framing data at all: never present the
-        // open-vs-closed bracket/trend gap/timeline under China-vs-US labels.
-        result = {
-            ...result,
-            statistics: { ...result.statistics, current_lag_bracket: null },
-            trend_gap: null,
-            gap_timeline: null,
-            score_gap_timeline: null,
-        };
-    }
+    const $ = (id) => document.getElementById(id);
+    const all = (selector) => Array.from(document.querySelectorAll(selector));
+    const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
 
-    return result;
-}
+    const toTime = (iso) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
+    const LONG = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+    const SHORT = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+    const longDate = (t) => LONG.format(new Date(t));
+    const shortDate = (t) => SHORT.format(new Date(t));
+    const one = (value) => value.toFixed(1);
 
-/**
- * Update display based on current gap metric selection
- */
-function updateDisplay() {
-    const currentData = getCurrentData();
-    const stats = currentData.statistics || {};
+    /* ------------------------------------------------------------- data */
 
-    updateHeadline(currentData);
-    updateStats(currentData);
-    // Survival estimate, release-lag bracket and trend gap: collapsed under
-    // "Other estimates of the current gap".
-    showExplainer(stats, currentData.gaps || []);
-    applyCountryLagHeadline(currentData);
-
-    renderHistoricalChart(currentData);
-}
-
-/**
- * Headline sentence, framed the way Epoch AI frames its open-vs-closed
- * figure: the day-by-day gap averaged over a stated window, here the
- * trailing 12 months to the latest record-setting release ("has averaged X
- * months over the 12 months to Sep 2026"). The China view replaces the
- * number with the trendline lag in applyCountryLagHeadline.
- */
-/**
- * " over the 12 months to Sep 2026", or " since Mar 2025" when the
- * benchmark's whole (shorter) history is used. Empty without a window.
- */
-function headlineWindowPhrase(h, long) {
-    if (!h) return '';
-    if (h.full_history) return ` since ${fmtMonthYear(parseUTCDate(h.window_start), long)}`;
-    return ` over the ${h.window_months || 12} months to ${fmtMonthYear(parseUTCDate(h.window_end), long)}`;
-}
-
-function updateHeadline(currentData) {
-    const stats = currentData.statistics || {};
-    const h = stats.headline_gap;
-    const verb = document.getElementById('headline-verb');
-    const suffix = document.getElementById('headline-suffix');
-    const note = document.getElementById('headline-method-note');
-    const value = h ? h.months : stats.avg_horizontal_gap_months;
-    updateTitle(value != null ? Number(value).toFixed(1) : '--');
-    if (verb) verb.textContent = 'has averaged';
-    if (suffix) suffix.textContent = headlineWindowPhrase(h, true);
-    if (note) {
-        const labels = getFramingLabels();
-        note.hidden = !h;
-        note.textContent = h
-            ? `Epoch AI's method: on each day, months since the most recent ${labels.closed} record the best ${labels.open} model `
-              + `had caught up to, averaged from ${fmtDayLong(parseUTCDate(h.window_start))} to `
-              + `${fmtDayLong(parseUTCDate(h.window_end))} (the latest record-setting release).`
-              + (h.full_history ? ` This benchmark has less than ${h.window_months || 12} months of history, so all of it is used.` : '')
-            : '';
-    }
-}
-
-/**
- * China vs US view: the headline and first stat card show the appendix
- * trendline lag (how many months earlier the US frontier trend reached the
- * level of the Chinese frontier trend at the latest Chinese frontier
- * release). When a benchmark has too few frontier points to fit both lines,
- * the framing's existing average/current gap stays in the headline.
- */
-function applyCountryLagHeadline(currentData) {
-    const card = document.getElementById('stat-card-country-lag');
-    const explainer = document.getElementById('country-lag-explainer');
-    const isChina = appState.framing === 'china';
-    const lag = isChina ? currentData.country_trend_lag : null;
-    if (card) card.hidden = !lag;
-    if (explainer) explainer.classList.toggle('hidden', !isChina);
-    updateFramingCaveats(isChina, Boolean(lag));
-    if (!isChina) return;
-
-    const content = explainer?.querySelector('.explainer-content');
-    if (!lag) {
-        // updateHeadline's Epoch-style average stays in the headline.
-        if (content) {
-            content.innerHTML = `<p>This benchmark has too few US or Chinese record-setting releases
-                since 2024 to fit both trendlines (at least three each), so the headline shows the
-                average gap over the stated window instead.</p>`;
+    function prepare(data) {
+        if (!data || data.schema !== SCHEMA || !data.comparisons) {
+            throw new Error('data.json has an unexpected format');
         }
-        return;
+        const asOf = toTime(data.as_of);
+        const site = {
+            asOf,
+            asOfIso: data.as_of,
+            // The build runs daily. If it has been failing, "today" would be wrong.
+            fresh: Date.now() - asOf < 2 * DAY,
+            daysPerMonth: data.days_per_month,
+            test: data.test,
+            views: {},
+        };
+        for (const key of Object.keys(WORDS)) {
+            if (!data.comparisons[key]) throw new Error(`data.json has no ${key} comparison`);
+            site.views[key] = prepareView(site, key, data.comparisons[key]);
+        }
+        return site;
     }
-    const lagText = lag.lag_months.toFixed(1);
-    updateTitle(lagText);
-    const verb = document.getElementById('headline-verb');
-    const suffix = document.getElementById('headline-suffix');
-    if (verb) verb.textContent = 'is around';
-    if (suffix) suffix.textContent = '';
-    const note = document.getElementById('headline-method-note');
-    if (note) {
-        note.hidden = false;
-        note.textContent = 'Headline: how many months earlier the US trendline reached the level of the Chinese '
-            + 'trendline at the latest Chinese record (record-setting releases since 2024).';
+
+    function prepareView(site, key, comparison) {
+        const index = (list) => {
+            const byName = new Map();
+            const records = list.map((m) => ({ ...m, t: toTime(m.released) }));
+            records.forEach((m) => byName.set(m.model, m));
+            return { records, byName };
+        };
+        const leaders = index(comparison.leader_frontier);
+        const laggards = index(comparison.laggard_frontier);
+        const find = (group, name) => {
+            if (name === null) return null;
+            const record = group.byName.get(name);
+            if (!record) throw new Error(`data.json names an unknown model: ${name}`);
+            return record;
+        };
+        const segments = comparison.segments.map((s) => ({
+            t: toTime(s.start),
+            laggard: find(laggards, s.laggard_model),
+            leader: find(leaders, s.leader_model),
+            reference: find(leaders, s.reference_model),
+            matched: s.matched,
+            unmatched: find(leaders, s.unmatched_model),
+        }));
+        if (!segments.length) throw new Error(`data.json has no ${key} series`);
+        const average = comparison.average;
+        return {
+            key,
+            words: WORDS[key],
+            asOf: site.asOf,
+            fresh: site.fresh,
+            daysPerMonth: site.daysPerMonth,
+            headline: comparison.headline,
+            today: comparison.today,
+            leaders: leaders.records,
+            laggards: laggards.records,
+            segments,
+            start: segments[0].t,
+            windowEnd: toTime(comparison.headline.window_end),
+            average: {
+                start: average.start ? toTime(average.start) : null,
+                firmFrom: average.firm_from ? toTime(average.firm_from) : null,
+                months: average.months,
+            },
+            averageName: comparison.headline.full_history
+                ? 'average so far'
+                : `${comparison.headline.window_months}-month average`,
+            trend: prepareTrend(comparison.trend),
+        };
     }
-    document.getElementById('stat-country-lag').textContent = `${lagText} mo`;
-    if (content) content.innerHTML = buildCountryLagHtml(lag);
-}
 
-// Caveat bullets whose wording depends on the framing. The open-vs-closed
-// text lives in the HTML and is captured on first use.
-const CHINA_CAVEATS = {
-    'caveat-release': `<strong>Release dates embed testing lag.</strong> Developers differ in how long they
-        evaluate models before release, so release-date gaps can over- or understate the underlying development gap.`,
-    'caveat-distillation': `<strong>Distillation can inflate apparent catch-up.</strong> Chinese developers may
-        train against US-model outputs, so a short measured gap does not by itself imply independent capability parity.`,
-};
-const CHINA_BACKWARD_CAVEAT = {
-    trendline: `<strong>A trendline comparison, read at China's latest record.</strong> The headline compares
-        straight-line fits through each country's record-setting releases since 2024, read on the date of the
-        latest Chinese record. It smooths over single releases and does not grow while no new Chinese record
-        appears; on benchmarks with few Chinese record-setters (see the explainer) the fit, and so the figure,
-        is less stable. The Gap Over Time charts measure release by release instead.`,
-    release: `<strong>Backward-looking by default.</strong> Published gaps measure how long ago the US frontier
-        reached the Chinese frontier's current level. Catch-up projections from trend extrapolation are
-        forecasts with wider, assumption-laden uncertainty, and are labeled as such.`,
-};
+    /** The trendline comparison, where a view has one: it then leads the page. */
+    function prepareTrend(trend) {
+        if (!trend) return null;
+        const line = (group) => group.line.map(([day, eci]) => [toTime(day), eci]);
+        return {
+            months: trend.lag_months,
+            perYear: trend.change_months_per_year,
+            since: toTime(trend.since),
+            on: toTime(trend.on),
+            level: trend.level,
+            reached: trend.leader_reached ? toTime(trend.leader_reached) : null,
+            leaderLine: line(trend.leader),
+            laggardLine: line(trend.laggard),
+        };
+    }
 
-function updateFramingCaveats(isChina, hasTrendlineLag) {
-    const ids = ['caveat-backward', ...Object.keys(CHINA_CAVEATS)];
-    for (const id of ids) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        if (el.dataset.openText === undefined) el.dataset.openText = el.innerHTML;
-        if (!isChina) {
-            el.innerHTML = el.dataset.openText;
-        } else if (id === 'caveat-backward') {
-            el.innerHTML = hasTrendlineLag ? CHINA_BACKWARD_CAVEAT.trendline : CHINA_BACKWARD_CAVEAT.release;
+    /** The state of the world on day `t`: who leads, who is matched, how far. */
+    function stateAt(view, t) {
+        let segment = view.segments[0];
+        for (const s of view.segments) {
+            if (s.t > t) break;
+            segment = s;
+        }
+        return {
+            t,
+            segment,
+            months: (t - segment.reference.t) / DAY / view.daysPerMonth,
+            average: averageAt(view, t),
+        };
+    }
+
+    /** The headline average as it stood on day `t`, or null before there was one. */
+    function averageAt(view, t) {
+        // From its last day the headline holds until the next record-setting release.
+        if (t >= view.windowEnd) return view.headline.months;
+        const { start, months } = view.average;
+        if (start === null || t < start) return null;
+        return months[Math.round((t - start) / DAY)];
+    }
+
+    /** ECI of the latest record released on or before `t`, or null. */
+    function levelAt(records, t) {
+        let level = null;
+        for (const m of records) {
+            if (m.t > t) break;
+            level = m.eci;
+        }
+        return level;
+    }
+
+    /* ------------------------------------------------------------- text */
+
+    function setParts(node, parts) {
+        node.replaceChildren(...parts.map((part) => {
+            if (typeof part === 'string') return document.createTextNode(part);
+            const strong = document.createElement('strong');
+            strong.textContent = part.strong;
+            return strong;
+        }));
+    }
+
+    function renderText(site, view) {
+        const { headline, today, words, trend } = view;
+        const { laggard, reference } = stateAt(view, view.asOf).segment;
+
+        // A view with a trendline leads with it; otherwise with the 12-month average.
+        const figure = trend ? trend.months : headline.months;
+        document.title = words.title;
+        $('headline-who').textContent = words.laggards;
+        $('headline-months').textContent = `about ${one(Math.abs(figure))} months`;
+        $('headline-side').textContent = figure < 0 ? 'ahead of' : 'behind';
+        $('headline-whom').textContent = words.frontier;
+
+        const updated = $('updated');
+        updated.textContent = shortDate(site.asOf);
+        updated.setAttribute('datetime', site.asOfIso);
+
+        const parts = [];
+        let lead = site.fresh ? 'Today the gap is' : `On ${longDate(site.asOf)}, the gap was`;
+        let after = '';
+        if (trend) {
+            parts.push(trend.months < 0
+                ? `On ${longDate(trend.on)}, the date of the latest ${words.laggard} record, the ${words.laggard} `
+                    + `trendline on the Epoch Capabilities Index (ECI) stood above the ${words.leader} one, at a `
+                    + `level the ${words.leader} trendline reaches that much later. `
+                : `That is how much earlier the ${words.leader} trendline on the Epoch Capabilities Index (ECI) `
+                    + `reached the level the ${words.laggard} trendline stood at on ${longDate(trend.on)}, the date `
+                    + `of the latest ${words.laggard} record. `);
+            const pace = Math.abs(trend.perYear);
+            parts.push(pace < 0.05
+                ? 'On those trends the gap is holding steady. '
+                : `On those trends the gap is ${trend.perYear > 0 ? 'widening' : 'narrowing'} by about `
+                    + `${one(pace)} months a year. `);
+            lead = site.fresh
+                ? 'Matched model by model, the gap is'
+                : `Matched model by model, the gap on ${longDate(site.asOf)} was`;
+            after = site.fresh ? ' today' : '';
         } else {
-            el.innerHTML = CHINA_CAVEATS[id];
+            // The window ends at the latest record-setting release, usually days ago.
+            let span = `over the past ${headline.window_months} months`;
+            if (headline.full_history) span = `since ${longDate(toTime(headline.window_start))},`;
+            else if (site.asOf - view.windowEnd > 14 * DAY) span = `over the ${headline.window_months} months to ${longDate(view.windowEnd)},`;
+            parts.push(`That is the average ${span} on the Epoch Capabilities Index (ECI), which combines many `
+                + 'benchmarks into one score. ');
         }
-    }
-    const country = document.getElementById('caveat-country');
-    if (country) country.hidden = !isChina;
-}
-
-function buildCountryLagHtml(lag) {
-    const fmtDate = (s) => parseUTCDate(s).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-    const fmtDay = (s) => parseUTCDate(s).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
-    const slope = (g) => {
-        if (lag.transform === 'log') return `doubling every ${(Math.LN2 / g.slope_per_month).toFixed(1)} months`;
-        if (lag.transform === 'logit') return `${g.slope_per_month.toFixed(3)} logits/month`;
-        return `${g.slope_per_month.toFixed(2)} points/month`;
-    };
-    const r2 = (g) => (g.r2 === null || g.r2 === undefined ? '' : `, R&sup2; = ${g.r2.toFixed(2)}`);
-    const group = (label, g) => `${label} frontier: <strong>${g.n_points}</strong> record-setting releases
-        (${escapeHTML(g.first_model)}, ${fmtDate(g.first_date)} &ndash; ${escapeHTML(g.last_model)}, ${fmtDate(g.last_date)}),
-        trend ${slope(g)}${r2(g)}`;
-    const space = lag.transform === 'log'
-        ? ' in log space (time horizons grow exponentially)'
-        : lag.transform === 'logit' ? ' in logit space (percentage scores are bounded at 0&ndash;100)' : '';
-    const level = lag.transform === 'logit' ? `${lag.laggard_trend_level}%`
-        : lag.transform === 'log' ? `${lag.laggard_trend_level} minutes`
-        : `${lag.laggard_trend_level}`;
-    const change = lag.gap_change_months_per_year;
-    const dir =change > 0 ? 'widening' : change < 0 ? 'narrowing' : 'steady';
-    const reached = lag.leader_reached_level_date
-        ? ` around <strong>${fmtDay(lag.leader_reached_level_date)}</strong>`
-        : '';
-    const lead = lag.lag_months >= 0
-        ? `The US trendline reached that level${reached}, <strong>${lag.lag_months.toFixed(1)} months</strong> earlier`
-        : `The Chinese trendline sits above the US trendline there, by <strong>${Math.abs(lag.lag_months).toFixed(1)} months</strong>`;
-    return `
-        <p><strong>Method:</strong> models are split by the developer's country, open- and closed-weight alike.
-        For each country we keep releases from ${fmtDate(lag.window_start)} on, take the record-setting ones
-        (a running maximum by release date; same-day records collapse to the day's best), and fit a straight
-        trendline through them${space}. The headline is how many months earlier the US trendline reached the level
-        the Chinese trendline stands at on the date of the latest Chinese record-setting release.</p>
-        <p>${group('US', lag.leader)}.<br>${group('China', lag.laggard)}.</p>
-        <p>On ${fmtDay(lag.eval_date)} (${escapeHTML(lag.eval_model)}'s release) the Chinese trendline stands at
-        ${level}. ${lead}. At current slopes the gap is ${dir}
-        (${Math.abs(change).toFixed(1)} months/year).</p>
-        <p>The trendline lag compares fitted trends, so one unusually strong or weak release moves it less
-        than the release-lag bracket. It is measured at the latest Chinese record rather than today, so it
-        does not grow while no new Chinese record appears.</p>`;
-}
-
-/**
- * Build the release-lag-bracket + trend-gap section of the explainer.
- * Backward-looking numbers are measurements; the catch-up projection is a
- * trend-conditional forecast and is labeled as such.
- */
-function buildGapEstimatorsHtml(stats, trendGap) {
-    const labels = getFramingLabels();
-    // Backend dates are date-only or ISO-without-Z; parse and format as UTC
-    // so months don't shift for viewers west of UTC.
-    const fmtDate = (s) => parseUTCDate(s).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-    let html = '';
-
-    const bracket = stats.current_lag_bracket;
-    if (bracket && !bracket.laggard_leads && bracket.under_months !== null) {
-        const above = bracket.above_model;
-        const below = bracket.below_model;
-        const asOf = bracket.as_of ? ` as of ${fmtDate(bracket.as_of)}` : '';
-        if (below && bracket.over_months !== null) {
-            html += `
-            <p><strong>Release-lag bracket (backward-looking):</strong> the best ${labels.open} model
-            (<strong>${escapeHTML(bracket.laggard_model)}</strong>) sits between
-            <strong>${escapeHTML(below.model)}</strong> (${fmtDate(below.date)}) and
-            <strong>${escapeHTML(above.model)}</strong> (${fmtDate(above.date)}) on the ${labels.closed} frontier.
-            That brackets the gap${asOf} at <strong>${bracket.under_months} &ndash; ${bracket.over_months} months</strong>,
-            with an interpolated central estimate of <strong>${bracket.central_months} months</strong>.</p>`;
-        } else if (bracket.censored) {
-            html += `
-            <p><strong>Release-lag bracket (backward-looking):</strong> the ${labels.closed} frontier was already above the best
-            ${labels.open} model's level at the start of observed history, so the gap${asOf} is at least
-            <strong>${bracket.under_months} months</strong> (upper end unknown).</p>`;
+        if (today.matched) {
+            parts.push(`${lead} `, { strong: `${one(today.months)} months` },
+                `${after}: the best ${words.laggard} model, ${laggard.model}, statistically ${site.fresh ? 'matches' : 'matched'} `
+                + `${reference.model}, a ${words.leader} model released on ${longDate(reference.t)}.`);
+        } else {
+            parts.push(`${lead} at least `, { strong: `${one(today.months)} months` },
+                `${after}: no ${words.laggard} model ${site.fresh ? 'has' : 'had'} matched ${reference.model}, `
+                + `released on ${longDate(reference.t)}.`);
         }
-    } else if (bracket && bracket.laggard_leads) {
-        html += `
-        <p><strong>Release-lag bracket:</strong> the best ${labels.open} model currently tops every
-        ${labels.closed} release &mdash; no lag at the frontier.</p>`;
-    }
+        if (today.eci_points < 0) {
+            parts.push(` On raw score, ${laggard.model} leads ${words.frontier} by ${one(-today.eci_points)} ECI points.`);
+        }
+        setParts($('lede'), parts);
 
-    if (trendGap && trendGap.backward_gap_months !== null && trendGap.backward_gap_months !== undefined) {
-        const dir = trendGap.gap_change_months_per_year < 0 ? 'shrinking' : 'growing';
-        const rate = Math.abs(trendGap.gap_change_months_per_year).toFixed(1);
-        const asOf = trendGap.as_of ? ` as of ${fmtDate(trendGap.as_of)}` : '';
-        const ci = trendGap.backward_gap_ci_90
-            ? ` (90% CI ${trendGap.backward_gap_ci_90[0]}&ndash;${trendGap.backward_gap_ci_90[1]})`
-            : '';
-        html += `
-        <p><strong>Trend-based gap (backward-looking):</strong> fitting one trend line per group's frontier
-        puts the gap${asOf} at <strong>${trendGap.backward_gap_months} months</strong>${ci},
-        <strong>${dir} at ${rate} months/year</strong>.</p>`;
+        $('legend-leader').textContent = words.leaders;
+        $('legend-laggard').textContent = words.laggards;
 
-        if (trendGap.forward_gap_months > 0 && trendGap.projected_catchup_date) {
-            const cci = trendGap.projected_catchup_ci_90
-                ? ` (90% CI ${fmtDate(trendGap.projected_catchup_ci_90[0])} &ndash; ${fmtDate(trendGap.projected_catchup_ci_90[1])})`
-                : '';
-            html += `
-            <p><strong>Forward-looking projection (a forecast, not a measurement):</strong> if both trends hold,
-            the ${labels.open} frontier reaches <strong>${escapeHTML(trendGap.leader_current_best.model)}</strong>'s current score
-            around <strong>${fmtDate(trendGap.projected_catchup_date)}</strong>${cci},
-            i.e. about ${trendGap.forward_gap_months} months after the trend evaluation date. Forward-looking estimates carry wider,
-            assumption-laden uncertainty than the backward-looking measurements above.</p>`;
-        } else if (trendGap.forward_gap_months !== null && trendGap.forward_gap_months !== undefined && trendGap.forward_gap_months <= 0) {
-            html += `
-            <p><strong>Forward-looking projection:</strong> the fitted ${labels.open} trend line has already reached the
-            ${labels.closed} frontier's current best score${asOf} &mdash; no future crossing to project.</p>`;
+        const lowerBound = view.segments.some((s) => !s.matched);
+        const top = trend
+            ? 'Top: each dot is a model that set a new record on the Epoch Capabilities Index. The dashed lines '
+                + `are straight-line fits to the ${words.leader} and ${words.laggard} records since `
+                + `${new Date(trend.since).getUTCFullYear()}, and the bracket shows how much earlier the `
+                + `${words.leader} line reached the level the ${words.laggard} line stood at on ${shortDate(trend.on)}. `
+                + 'Bottom: the gap on each day, matched model by model, and its average '
+            : 'Top: each dot is a model that set a new record on the Epoch Capabilities Index, and the bracket '
+                + `runs from the release of the newest ${words.leader} model that the best ${words.laggard} model `
+                + 'has matched to the selected day. Bottom: the gap on each day and its average ';
+        $('chart-caption').textContent = `${top}over the ${headline.window_months} months before.`
+            + (lowerBound ? ` Paler stretches are lower bounds, from before any ${words.leader} model had been matched.` : '')
+            + ' Point at or tap the chart to pick a day.';
+
+        $('releases-title').textContent = `Every ${words.leader} record and the ${words.laggard} model that matched it`;
+        $('releases-leader').textContent = `${words.leader[0].toUpperCase()}${words.leader.slice(1)} model`;
+
+        for (const notes of all('.notes')) notes.hidden = notes.dataset.view !== view.key;
+        for (const link of all('[data-view-link]')) {
+            if (link.dataset.viewLink === view.key) link.setAttribute('aria-current', 'true');
+            else link.removeAttribute('aria-current');
         }
     }
 
-    return html ? `<hr>${html}` : '';
-}
-
-/**
- * Show the current gap explainer panel with data
- */
-function showExplainer(stats, gaps) {
-    const explainer = document.getElementById('current-gap-explainer');
-    if (!explainer) return;
-
-    const unmatched = gaps.filter(g => !g.matched);
-    const estimate = stats.current_gap_estimate || {};
-    const method = estimate.method || 'survival_analysis_mle';
-
-    const scoreField = appState.currentBenchmark === 'eci' ? 'closed_eci' : 'closed_score';
-    const metadata = getBenchmarkMetadata();
-    const scoreName = metadata?.unit || 'Score';
-
-    const unmatchedListHtml = unmatched
-        .sort((a, b) => b.gap_months - a.gap_months)
-        .map(g => {
-            const score = g[scoreField] ?? g.closed_eci ?? g.closed_score;
-            return `<li><strong>${g.closed_model}</strong>: ${g.gap_months} months old (${scoreName}: ${score?.toFixed(1) || 'N/A'})</li>`;
-        })
-        .join('');
-
-    // Build explainer content based on method
-    const content = explainer.querySelector('.explainer-content');
-    if (!content) return;
-
-    const avgGap = (stats.headline_gap?.months ?? stats.avg_horizontal_gap_months)?.toFixed(1) || '--';
-    const minBoundVal = estimate.min_current_gap || '--';
-    const priorFiltered = estimate.prior_from_first_match;
-
-    if (method === 'oldest_unmatched') {
-        content.innerHTML = `
-            <p>The <strong>estimated current gap</strong> is the age of the <strong>oldest unmatched</strong> frontier model &mdash; the minimum time the open-source frontier has been behind.</p>
-            <p>These frontier models have not yet been matched by an open-source model:</p>
-            <ul>${unmatchedListHtml}</ul>
-            <p>The oldest unmatched model has been waiting <strong>${minBoundVal} months</strong>, so the current gap is at least this long.</p>
-        `;
-    } else if (priorFiltered) {
-        // Survival analysis with prior filtered to competitive era
-        const priorMean = estimate.prior_params?.prior_mean_months?.toFixed(1) || '--';
-        content.innerHTML = `
-            <p>These frontier models have not yet been matched by an open-source model:</p>
-            <ul>${unmatchedListHtml}</ul>
-            <p><strong>Methodology:</strong> We use survival analysis, fitting a log-normal prior only to matched gaps from the <strong>competitive era</strong> &mdash; closed models released after the first open model matched any closed model. This excludes early gaps from before open-source alternatives existed.</p>
-            <ol>
-                <li><strong>Fit prior:</strong> A log-normal distribution is fit to recent matched gaps (prior mean: ${priorMean} months)</li>
-                <li><strong>Censored likelihood:</strong> Each unmatched model tells us the gap is <em>at least</em> as long as its age</li>
-                <li><strong>Truncated expectation:</strong> For each, compute E[gap | gap &gt; age] using the fitted distribution</li>
-                <li><strong>Weighted estimate:</strong> Combine expectations, weighting older unmatched models more heavily</li>
-            </ol>
-            <p class="explainer-note">
-                <strong>Minimum bound:</strong> ${minBoundVal} months &mdash; the gap cannot be shorter than the age of the oldest unmatched model.
-            </p>
-            <div class="distribution-section">
-                <p><strong>Gap Distribution (Log-Normal Prior):</strong></p>
-                <div id="distribution-chart" style="width: 100%; height: 200px;"></div>
-            </div>
-        `;
-    } else {
-        // Standard survival analysis explanation
-        content.innerHTML = `
-            <p>The <strong>headline average</strong> (${avgGap} months) counts only ${getFramingLabels().closed} models that have already been matched, so it can understate the <em>current</em> gap after a run of unmatched releases.</p>
-            <p>The <strong>estimated current gap</strong> treats unmatched frontier models as <strong>censored observations</strong> &mdash; they tell us the gap is <em>at least</em> as long as their age:</p>
-            <ul>${unmatchedListHtml}</ul>
-            <p><strong>Methodology:</strong> We use survival analysis with Maximum Likelihood Estimation:</p>
-            <ol>
-                <li><strong>Fit prior:</strong> A log-normal distribution is fit to historical matched gaps</li>
-                <li><strong>Censored likelihood:</strong> Unmatched models contribute P(gap &gt; observed_age) to the likelihood</li>
-                <li><strong>Truncated expectation:</strong> For each unmatched model, compute E[gap | gap &gt; age] using the truncated log-normal formula</li>
-                <li><strong>Weighted estimate:</strong> Combine expectations, weighting older models more heavily (they're more informative)</li>
-            </ol>
-            <p class="explainer-note">
-                <strong>Minimum bound:</strong> ${minBoundVal} months &mdash; the gap cannot be shorter than the age of the oldest unmatched model.
-            </p>
-            <div class="distribution-section">
-                <p><strong>Gap Distribution (Log-Normal Prior):</strong></p>
-                <div id="distribution-chart" style="width: 100%; height: 200px;"></div>
-            </div>
-        `;
+    /** Numbers in the method notes, which do not depend on the view on screen. */
+    function fillNotes(site) {
+        for (const notes of all('.notes')) {
+            const view = site.views[notes.dataset.view];
+            for (const node of notes.querySelectorAll('[data-fill="eci-points"]')) {
+                node.textContent = one(view.headline.eci_points);
+            }
+            for (const node of notes.querySelectorAll('[data-fill="average-months"]')) {
+                node.textContent = one(view.headline.months);
+            }
+            for (const node of notes.querySelectorAll('[data-show="points"]')) node.hidden = false;
+            // Notes written for a trendline headline fall back if there is no trendline to show.
+            for (const node of notes.querySelectorAll('[data-show="trend"]')) node.hidden = !view.trend;
+            for (const node of notes.querySelectorAll('[data-show="no-trend"]')) node.hidden = Boolean(view.trend);
+        }
+        if (site.test.resamples) {
+            for (const node of all('[data-fill="resamples"]')) node.textContent = String(site.test.resamples);
+        }
+        for (const node of all('[data-show="fallback"]')) node.hidden = site.test.paired_bootstrap;
     }
 
-    // Release-lag bracket + trend gap + forward projection (article-style
-    // estimator family), appended for every method branch.
-    content.innerHTML += buildGapEstimatorsHtml(stats, (getCurrentData() || {}).trend_gap);
+    function cell(row, className) {
+        const td = document.createElement('td');
+        if (className) td.className = className;
+        row.appendChild(td);
+        return td;
+    }
 
-    explainer.classList.remove('hidden');
+    function line(parent, text, className) {
+        const span = document.createElement('span');
+        if (className) span.className = className;
+        span.textContent = text;
+        parent.appendChild(span);
+        return span;
+    }
 
-    // Store estimate for later rendering when details is opened
-    explainer._currentEstimate = estimate;
+    function renderTable(view) {
+        const rows = [...view.leaders].reverse().map((m) => {
+            const tr = document.createElement('tr');
 
-    // Add toggle listener to render chart when opened (Plotly needs visible container)
-    if (!explainer._hasToggleListener) {
-        explainer.addEventListener('toggle', function() {
-            if (this.open && this._currentEstimate && this._currentEstimate.prior_params) {
-                requestAnimationFrame(() => {
-                    renderDistributionChart(this._currentEstimate);
+            const name = cell(tr, 'keyed');
+            line(name, '', 'swatch swatch-leader');
+            name.appendChild(document.createTextNode(m.model));
+            const released = line(name, '', 'sub');
+            if (m.organization) line(released, `${m.organization}, `, 'org');
+            released.appendChild(document.createTextNode(shortDate(m.t)));
+
+            cell(tr, 'num').textContent = one(m.eci);
+
+            const by = cell(tr);
+            const lag = cell(tr, 'num');
+            if (m.matched_by) {
+                by.className = 'keyed';
+                line(by, '', 'swatch swatch-laggard');
+                by.appendChild(document.createTextNode(m.matched_by));
+                const sameDay = m.matched_on === m.released;
+                line(by, sameDay ? 'Already level at release' : shortDate(toTime(m.matched_on)), 'sub');
+                lag.textContent = one(m.lag_months);
+            } else {
+                by.className = 'pending';
+                by.textContent = 'Not yet matched';
+                lag.className = 'num pending';
+                lag.textContent = one((view.asOf - m.t) / DAY / view.daysPerMonth);
+                line(lag, 'so far', 'sub');
+            }
+            return tr;
+        });
+        $('releases-body').replaceChildren(...rows);
+        $('releases').hidden = false;
+    }
+
+    function describe(view, state) {
+        const { laggard, reference, matched } = state.segment;
+        const when = state.t === view.asOf && view.fresh ? 'today' : `on ${shortDate(state.t)}`;
+        return {
+            value: `${matched ? '' : 'At least '}${one(state.months)} months behind ${when}`,
+            aside: state.average === null ? '' : ` (${view.averageName} ${one(state.average)})`,
+            detail: matched
+                ? `${laggard.model} matches ${reference.model}, released ${shortDate(reference.t)}`
+                : `${laggard.model} has not matched ${reference.model}, released ${shortDate(reference.t)}`,
+        };
+    }
+
+    /* ------------------------------------------------------------ chart */
+
+    function svg(name, attrs, parent) {
+        const node = document.createElementNS(SVG_NS, name);
+        for (const key in attrs) node.setAttribute(key, attrs[key]);
+        if (parent) parent.appendChild(node);
+        return node;
+    }
+
+    function label(parent, text, attrs) {
+        const node = svg('text', attrs, parent);
+        node.textContent = text;
+        return node;
+    }
+
+    /** Round tick values covering [low, high] in at most `count` steps. */
+    function niceTicks(low, high, count) {
+        const span = high - low || 1;
+        const power = Math.pow(10, Math.floor(Math.log10(span / count)));
+        const step = [1, 2, 5, 10].map((m) => m * power).find((s) => span / s <= count);
+        const first = Math.floor(low / step) * step;
+        const last = Math.ceil(high / step) * step;
+        const ticks = [];
+        for (let v = first; v <= last + step / 2; v += step) ticks.push(Math.round(v * 1e6) / 1e6);
+        return ticks;
+    }
+
+    const trace = (points) => points.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join('');
+
+    /** Two labels a fixed distance apart at least, keeping their order. */
+    function spread(a, b, apart) {
+        if (Math.abs(b - a) >= apart) return [a, b];
+        const middle = (a + b) / 2;
+        const side = b >= a ? 1 : -1;
+        return [middle - (side * apart) / 2, middle + (side * apart) / 2];
+    }
+
+    function createChart(container, onSelect) {
+        let view = null;       // the comparison on screen
+        let domain = null;     // what its axes cover
+        let selected = 0;
+        let frame = null;      // geometry of the current render
+        let dynamic = null;    // <g> holding everything that follows the selection
+
+        /** Width of `text` set in `className`, measured in the page's own typeface. */
+        function textWidth(text, className) {
+            const probe = svg('svg', { width: 0, height: 0, 'aria-hidden': 'true', style: 'position:absolute;visibility:hidden' }, container);
+            const measured = label(probe, text, { class: className }).getComputedTextLength();
+            probe.remove();
+            return measured;
+        }
+
+        function show(next) {
+            view = next;
+            selected = view.asOf;
+            const models = view.leaders.concat(view.laggards);
+            // The gap peaks on the last day of a segment, just before the next release.
+            const peak = view.segments.reduce((most, s, i) => {
+                const end = i + 1 < view.segments.length ? view.segments[i + 1].t : view.asOf;
+                return Math.max(most, (end - s.reference.t) / DAY / view.daysPerMonth);
+            }, 0);
+            domain = {
+                tMin: Math.min(view.leaders[0].t, view.laggards[0].t),
+                eciTicks: niceTicks(Math.min(...models.map((m) => m.eci)), Math.max(...models.map((m) => m.eci)), 5),
+                gapTicks: niceTicks(0, peak, 3),
+                ends: [view.leaders[view.leaders.length - 1], view.laggards[view.laggards.length - 1]],
+            };
+            if (container.clientWidth) render();
+        }
+
+        function render() {
+            if (!view) return;
+            const { leaders, laggards, segments, asOf, headline, average } = view;
+            const { tMin, eciTicks, gapTicks, ends } = domain;
+            const now = stateAt(view, asOf);
+
+            const width = Math.max(280, Math.floor(container.clientWidth));
+            const narrow = width < 520;
+            // Wide charts label the ends of their lines in a margin on the right.
+            const endLabelWidth = narrow ? 0 : Math.min(
+                Math.ceil(Math.max(
+                    ...ends.map((m) => textWidth(m.model, 'mark-label')),
+                    textWidth(view.averageName, 'tick'),
+                )),
+                Math.round(width * 0.26),
+            );
+            const margin = { left: 38, right: narrow ? 6 : endLabelWidth + 16, top: 24, bottom: 26 };
+            // On a narrow chart the lower panel's key takes a row of its own.
+            const between = narrow ? 68 : 46;
+            const eciHeight = clamp(Math.round(width * 0.34), 220, 360);
+            const gapHeight = clamp(Math.round(width * 0.22), 150, 230);
+            const height = margin.top + eciHeight + between + gapHeight + margin.bottom;
+
+            const x0 = margin.left;
+            const x1 = width - margin.right;
+            const xSpan = x1 - x0 - (narrow ? 6 : 0);
+            const x = (t) => x0 + ((t - tMin) / (asOf - tMin)) * xSpan;
+            const tAt = (px) => tMin + ((px - x0) / xSpan) * (asOf - tMin);
+
+            const eciTop = margin.top;
+            const eciBottom = eciTop + eciHeight;
+            const eciLow = eciTicks[0];
+            const eciHigh = eciTicks[eciTicks.length - 1];
+            const yEci = (v) => eciBottom - ((v - eciLow) / (eciHigh - eciLow)) * eciHeight;
+
+            const gapTop = eciBottom + between;
+            const gapBottom = gapTop + gapHeight;
+            const gapHigh = gapTicks[gapTicks.length - 1];
+            const yGap = (v) => gapBottom - (v / gapHigh) * gapHeight;
+            const months = (s, t) => (t - s.reference.t) / DAY / view.daysPerMonth;
+
+            const root = svg('svg', {
+                viewBox: `0 0 ${width} ${height}`,
+                width,
+                height,
+                role: 'img',
+                'aria-label': `Two aligned charts from ${longDate(tMin)} to ${longDate(asOf)}. Top: the highest ECI `
+                    + `score among ${view.words.leader} models rose from ${one(leaders[0].eci)} to ${one(ends[0].eci)}, `
+                    + `and among ${view.words.laggard} models from ${one(laggards[0].eci)} to ${one(ends[1].eci)}. `
+                    + `Bottom: months behind, ${one(now.months)} on the last day, with a ${view.averageName} of `
+                    + `${one(headline.months)}.`,
+            });
+
+            /* grid, axes, titles */
+            const chrome = svg('g', {}, root);
+            label(chrome, 'ECI score', { class: 'panel-title', x: 0, y: eciTop - 10 });
+            label(chrome, 'Months behind', { class: 'panel-title', x: 0, y: gapTop - (narrow ? 32 : 10) });
+            for (const v of eciTicks) {
+                svg('line', { class: 'grid', x1: x0, x2: x1, y1: yEci(v), y2: yEci(v) }, chrome);
+                label(chrome, String(v), { class: 'tick', x: x0 - 8, y: yEci(v) + 4, 'text-anchor': 'end' });
+            }
+            for (const v of gapTicks) {
+                svg('line', { class: v === 0 ? 'baseline' : 'grid', x1: x0, x2: x1, y1: yGap(v), y2: yGap(v) }, chrome);
+                label(chrome, String(v), { class: 'tick', x: x0 - 8, y: yGap(v) + 4, 'text-anchor': 'end' });
+            }
+            const firstYear = new Date(tMin).getUTCFullYear();
+            for (let year = firstYear + 1; Date.UTC(year, 0, 1) <= asOf; year += 1) {
+                const px = x(Date.UTC(year, 0, 1));
+                svg('line', { class: 'grid', x1: px, x2: px, y1: eciTop, y2: eciBottom }, chrome);
+                svg('line', { class: 'grid', x1: px, x2: px, y1: gapTop, y2: gapBottom }, chrome);
+                label(chrome, String(year), { class: 'tick', x: px + 5, y: gapBottom + 17 });
+            }
+            if (x(Date.UTC(firstYear + 1, 0, 1)) - x0 > 44) {
+                label(chrome, String(firstYear), { class: 'tick', x: x0, y: gapBottom + 17 });
+            }
+
+            // Key to the lower panel: beside its title, or under it on a narrow chart.
+            const keys = [['area', 'Each day'], ['average', view.averageName]];
+            const keyWidths = keys.map(([, text]) => 24 + textWidth(text, 'panel-key'));
+            let keyX = narrow ? 0 : x1 - keyWidths.reduce((sum, w) => sum + w, 0) - 18 * (keys.length - 1);
+            const keyY = gapTop - 10;
+            keys.forEach(([kind, text], i) => {
+                if (kind === 'area') {
+                    svg('rect', { class: 'gap-area', x: keyX, y: keyY - 9, width: 16, height: 9 }, chrome);
+                    svg('path', { class: 'gap-line', d: `M${keyX},${keyY - 9}h16` }, chrome);
+                } else {
+                    svg('path', { class: 'avg-line', d: `M${keyX},${keyY - 4}h16` }, chrome);
+                }
+                label(chrome, text, { class: 'panel-key', x: keyX + 22, y: keyY });
+                keyX += keyWidths[i] + 18;
+            });
+
+            const marks = svg('g', {}, root);
+            const trend = view.trend;
+            if (trend) {
+                // The straight-line fits sit behind the frontiers they summarise.
+                for (const [points, side] of [[trend.leaderLine, 'leader'], [trend.laggardLine, 'laggard']]) {
+                    svg('path', {
+                        class: `trendline line-${side}`,
+                        d: trace(points.map(([t, eci]) => [x(t), yEci(eci)])),
+                    }, marks);
+                }
+            }
+
+            /* frontier lines: each record holds until the next one */
+            const steps = (records) => records.map((m, i) => (
+                `${i ? `H${x(m.t).toFixed(1)}V` : `M${x(m.t).toFixed(1)},`}${yEci(m.eci).toFixed(1)}`
+            )).join('') + `H${x(asOf).toFixed(1)}`;
+            svg('path', { class: 'line line-leader', d: steps(leaders) }, marks);
+            svg('path', { class: 'line line-laggard', d: steps(laggards) }, marks);
+            // A filled dot loses its 2px ring and a hollow one gains its stroke, so
+            // these radii give both the same visible size.
+            const size = narrow ? 3.25 : 4.25;
+            for (const m of leaders) svg('circle', { class: 'dot-leader', cx: x(m.t), cy: yEci(m.eci), r: size + 1 }, marks);
+            for (const m of laggards) svg('circle', { class: 'dot-laggard', cx: x(m.t), cy: yEci(m.eci), r: size - 1 }, marks);
+
+            const fitted = [];   // labels to cut short if they overrun the margin
+            if (!narrow) {
+                spread(yEci(ends[0].eci), yEci(ends[1].eci), 36).forEach((y, i) => {
+                    fitted.push(label(marks, ends[i].model, { class: 'mark-label', x: x1 + 10, y: y - 1 }));
+                    label(marks, one(ends[i].eci), { class: 'tick', x: x1 + 10, y: y + 13 });
                 });
             }
+
+            /* The trendline gap, dimensioned as on a drawing: the two points at one level
+               (where the leaders' line was, where the laggards' line is), extension lines
+               up from each, and the measurement on a line above the frontier. */
+            let trendLabel = null;
+            if (trend && trend.months >= 0 && trend.reached !== null && trend.reached >= tMin) {
+                const xa = x(trend.reached);
+                const xb = x(trend.on);
+                const level = yEci(trend.level);
+                const clear = yEci(Math.max(levelAt(leaders, trend.on) ?? trend.level, trend.level));
+                const yDim = Math.max(eciTop + 16, clear - 26);
+                svg('path', { class: 'trend-level', d: `M${xa.toFixed(1)},${level.toFixed(1)}H${xb.toFixed(1)}` }, marks);
+                svg('path', {
+                    class: 'bracket',
+                    d: `M${xa.toFixed(1)},${level.toFixed(1)}V${(yDim - 5).toFixed(1)}`
+                        + `M${xb.toFixed(1)},${level.toFixed(1)}V${(yDim - 5).toFixed(1)}`
+                        + `M${xa.toFixed(1)},${yDim.toFixed(1)}H${xb.toFixed(1)}`
+                        + `M${(xa - 4).toFixed(1)},${(yDim + 4).toFixed(1)}l8,-8`
+                        + `M${(xb - 4).toFixed(1)},${(yDim + 4).toFixed(1)}l8,-8`,
+                }, marks);
+                svg('circle', { class: 'trend-anchor', cx: xa, cy: level, r: 3 }, marks);
+                svg('circle', { class: 'trend-anchor', cx: xb, cy: level, r: 3 }, marks);
+                trendLabel = label(marks, `${one(trend.months)} months`, {
+                    class: 'trend-label', x: (xa + xb) / 2, y: yDim - 8, 'text-anchor': 'middle',
+                });
+            }
+
+            /* gap on each day: climbs a day per day and falls when a newer record is matched */
+            const runs = [];   // consecutive segments with the same matched flag share a shape
+            segments.forEach((s, i) => {
+                const end = i + 1 < segments.length ? segments[i + 1].t : asOf;
+                const points = [[x(s.t), yGap(months(s, s.t))], [x(end), yGap(months(s, end))]];
+                const last = runs[runs.length - 1];
+                if (last && last.matched === s.matched) last.points.push(...points);
+                else runs.push({ matched: s.matched, points: last ? [last.points[last.points.length - 1], ...points] : points });
+            });
+            for (const run of runs) {
+                const soft = run.matched ? '' : ' gap-soft';
+                const first = run.points[0];
+                const last = run.points[run.points.length - 1];
+                svg('path', {
+                    class: `gap-area${soft}`,
+                    d: `${trace(run.points)}L${last[0].toFixed(1)},${gapBottom}L${first[0].toFixed(1)},${gapBottom}Z`,
+                }, marks);
+                svg('path', { class: `gap-line${soft}`, d: trace(run.points) }, marks);
+            }
+
+            /* its 12-month average, ending on the headline */
+            const count = average.months.length;
+            if (average.start !== null && count > 1) {
+                const point = (i) => [x(average.start + i * DAY), yGap(average.months[i])];
+                // One value a day is finer than the screen: draw about one point per pixel and a half.
+                const stride = Math.max(1, Math.floor(count / Math.max(40, xSpan / 1.5)));
+                const stretch = (from, to) => {
+                    const points = [];
+                    for (let i = from; i < to; i += stride) points.push(point(i));
+                    points.push(point(to));
+                    return points;
+                };
+                const last = count - 1;
+                const firm = average.firmFrom === null
+                    ? last
+                    : clamp(Math.round((average.firmFrom - average.start) / DAY), 0, last);
+                if (firm > 0) svg('path', { class: 'avg-line avg-soft', d: trace(stretch(0, firm)) }, marks);
+                if (firm < last) svg('path', { class: 'avg-line', d: trace(stretch(firm, last)) }, marks);
+                svg('circle', { class: 'avg-dot', cx: x(view.windowEnd), cy: yGap(headline.months), r: 4.5 }, marks);
+            }
+            if (!narrow) {
+                const [yAverage, yDay] = spread(yGap(headline.months), yGap(now.months), 34);
+                label(marks, one(headline.months), { class: 'mark-label', x: x1 + 10, y: yAverage - 1 });
+                fitted.push(label(marks, view.averageName, { class: 'tick', x: x1 + 10, y: yAverage + 13 }));
+                label(marks, one(now.months), { class: 'mark-label', x: x1 + 10, y: yDay - 1 });
+                label(marks, view.fresh ? 'today' : shortDate(asOf), { class: 'tick', x: x1 + 10, y: yDay + 13 });
+            }
+
+            dynamic = svg('g', {}, root);
+
+            container.replaceChildren(root);
+            frame = { root, width, narrow, size, x, tAt, yEci, yGap, x0, eciTop, gapBottom };
+
+            // A label too long for the margin is cut short; the readout has it in full.
+            for (const node of fitted) {
+                let text = node.textContent;
+                while (text.length > 4 && node.getComputedTextLength() > endLabelWidth) {
+                    text = text.slice(0, -2);
+                    node.textContent = `${text.trimEnd()}…`;
+                }
+            }
+            // Keep the trendline measurement inside the plot when its bracket is near an edge.
+            if (trendLabel) {
+                const half = trendLabel.getComputedTextLength() / 2;
+                const centre = Number(trendLabel.getAttribute('x'));
+                trendLabel.setAttribute('x', clamp(centre, x0 + half, Math.max(x0 + half, x(asOf) - half)));
+            }
+
+            draw();
+        }
+
+        /** Everything that follows the selected day. */
+        function draw() {
+            const f = frame;
+            const { leaders } = view;
+            const state = stateAt(view, selected);
+            const { laggard: best, reference } = state.segment;
+            const xt = f.x(selected);
+            const xr = f.x(reference.t);
+            const yr = f.yEci(reference.eci);
+            const xo = f.x(best.t);
+            const yo = f.yEci(best.eci);
+            const g = dynamic;
+            g.replaceChildren();
+
+            svg('line', { class: 'crosshair', x1: xt, x2: xt, y1: f.eciTop, y2: f.gapBottom }, g);
+
+            // The same day in the lower panel: its average (until the line ends), then the day itself.
+            if (state.average !== null && selected < view.windowEnd) {
+                svg('circle', { class: 'avg-dot', cx: xt, cy: f.yGap(state.average), r: 4 }, g);
+            }
+            svg('circle', { class: 'gap-dot', cx: xt, cy: f.yGap(state.months), r: 4 }, g);
+
+            onSelect(view, state);
+            // Where the top panel dimensions the trendline gap, it carries no second
+            // bracket for the day's matched pair: the readout names them.
+            if (view.trend) return;
+
+            // A dimension line, as on a drawing: along the matched model's score from its
+            // release to the selected day, then down (or up) to the laggard's line, with a
+            // tick where the two meet.
+            svg('path', {
+                class: 'bracket',
+                d: `M${xr.toFixed(1)},${yr.toFixed(1)}H${xt.toFixed(1)}V${yo.toFixed(1)}`
+                    + `M${(xt - 4).toFixed(1)},${(yr + 4).toFixed(1)}l8,-8`,
+            }, g);
+            svg('circle', { class: 'dot-leader', cx: xr, cy: yr, r: f.size + 3 }, g);
+            svg('circle', { class: 'dot-laggard dot-selected', cx: xo, cy: yo, r: f.size + 0.75 }, g);
+
+            if (!f.narrow) {
+                // Label the bracket where it starts: the matched model (unless its line-end
+                // label already names it) and how long before the selected day it came out.
+                // Above a leader record and to its left is always clear of the leader line.
+                const lines = [`${one(state.months)} months earlier`];
+                if (reference !== domain.ends[0]) lines.unshift(reference.model);
+                const nodes = lines.map((text, i) => label(g, text, {
+                    class: i < lines.length - 1 ? 'mark-label' : 'mark-note',
+                    x: xr - 10,
+                    y: yr - 10 - 15 * (lines.length - 1 - i),
+                    'text-anchor': 'end',
+                }));
+                const widest = Math.max(...nodes.map((node) => node.getComputedTextLength()));
+                if (xr - 10 - widest < f.x0) {
+                    // No room on the left: sit above the line on the right instead.
+                    const level = levelAt(leaders, f.tAt(xr + 10 + widest + 8)) ?? reference.eci;
+                    const base = Math.max(f.eciTop + 11 + 15 * (lines.length - 1), f.yEci(level) - 10);
+                    nodes.forEach((node, i) => {
+                        node.setAttribute('text-anchor', 'start');
+                        node.setAttribute('x', xr + 10);
+                        node.setAttribute('y', base - 15 * (lines.length - 1 - i));
+                    });
+                }
+            }
+        }
+
+        function select(t) {
+            if (!frame) return;
+            const { tMin } = domain;
+            const day = tMin + Math.round((t - tMin) / DAY) * DAY;
+            const next = clamp(day, view.start, view.asOf);
+            if (next === selected) return;
+            selected = next;
+            draw();
+        }
+
+        function fromPointer(event) {
+            const box = frame.root.getBoundingClientRect();
+            return frame.tAt(((event.clientX - box.left) / box.width) * frame.width);
+        }
+
+        container.addEventListener('pointermove', (event) => frame && select(fromPointer(event)));
+        container.addEventListener('pointerdown', (event) => frame && select(fromPointer(event)));
+        container.addEventListener('pointerleave', (event) => {
+            if (frame && event.pointerType === 'mouse') select(view.asOf);
         });
-        explainer._hasToggleListener = true;
-    }
-}
 
-/**
- * Render the log-normal distribution chart in the explainer panel
- */
-function renderDistributionChart(estimate) {
-    const chartDiv = document.getElementById('distribution-chart');
-    if (!chartDiv) {
-        console.warn('Distribution chart div not found');
-        return;
-    }
-    if (!estimate || !estimate.prior_params) {
-        console.warn('No prior_params in estimate:', estimate);
-        chartDiv.innerHTML = '<p style="color: #6b7280; font-size: 0.9em; text-align: center;">Distribution data not available.</p>';
-        return;
-    }
+        container.addEventListener('keydown', (event) => {
+            if (!frame) return;
+            const forward = event.key === 'ArrowRight';
+            if (forward || event.key === 'ArrowLeft') {
+                if (event.shiftKey) {
+                    const starts = view.segments.map((s) => s.t);
+                    const target = forward
+                        ? starts.find((t) => t > selected)
+                        : [...starts].reverse().find((t) => t < selected);
+                    select(target ?? (forward ? view.asOf : view.start));
+                } else {
+                    select(selected + (forward ? 7 : -7) * DAY);
+                }
+            } else if (event.key === 'Home') {
+                select(view.start);
+            } else if (event.key === 'End' || event.key === 'Escape') {
+                select(view.asOf);
+            } else {
+                return;
+            }
+            event.preventDefault();
+        });
 
-    const { mu, sigma, prior_mean_months } = estimate.prior_params;
-    const estimatedGap = estimate.estimated_current_gap;
-    const minBound = estimate.min_current_gap;
+        let lastWidth = 0;
+        const refresh = () => {
+            if (container.clientWidth && container.clientWidth !== lastWidth) {
+                lastWidth = container.clientWidth;
+                render();
+            }
+        };
+        if ('ResizeObserver' in window) new ResizeObserver(refresh).observe(container);
+        else window.addEventListener('resize', refresh);
+        // Labels are measured, so measure again once the typeface has loaded.
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
 
-    // Generate log-normal PDF points
-    const xMin = 0.1;
-    const xMax = 25;
-    const numPoints = 200;
-    const xVals = [];
-    const yVals = [];
-
-    for (let i = 0; i < numPoints; i++) {
-        const x = xMin + (xMax - xMin) * (i / (numPoints - 1));
-        // Log-normal PDF: (1/(x*sigma*sqrt(2*pi))) * exp(-(ln(x)-mu)^2 / (2*sigma^2))
-        const pdf = (1 / (x * sigma * Math.sqrt(2 * Math.PI))) *
-                    Math.exp(-Math.pow(Math.log(x) - mu, 2) / (2 * sigma * sigma));
-        xVals.push(x);
-        yVals.push(pdf);
-    }
-
-    const traces = [
-        // Distribution curve
-        {
-            x: xVals,
-            y: yVals,
-            type: 'scatter',
-            mode: 'lines',
-            fill: 'tozeroy',
-            fillcolor: 'rgba(92, 107, 192, 0.2)',
-            line: { color: COLORS.open, width: 2 },
-            name: 'Prior Distribution',
-            hoverinfo: 'skip',
-        },
-        // Prior mean marker
-        {
-            x: [prior_mean_months],
-            y: [0],
-            type: 'scatter',
-            mode: 'markers+text',
-            marker: { color: COLORS.annotation, size: 10, symbol: 'triangle-up' },
-            text: [`Prior Mean: ${prior_mean_months.toFixed(1)} mo`],
-            textposition: 'top center',
-            textfont: { size: 10, color: COLORS.annotation },
-            name: 'Prior Mean',
-            showlegend: false,
-        },
-        // Min bound marker
-        {
-            x: [minBound],
-            y: [0],
-            type: 'scatter',
-            mode: 'markers+text',
-            marker: { color: COLORS.closed, size: 10, symbol: 'triangle-up' },
-            text: [`Min: ${minBound.toFixed(1)} mo`],
-            textposition: 'top center',
-            textfont: { size: 10, color: COLORS.closed },
-            name: 'Minimum Bound',
-            showlegend: false,
-        },
-        // Estimated gap marker
-        {
-            x: [estimatedGap],
-            y: [0],
-            type: 'scatter',
-            mode: 'markers+text',
-            marker: { color: '#2e7d32', size: 12, symbol: 'star' },
-            text: [`Estimate: ${estimatedGap.toFixed(1)} mo`],
-            textposition: 'top center',
-            textfont: { size: 10, color: '#2e7d32' },
-            name: 'Estimated Gap',
-            showlegend: false,
-        },
-    ];
-
-    const layout = {
-        margin: { l: 40, r: 20, t: 10, b: 40 },
-        height: 200,
-        xaxis: {
-            title: 'Gap (Months)',
-            titlefont: { size: 11 },
-            tickfont: { size: 10 },
-            range: [0, 20],
-        },
-        yaxis: {
-            title: 'Density',
-            titlefont: { size: 11 },
-            tickfont: { size: 10 },
-            showticklabels: false,
-        },
-        showlegend: false,
-        paper_bgcolor: 'transparent',
-        plot_bgcolor: 'transparent',
-    };
-
-    const config = {
-        responsive: true,
-        displayModeBar: false,
-    };
-
-    Plotly.newPlot('distribution-chart', traces, layout, config);
-}
-
-/**
- * Render all charts and update all displays
- */
-function renderAll() {
-    const currentData = getCurrentData();
-    if (!currentData) {
-        console.warn('No data available for rendering');
-        return;
+        return { show };
     }
 
-    // Each section renders on its own: one failing (e.g. a script/HTML
-    // version mismatch) must not blank the table and timestamp after it.
-    const steps = [
-        ['benchmark display', () => updateBenchmarkDisplay()],
-        ['framing labels', () => updateFramingLabels()],
-        ['main chart', () => renderChart(currentData)],
-        ['trend chart', () => renderTrendChart(currentData)],
-        ['gap over time', () => renderHistoricalChart(currentData)],
-        ['headline and stats', () => updateDisplay()],
-        ['last updated', () => updateLastUpdated(currentData.last_updated)],
-        ['data table', () => renderTable(currentData.trend_models || currentData.models)],
-    ];
-    for (const [name, step] of steps) {
+    /* ------------------------------------------------------------- page */
+
+    async function main() {
+        const lede = $('lede');
+        let site;
         try {
-            step();
-        } catch (err) {
-            console.error(`Rendering ${name} failed:`, err);
-        }
-    }
-}
-
-/**
- * Render the trend chart with dynamic trend lines based on benchmark data
- */
-/**
- * The published fit the trend chart draws, in one shape for both framings:
- * the China view's headline trendline lag (country_trend_lag) or, otherwise,
- * the frontier trend gap (trend_gap.plot). Null when neither is published.
- */
-function getTrendFit(data) {
-    const isChina = appState.framing === 'china';
-    const lag = isChina ? data.country_trend_lag : null;
-    if (lag && lag.leader && lag.leader.points) {
-        return {
-            source: 'country',
-            leaderName: 'US', laggardName: 'China',
-            leader: lag.leader, laggard: lag.laggard,
-            level: lag.laggard_trend_level,
-            reachDate: lag.leader_reached_level_date,
-            evalDate: lag.eval_date,
-            lagMonths: lag.lag_months,
-            windowStart: lag.window_start,
-        };
-    }
-    const tg = data.trend_gap;
-    if (tg && tg.plot && tg.backward_gap_months != null) {
-        const p = tg.plot;
-        return {
-            source: 'trend_gap',
-            leaderName: isChina ? 'US' : 'Closed', laggardName: isChina ? 'China' : 'Open',
-            leader: { points: p.leader_points, trendline: p.leader_trendline },
-            laggard: { points: p.laggard_points, trendline: p.laggard_trendline },
-            level: p.laggard_trend_level,
-            reachDate: p.leader_reached_level_date,
-            evalDate: String(tg.as_of).slice(0, 10),
-            lagMonths: tg.backward_gap_months,
-            windowStart: null,
-        };
-    }
-    return null;
-}
-
-/**
- * Trend chart overlay for a published fit: each side's record-setting
- * points, its trendline (sampled server-side in raw units, so logit/log fits
- * curve correctly), and a horizontal marker from the date the leader's
- * trendline reached the laggard trendline's level to the evaluation date.
- */
-function addFitTraces(traces, annotations, trendAnnotationMap, fit, logAxis) {
-    const groups = [
-        { g: fit.leader, name: fit.leaderName, color: COLORS.closed, dash: 'solid' },
-        { g: fit.laggard, name: fit.laggardName, color: COLORS.open, dash: 'dot' },
-    ];
-    for (const { g, name, color, dash } of groups) {
-        if (!g.points || !g.trendline) continue;
-        traces.push({
-            x: g.points.map(p => p.date),
-            y: g.points.map(p => p.score),
-            mode: 'markers',
-            type: 'scatter',
-            name: `${name} record-setters`,
-            marker: { color, size: 10, line: { color: '#fff', width: 1 } },
-            text: g.points.map(p => p.model),
-            hovertemplate: '%{text}<br>%{x|%b %d, %Y}: %{y:.1f}<extra></extra>',
-        });
-        traces.push({
-            x: g.trendline.map(p => p.date),
-            y: g.trendline.map(p => p.score),
-            mode: 'lines',
-            type: 'scatter',
-            name: `${name} trendline`,
-            line: { width: 3, dash, color },
-            hoverinfo: 'skip',
-        });
-    }
-    if (!fit.reachDate) return;
-    const level = fit.level;
-    const lagName = `${fit.source === 'country' ? 'Headline lag' : 'Trend gap'} (${fit.lagMonths.toFixed(1)} mo)`;
-    traces.push({
-        x: [fit.reachDate, fit.evalDate],
-        y: [level, level],
-        mode: 'lines+markers',
-        type: 'scatter',
-        name: lagName,
-        line: { color: '#111827', width: 2.5 },
-        marker: {
-            color: '#111827',
-            size: [12, 11],
-            symbol: ['line-ns-open', fit.lagMonths >= 0 ? 'triangle-right' : 'triangle-left'],
-        },
-        hoverinfo: 'skip',
-    });
-    trendAnnotationMap[lagName] = annotations.length;
-    annotations.push({
-        x: fit.evalDate,
-        // Annotation positions on a log axis are given in log10 units.
-        y: logAxis ? Math.log10(level) : level,
-        text: `<b>${fit.lagMonths.toFixed(1)} mo</b>`,
-        showarrow: false,
-        xanchor: 'left',
-        xshift: 10,
-        bgcolor: 'rgba(255, 255, 255, 0.85)',
-        font: { size: 12, color: '#111827' },
-        visible: true,
-    });
-}
-
-function renderTrendChart(data) {
-    const models = data.trend_models || data.models;
-    const isTrendMetr = appState.currentBenchmark === 'metr_time_horizon';
-    const traces = [];
-    const annotations = [];
-    const scoreField = getScoreField();
-
-    if (!models || models.length === 0) {
-        document.getElementById('trend-chart').innerHTML =
-            '<p style="text-align: center; color: #6b7280; padding: 2rem;">No trend data available.</p>';
-        return;
-    }
-
-    const getScore = (m) => m[scoreField] ?? m.eci ?? m.score;
-    const benchmarkMetadata = getBenchmarkMetadata();
-    const unitName = appState.currentBenchmark === 'eci' ? 'ECI points' : (benchmarkMetadata?.unit || 'points');
-    // Draw the published fit the trend box describes (record-setters and the
-    // trendlines behind the headline / trend gap) over faded context points,
-    // instead of client-side raw fits over all models, which can disagree
-    // with the published numbers.
-    const fit = getTrendFit(data);
-
-    // Filter models based on current framing
-    let category1Models, category2Models;
-    let cat1Name, cat2Name, cat1Color, cat2Color;
-
-    if (appState.framing === 'china') {
-        category1Models = models.filter(m => m.is_china && m.date && getScore(m) !== undefined);
-        category2Models = models.filter(m => !m.is_china && m.date && getScore(m) !== undefined);
-        cat1Name = fit ? 'All Chinese models' : 'China';
-        cat2Name = fit ? 'All other models' : 'US/Other';
-        cat1Color = COLORS.china;
-        cat2Color = COLORS.us;
-    } else {
-        category1Models = models.filter(m => !m.is_open && m.date && getScore(m) !== undefined);
-        category2Models = models.filter(m => m.is_open && m.date && getScore(m) !== undefined);
-        cat1Name = fit ? 'All closed models' : 'Closed';
-        cat2Name = fit ? 'All open models' : 'Open';
-        cat1Color = COLORS.closed;
-        cat2Color = COLORS.open;
-    }
-
-    // Sort models by date for trend calculation
-    category1Models.sort((a, b) => new Date(a.date) - new Date(b.date));
-    category2Models.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    // Add scatter traces for both categories
-    traces.push({
-        x: category1Models.map(m => m.date),
-        y: category1Models.map(m => getScore(m)),
-        mode: 'markers',
-        type: 'scatter',
-        name: cat1Name,
-        marker: { color: cat1Color, size: 8, opacity: fit ? 0.2 : 0.6 },
-        text: category1Models.map(m => m.display_name),
-    });
-
-    traces.push({
-        x: category2Models.map(m => m.date),
-        y: category2Models.map(m => getScore(m)),
-        mode: 'markers',
-        type: 'scatter',
-        name: cat2Name,
-        marker: { color: cat2Color, size: 8, opacity: fit ? 0.2 : 0.6 },
-        text: category2Models.map(m => m.display_name),
-    });
-
-    // Calculate trend lines for each category
-    // For METR (log-scale axis), use log-linear regression so the trend line is straight
-    const cat1Regression = !fit && category1Models.length >= 3
-        ? linearRegression(category1Models.map(m => m.date), category1Models.map(m => getScore(m)), isTrendMetr)
-        : null;
-    const cat2Regression = !fit && category2Models.length >= 3
-        ? linearRegression(category2Models.map(m => m.date), category2Models.map(m => getScore(m)), isTrendMetr)
-        : null;
-
-    // Track which annotations belong to which trend lines
-    const trendAnnotationMap = {}; // Maps trace name to annotation index
-
-    // Add trend line for category 1
-    if (cat1Regression) {
-        // For log-scale regression, generate multiple points so the line renders
-        // as a straight line on the log axis (Plotly draws linear segments between points)
-        const nPts = cat1Regression.useLog ? 20 : 2;
-        const t0 = new Date(cat1Regression.startDate).getTime();
-        const t1 = new Date(cat1Regression.endDate).getTime();
-        const trendXs = Array.from({length: nPts}, (_, i) => new Date(t0 + (t1 - t0) * i / (nPts - 1)).toISOString().split('T')[0]);
-        const trendYs = trendXs.map(d => cat1Regression.predict(d));
-        const startY = trendYs[0];
-        const endY = trendYs[trendYs.length - 1];
-        const trendName = `${cat1Name} Trend`;
-        traces.push({
-            x: trendXs,
-            y: trendYs,
-            mode: 'lines',
-            type: 'scatter',
-            name: trendName,
-            line: { width: 3, dash: 'dot', color: cat1Color }
-        });
-
-        // Annotation for category 1 trend
-        const growthText = cat1Regression.useLog
-            ? `${cat1Regression.slope.toFixed(1)}x/year`
-            : `+${cat1Regression.slope.toFixed(1)} ${unitName}/year`;
-        trendAnnotationMap[trendName] = annotations.length; // Track annotation index
-        annotations.push({
-            x: cat1Regression.endDate,
-            y: endY,
-            text: `<b>${cat1Name} Growth</b><br>${growthText}`,
-            showarrow: true,
-            arrowhead: 2,
-            ax: -100,
-            ay: -40,
-            bgcolor: 'rgba(255, 255, 255, 0.9)',
-            borderpad: 4,
-            bordercolor: cat1Color,
-            borderwidth: 1,
-            align: 'left',
-            font: { size: 11, color: '#333' },
-            visible: true
-        });
-    }
-
-    // Add trend line for category 2
-    if (cat2Regression) {
-        const nPts2 = cat2Regression.useLog ? 20 : 2;
-        const t0_2 = new Date(cat2Regression.startDate).getTime();
-        const t1_2 = new Date(cat2Regression.endDate).getTime();
-        const trendXs2 = Array.from({length: nPts2}, (_, i) => new Date(t0_2 + (t1_2 - t0_2) * i / (nPts2 - 1)).toISOString().split('T')[0]);
-        const trendYs2 = trendXs2.map(d => cat2Regression.predict(d));
-        const startY = trendYs2[0];
-        const endY = trendYs2[trendYs2.length - 1];
-        const trendName = `${cat2Name} Trend`;
-        traces.push({
-            x: trendXs2,
-            y: trendYs2,
-            mode: 'lines',
-            type: 'scatter',
-            name: trendName,
-            line: { width: 3, dash: 'solid', color: cat2Color }
-        });
-
-        // Annotation for category 2 trend with comparison
-        const growthText2 = cat2Regression.useLog
-            ? `${cat2Regression.slope.toFixed(1)}x/year`
-            : `+${cat2Regression.slope.toFixed(1)} ${unitName}/year`;
-        let annotationText = `<b>${cat2Name} Growth</b><br>${growthText2}`;
-
-        if (cat1Regression && cat1Regression.slope > 0) {
-            const factor = (cat2Regression.slope / cat1Regression.slope).toFixed(1);
-            if (factor > 1) {
-                annotationText += `<br>${factor}x faster than ${cat1Name}`;
-            } else if (factor < 1 && factor > 0) {
-                annotationText += `<br>${(1/factor).toFixed(1)}x slower than ${cat1Name}`;
-            }
-        }
-
-        trendAnnotationMap[trendName] = annotations.length; // Track annotation index
-        annotations.push({
-            x: cat2Regression.endDate,
-            y: endY,
-            text: annotationText,
-            showarrow: true,
-            arrowhead: 2,
-            ax: 100,
-            ay: 40,
-            bgcolor: 'rgba(255, 255, 255, 0.9)',
-            borderpad: 4,
-            bordercolor: cat2Color,
-            borderwidth: 1,
-            align: 'left',
-            font: { size: 11, color: '#333' },
-            visible: true
-        });
-    }
-
-    if (fit) {
-        addFitTraces(traces, annotations, trendAnnotationMap, fit, isTrendMetr);
-    }
-
-    // Update trend chart title based on framing
-    const trendTitle = document.getElementById('trend-title');
-    const trendSubtitle = document.getElementById('trend-subtitle');
-    if (trendTitle && trendSubtitle) {
-        const scoreLabel = benchmarkShortName();
-        const scoreLabelLower = appState.currentBenchmark === 'eci' ? 'ECI' : 'score';
-        if (fit && fit.source === 'country') {
-            const since = parseUTCDate(fit.windowStart).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-            trendTitle.textContent = `${scoreLabel} Frontier Trends: China vs US`;
-            trendSubtitle.textContent = `Each country's record-setting releases since ${since} and the trendlines behind the headline; `
-                + `the black marker is the headline lag. Faded points are all models, other countries included.`;
-        } else if (fit) {
-            const framingLabel = appState.framing === 'china' ? 'China vs US' : 'Open vs Closed';
-            trendTitle.textContent = `${scoreLabel} Frontier Trends: ${framingLabel}`;
-            trendSubtitle.textContent = `Record-setting ${fit.leaderName.toLowerCase()} and ${fit.laggardName.toLowerCase()} releases and the `
-                + `trendlines behind the trend gap; the black marker is that gap. Faded points are all models.`;
-        } else {
-            const framingLabel = appState.framing === 'china' ? 'China vs US/Other' : 'Open vs Closed';
-            trendTitle.textContent = `${scoreLabel} Growth Trends: ${framingLabel}`;
-            const [name1, name2] = appState.framing === 'china' ? ['Chinese', 'US/other'] : ['closed', 'open'];
-            trendSubtitle.textContent = `Comparing ${scoreLabelLower} growth rates between ${name1} and ${name2} models.`;
-        }
-    }
-
-    // Add "current date" vertical line logic
-    const today = new Date().toISOString().split('T')[0];
-    const now = new Date();
-    const quarter = Math.ceil((now.getMonth() + 1) / 3);
-    const quarterLabel = `Q${quarter} ${now.getFullYear()}`;
-
-    annotations.push({
-        x: today,
-        y: 1,
-        yref: 'paper',
-        text: quarterLabel,
-        showarrow: false,
-        font: {
-            size: 11,
-            color: COLORS.annotation,
-        },
-        yshift: 10,
-    });
-
-    // Y-axis title and scale based on benchmark
-    const yAxisTitle = appState.currentBenchmark === 'eci' ? 'ECI Score' :
-                       appState.currentBenchmark === 'metr_time_horizon' ? 'p50 Time Horizon (minutes)' :
-                       (benchmarkMetadata?.unit || 'Score');
-
-    // Trend-gap summary box: horizontal offset between the two fitted
-    // frontier trend lines (backward-looking), its velocity, and the
-    // trend-conditional catch-up projection (a forecast).
-    // In the China view the box shows the headline trendline lag instead
-    // (getCurrentData drops trend_gap there so the two fits never disagree
-    // on screen).
-    const current = getCurrentData() || {};
-    const trendGap = current.trend_gap;
-    const countryLag = current.country_trend_lag;
-    const fmtD = (s) => parseUTCDate(s).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-    let boxText = null;
-    if (countryLag) {
-        const change = countryLag.gap_change_months_per_year;
-        const dir = change > 0 ? 'widening' : change < 0 ? 'narrowing' : 'steady';
-        boxText = `<b>Trendline lag (headline):</b> ${countryLag.lag_months.toFixed(1)} mo`
-            + `<br>${dir} at ${Math.abs(change).toFixed(1)} mo/yr · at ${fmtD(countryLag.eval_date)}`
-            + `<br><i>US vs China record-setters since ${fmtD(countryLag.window_start)}, ${countryLag.transform} space</i>`;
-    } else if (trendGap && trendGap.backward_gap_months !== null && trendGap.backward_gap_months !== undefined) {
-        const dir = trendGap.gap_change_months_per_year < 0 ? 'shrinking' : 'growing';
-        const rate = Math.abs(trendGap.gap_change_months_per_year).toFixed(1);
-        boxText = `<b>Trend gap:</b> ${trendGap.backward_gap_months.toFixed(1)} mo`;
-        if (trendGap.backward_gap_ci_90) {
-            boxText += ` (90% CI ${trendGap.backward_gap_ci_90[0]}–${trendGap.backward_gap_ci_90[1]})`;
-        }
-        boxText += `<br>${dir} at ${rate} mo/yr`;
-        if (trendGap.as_of) {
-            boxText += ` · as of ${fmtD(trendGap.as_of)}`;
-        }
-        if (trendGap.forward_gap_months > 0 && trendGap.projected_catchup_date) {
-            boxText += `<br><b>Projected catch-up (forecast):</b> ${fmtD(trendGap.projected_catchup_date)}`;
-            if (trendGap.projected_catchup_ci_90) {
-                boxText += `<br>90% CI ${fmtD(trendGap.projected_catchup_ci_90[0])} – ${fmtD(trendGap.projected_catchup_ci_90[1])}`;
-            }
-        }
-        boxText += `<br><i>frontier-model fit, ${trendGap.transform} space</i>`;
-    }
-    // On a phone the box would cover most of the plot; the subtitle and
-    // legend already name the marker.
-    const trendNarrow = (document.getElementById('trend-chart')?.clientWidth || 1000) < 640;
-    if (boxText && !trendNarrow) {
-        annotations.push({
-            x: 0.02,
-            y: 0.98,
-            xref: 'paper',
-            yref: 'paper',
-            xanchor: 'left',
-            yanchor: 'top',
-            text: boxText,
-            showarrow: false,
-            align: 'left',
-            bgcolor: 'rgba(255, 255, 255, 0.92)',
-            bordercolor: '#94a3b8',
-            borderwidth: 1,
-            borderpad: 6,
-            font: { size: 11, color: '#333' },
-        });
-    }
-
-    const layout = {
-        title: { text: '', font: { size: 16 } },
-        margin: { l: 60, r: 60, t: 40, b: 60 },
-        height: 500,
-        // Stop shortly after today: autorange otherwise pads out to empty
-        // future quarters.
-        xaxis: { title: 'Model Release Date', range: dateAxisRange(models, today) },
-        ...(trendNarrow ? { legend: { orientation: 'h', y: -0.25 } } : {}),
-        yaxis: {
-            title: yAxisTitle,
-            ...(isTrendMetr ? {
-                type: 'log',
-                range: [-2, 3], // 0.01 to 1000 minutes
-                dtick: 1, // Show only powers of 10
-            } : {}),
-        },
-        annotations,
-        shapes: [
-            // Today marker (always show)
-            {
-                type: 'line',
-                x0: today,
-                x1: today,
-                y0: 0,
-                y1: 1,
-                yref: 'paper',
-                line: {
-                    color: COLORS.gridline,
-                    width: 1,
-                    dash: 'dash',
-                },
-            }
-        ],
-        hovermode: 'closest',
-        paper_bgcolor: 'transparent',
-        plot_bgcolor: 'transparent',
-    };
-
-    const config = {
-        responsive: true,
-        displayModeBar: 'hover',
-        modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
-        displaylogo: false,
-    };
-
-    Plotly.newPlot('trend-chart', traces, layout, config).then(function(gd) {
-        // Handle legend clicks to show/hide corresponding annotations
-        gd.on('plotly_restyle', function(eventData) {
-            if (!eventData || !eventData[0] || eventData[0].visible === undefined) return;
-
-            const visibilityChanges = eventData[0].visible;
-            const traceIndices = eventData[1];
-
-            // Build new annotations array with updated visibility
-            const newAnnotations = [...layout.annotations];
-
-            traceIndices.forEach((traceIdx, i) => {
-                const trace = gd.data[traceIdx];
-                if (!trace) return;
-
-                const annotationIdx = trendAnnotationMap[trace.name];
-                if (annotationIdx === undefined) return;
-
-                // Get visibility state (can be true, false, or 'legendonly')
-                const isVisible = Array.isArray(visibilityChanges)
-                    ? visibilityChanges[i] !== 'legendonly' && visibilityChanges[i] !== false
-                    : visibilityChanges !== 'legendonly' && visibilityChanges !== false;
-
-                if (newAnnotations[annotationIdx]) {
-                    newAnnotations[annotationIdx] = {
-                        ...newAnnotations[annotationIdx],
-                        visible: isVisible
-                    };
-                }
-            });
-
-            Plotly.relayout(gd, { annotations: newAnnotations });
-        });
-    });
-}
-
-/**
- * Render the main chart using Plotly.js
- * Style: Only show closed models and the specific open models that matched them
- */
-function renderChart(data) {
-    const { models, gaps, statistics, metadata } = data;
-    const isMetr = appState.currentBenchmark === 'metr_time_horizon';
-    const labels = getFramingLabels();
-    const scoreField = getScoreField();
-    const scoreName = metadata?.unit || (appState.currentBenchmark === 'eci' ? 'ECI' : 'Score');
-
-    // Helper to get score from model or gap
-    const getModelScore = (m) => m[scoreField] ?? m.eci ?? m.score;
-    const getGapClosedScore = (g) => g.closed_eci ?? g.closed_score;
-    const getGapOpenScore = (g) => g.open_eci ?? g.open_score;
-
-    // Create traces
-    const traces = [];
-    const annotations = [];
-    const shapes = [];
-
-    // Get closed models from gaps data
-    const closedModels = models.filter(m => !m.is_open && m.date && getModelScore(m));
-
-    // Matched closed models (solid red circles)
-    const matchedClosed = closedModels.filter(m =>
-        gaps.some(g => g.closed_model === m.model && g.matched)
-    );
-
-    if (matchedClosed.length > 0) {
-        traces.push({
-            x: matchedClosed.map(m => m.date),
-            y: matchedClosed.map(m => getModelScore(m)),
-            mode: 'markers',
-            type: 'scatter',
-            name: labels.closedModel,
-            marker: {
-                color: COLORS.closed,
-                size: 12,
-                symbol: 'circle',
-            },
-            hovertemplate: `<b>%{text}</b><br>${scoreName}: %{y:.1f}<br>Date: %{x}<extra></extra>`,
-            text: matchedClosed.map(m => m.display_name || m.model),
-        });
-    }
-
-    // Unmatched closed models (dashed outline)
-    const unmatchedClosed = closedModels.filter(m =>
-        gaps.some(g => g.closed_model === m.model && !g.matched)
-    );
-
-    if (unmatchedClosed.length > 0) {
-        // Helper function to add months properly (handles month boundaries correctly)
-        const addMonths = (date, months) => {
-            const result = new Date(date);
-            const wholeMonths = Math.floor(months);
-            const fractionalDays = (months - wholeMonths) * 30.4375;  // Convert fractional month to days
-            result.setMonth(result.getMonth() + wholeMonths);
-            result.setDate(result.getDate() + Math.round(fractionalDays));
-            return result;
-        };
-
-        const hasCIData = statistics?.ci_90_low !== undefined && statistics?.ci_90_high !== undefined;
-
-        const hoverTexts = unmatchedClosed.map(m => {
-            const name = m.display_name || m.model;
-            const score = getModelScore(m);
-            if (!hasCIData) {
-                return `<b>${name}</b><br>${scoreName}: ${score?.toFixed(1) || 'N/A'}<br>Date: ${new Date(m.date).toLocaleDateString()}<br><i>Not yet matched</i>`;
-            }
-            const releaseDate = new Date(m.date);
-            const expectedLow = addMonths(releaseDate, statistics.ci_90_low);
-            const expectedHigh = addMonths(releaseDate, statistics.ci_90_high);
-            const formatDate = (d) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-            return `<b>${name}</b><br>${scoreName}: ${score?.toFixed(1) || 'N/A'}<br>Released: ${new Date(m.date).toLocaleDateString()}<br><i>Not yet matched</i><br><br><b>Catch-up if the historical gap range holds:</b><br>${formatDate(expectedLow)} – ${formatDate(expectedHigh)}<br><i>(range of past daily gaps, not a forecast interval)</i>`;
-        });
-
-        traces.push({
-            x: unmatchedClosed.map(m => m.date),
-            y: unmatchedClosed.map(m => getModelScore(m)),
-            mode: 'markers',
-            type: 'scatter',
-            name: `${labels.closedModel} (unmatched)`,
-            marker: {
-                color: COLORS.closedUnmatched,
-                size: 12,
-                symbol: 'circle-open',
-                line: { width: 2 },
-            },
-            hovertemplate: hoverTexts.map(t => t + '<extra></extra>'),
-            text: unmatchedClosed.map(m => m.display_name || m.model),
-        });
-    }
-
-    // Only show open models that matched a closed model (blue squares)
-    // Position them at the END of the connector line (at closed model's score level)
-    const matchedGaps = gaps.filter(g => g.matched);
-
-    if (matchedGaps.length > 0) {
-        traces.push({
-            x: matchedGaps.map(g => g.open_date),
-            y: matchedGaps.map(g => getGapClosedScore(g)),  // Position at closed model's score to align with connector line
-            mode: 'markers',
-            type: 'scatter',
-            name: labels.openModel,
-            marker: {
-                color: COLORS.open,
-                size: 10,
-                symbol: 'square',
-            },
-            hovertemplate: matchedGaps.map(g =>
-                `<b>${g.open_model}</b><br>${scoreName}: ${getGapOpenScore(g)?.toFixed(1)} (matched ${getGapClosedScore(g)?.toFixed(1)})<br>Gap: ${g.gap_months} months<br>Date: %{x}<extra></extra>`
-            ),
-        });
-    }
-
-    // Add horizontal connector lines for matched gaps
-    // For METR log-scale, collect label data for a text trace instead of annotations
-    const gapLabelX = [];
-    const gapLabelY = [];
-    const gapLabelText = [];
-    const sortedMatchedGaps = [...matchedGaps].sort((a, b) => getGapClosedScore(a) - getGapClosedScore(b));
-    // Label only the most recent matches on the chart (one on a phone); the
-    // rest stay readable on hover over the matching open model's square.
-    // Labelling every connector made the early-2024 cluster unreadable.
-    const narrowChart = (document.getElementById('chart')?.clientWidth || 1000) < 640;
-    const labelledGaps = new Set();
-    {
-        const scores = matchedGaps.map(getGapClosedScore).filter(Number.isFinite);
-        const span = isMetr
-            ? Math.log10(Math.max(...scores)) - Math.log10(Math.min(...scores))
-            : Math.max(...scores) - Math.min(...scores);
-        const pos = (g) => (isMetr ? Math.log10(getGapClosedScore(g)) : getGapClosedScore(g));
-        const kept = [];
-        // Most recent first; skip a label that would sit on top of one
-        // already kept (within ~6% of the score range).
-        for (const g of [...matchedGaps].sort((a, b) => new Date(b.closed_date) - new Date(a.closed_date))) {
-            if (kept.length >= (narrowChart ? 1 : 4)) break;
-            if (kept.some(k => Math.abs(pos(k) - pos(g)) < span * 0.06)) continue;
-            kept.push(g);
-            labelledGaps.add(g);
-        }
-    }
-
-    sortedMatchedGaps.forEach(gap => {
-        const closedDate = new Date(gap.closed_date);
-        const openDate = new Date(gap.open_date);
-        const midDate = new Date((closedDate.getTime() + openDate.getTime()) / 2);
-        const closedScore = getGapClosedScore(gap);
-
-        // Horizontal connector line
-        shapes.push({
-            type: 'line',
-            x0: gap.closed_date,
-            x1: gap.open_date,
-            y0: closedScore,
-            y1: closedScore,
-            line: {
-                color: COLORS.connector,
-                width: 2,
-            },
-        });
-
-        if (!labelledGaps.has(gap)) return;
-        if (isMetr) {
-            // Text trace on the log axis, offset upward by a factor.
-            gapLabelX.push(midDate.toISOString().split('T')[0]);
-            gapLabelY.push(closedScore * 1.8);
-            gapLabelText.push(`${gap.gap_months} mo`);
-        } else {
-            annotations.push({
-                x: midDate.toISOString().split('T')[0],
-                y: closedScore,
-                text: `${gap.gap_months} mo`,
-                showarrow: false,
-                font: { size: 11, color: COLORS.open },
-                yshift: 15,
-            });
-        }
-    });
-
-    // Add gap labels as a text trace for METR (more reliable on log axes)
-    if (isMetr && gapLabelX.length > 0) {
-        traces.push({
-            x: gapLabelX,
-            y: gapLabelY,
-            mode: 'text',
-            text: gapLabelText,
-            textfont: { size: 11, color: COLORS.open },
-            textposition: 'top center',
-            hoverinfo: 'skip',
-            showlegend: false,
-        });
-    }
-
-    // Add dashed extensions for unmatched closed models
-    const today = new Date().toISOString().split('T')[0];
-
-    // ECI-specific reference lines (only for ECI benchmark)
-    if (appState.currentBenchmark === 'eci') {
-        shapes.push(
-            {
-                type: 'line',
-                y0: 130,
-                y1: 130,
-                x0: 0,
-                x1: 1,
-                xref: 'paper',
-                line: {
-                    color: 'rgba(150, 150, 150, 0.4)',
-                    width: 1,
-                    dash: 'dot'
-                }
-            },
-            {
-                type: 'line',
-                y0: 150,
-                y1: 150,
-                x0: 0,
-                x1: 1,
-                xref: 'paper',
-                line: {
-                    color: 'rgba(150, 150, 150, 0.4)',
-                    width: 1,
-                    dash: 'dot'
-                }
-            },
-            {
-                type: 'line',
-                y0: 160.87,
-                y1: 160.87,
-                x0: 0,
-                x1: 1,
-                xref: 'paper',
-                line: {
-                    color: 'rgba(150, 150, 150, 0.4)',
-                    width: 1,
-                    dash: 'dot'
-                }
-            }
-        );
-    }
-
-    // Every unmatched model gets its dotted line to today; only the oldest
-    // (it sets the minimum current gap) is labelled, as the stacked labels
-    // of the rest collided at today's edge. Hover gives each one's age.
-    const unmatchedGaps = gaps.filter(g => !g.matched);
-    const oldestUnmatched = unmatchedGaps.reduce(
-        (best, g) => (best == null || g.gap_months > best.gap_months ? g : best), null);
-    unmatchedGaps.forEach(gap => {
-        const closedScore = getGapClosedScore(gap);
-        shapes.push({
-            type: 'line',
-            x0: gap.closed_date,
-            x1: today,
-            y0: closedScore,
-            y1: closedScore,
-            line: {
-                color: COLORS.closedUnmatched,
-                width: 2,
-                dash: 'dot',
-            },
-        });
-
-        if (gap !== oldestUnmatched) return;
-        annotations.push({
-            x: today,
-            y: closedScore,
-            text: `${gap.gap_months} mo`,
-            showarrow: false,
-            font: {
-                size: 11,
-                color: COLORS.closed,
-            },
-            xshift: 25,
-        });
-    });
-
-    // Add "current date" vertical line
-    shapes.push({
-        type: 'line',
-        x0: today,
-        x1: today,
-        y0: 0,
-        y1: 1,
-        yref: 'paper',
-        line: {
-            color: COLORS.gridline,
-            width: 1,
-            dash: 'dash',
-        },
-    });
-
-    // Current quarter annotation
-    const now = new Date();
-    const quarter = Math.ceil((now.getMonth() + 1) / 3);
-    const quarterLabel = `Q${quarter} ${now.getFullYear()}`;
-
-    annotations.push({
-        x: today,
-        y: 1,
-        yref: 'paper',
-        text: quarterLabel,
-        showarrow: false,
-        font: {
-            size: 11,
-            color: COLORS.annotation,
-        },
-        yshift: 10,
-    });
-
-    // Labels for reference lines (ECI only)
-    if (appState.currentBenchmark === 'eci') {
-        annotations.push(
-            {
-                x: 0.01,
-                y: 130,
-                xref: 'paper',
-                yref: 'y',
-                text: 'Claude 3.5 Sonnet (130)',
-                showarrow: false,
-                xanchor: 'left',
-                yanchor: 'bottom',
-                font: { size: 10, color: '#aaa' }
-            },
-            {
-                x: 0.01,
-                y: 150,
-                xref: 'paper',
-                yref: 'y',
-                text: 'GPT-5 (150)',
-                showarrow: false,
-                xanchor: 'left',
-                yanchor: 'bottom',
-                font: { size: 10, color: '#aaa' }
-            },
-            {
-                x: 0.01,
-                y: 160.87,
-                xref: 'paper',
-                yref: 'y',
-                text: 'Claude Fable 5 (161)',
-                showarrow: false,
-                xanchor: 'left',
-                yanchor: 'bottom',
-                font: { size: 10, color: '#aaa' }
-            }
-        );
-    }
-
-    // Y-axis title based on benchmark
-    const chartYAxisTitle = appState.currentBenchmark === 'eci' ? 'ECI Score' :
-                            appState.currentBenchmark === 'metr_time_horizon' ? 'p50 Time Horizon (minutes)' :
-                            (metadata?.unit || 'Score');
-
-    // Layout
-    const layout = {
-        showlegend: false,
-        margin: { l: 60, r: 100, t: 20, b: 60 },
-        xaxis: {
-            title: 'Model Release Date',
-            range: dateAxisRange(models, today),
-            titlefont: { size: 12, color: COLORS.annotation },
-            tickfont: { size: 11, color: COLORS.annotation },
-            gridcolor: COLORS.gridline,
-            zeroline: false,
-        },
-        yaxis: {
-            title: chartYAxisTitle,
-            titlefont: { size: 12, color: COLORS.annotation },
-            tickfont: { size: 11, color: COLORS.annotation },
-            gridcolor: COLORS.gridline,
-            zeroline: false,
-            ...(isMetr ? {
-                type: 'log',
-                range: [-2, 3], // 0.01 to 1000 minutes
-                dtick: 1, // Show only powers of 10
-            } : {
-                tickformat: '.0f',
-            }),
-        },
-        shapes: shapes,
-        annotations: annotations,
-        hovermode: 'closest',
-        paper_bgcolor: 'transparent',
-        plot_bgcolor: 'transparent',
-    };
-
-    const config = {
-        responsive: true,
-        displayModeBar: 'hover',
-        modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
-        displaylogo: false,
-    };
-
-    Plotly.newPlot('chart', traces, layout, config);
-}
-
-/**
- * Render the historical gap chart
- * Dynamic based on gap metric selection (average vs current)
- */
-/* ============================================================
- * Gap-over-time chart — inline SVG (McNair-style)
- * ============================================================ */
-
-const SVG_NS = 'http://www.w3.org/2000/svg';
-
-function svgEl(name, attrs, kids) {
-    const e = document.createElementNS(SVG_NS, name);
-    if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
-    if (kids) for (const c of kids) e.appendChild(c);
-    return e;
-}
-
-function parseUTCDate(d) {
-    if (d instanceof Date) return d;
-    const s = String(d);
-    if (s.length === 10) return new Date(s + 'T00:00:00Z');
-    // API serializes ISO timestamps without a 'Z'; force UTC so dates don't
-    // shift by viewer's local-time offset.
-    if (!/[Zz]|[+-]\d{2}:?\d{2}$/.test(s)) return new Date(s + 'Z');
-    return new Date(s);
-}
-
-function fmtMonthShort(d) {
-    return d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
-}
-
-function fmtYear(d) { return d.getUTCFullYear(); }
-
-function fmtDayLong(d) {
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-}
-
-function shortenModelName(name) {
-    if (!name) return '';
-    return String(name).replace(/\s*\(.*?\)\s*$/, '').trim();
-}
-
-function escapeHTML(s) {
-    return String(s).replace(/[&<>"']/g, ch => (
-        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
-    ));
-}
-
-function getLaggardAccent(framing) {
-    // The laggard is indigo in both framings (open models, Chinese models),
-    // matching the headline text and the main chart.
-    return { dot: '#5c6bc0', area: 'rgba(92, 107, 192, 0.18)' };
-}
-
-function getHistoricalLabels(framing) {
-    if (framing === 'china') {
-        return {
-            laggard: 'Chinese',
-            leader: 'US',
-            referenceModel: 'US release',
-            matcherModel: 'First Chinese model to match',
-            yAxisTitle: 'Months until each US frontier model was matched by a Chinese model',
-            xAxisTitle: 'US frontier release date',
-            behindHeader: 'months until a Chinese model matched it',
-        };
-    }
-    return {
-        laggard: 'Open',
-        leader: 'Closed',
-        referenceModel: 'Closed release',
-        matcherModel: 'First open model to match',
-        yAxisTitle: 'Months until each closed frontier model was matched by an open model',
-        xAxisTitle: 'Closed frontier release date',
-        behindHeader: 'months until an open model matched it',
-    };
-}
-
-/**
- * Build the laggard/leader frontier event arrays from per-model records.
- * A "frontier" release is one that raises the running max score within its
- * side. Returns dates as Date objects keyed `_d`, preserves model/score.
- */
-function buildFrontierEvents(models, framing, parityStart) {
-    const isLaggard = framing === 'china'
-        ? (m) => m.is_china === true
-        : (m) => m.is_open === true;
-    const isLeader = framing === 'china'
-        ? (m) => m.is_china !== true
-        : (m) => m.is_open !== true;
-    const scoreField = getScoreField();
-
-    const byDate = (a, b) => parseUTCDate(a.date) - parseUTCDate(b.date);
-    const laggard = [];
-    const leader = [];
-    let maxLag = -Infinity;
-    let maxLed = -Infinity;
-    for (const m of [...models].sort(byDate)) {
-        const s = m[scoreField];
-        if (s == null) continue;
-        const d = parseUTCDate(m.date);
-        if (parityStart && d < parityStart) {
-            // still update running max so post-parity frontier baseline is correct
-            if (isLaggard(m) && s > maxLag) maxLag = s;
-            if (isLeader(m) && s > maxLed) maxLed = s;
-            continue;
-        }
-        if (isLaggard(m) && s > maxLag) {
-            maxLag = s;
-            laggard.push({ model: m.model, display: m.display_name || m.model, date: m.date, _d: d, score: s });
-        } else if (isLeader(m) && s > maxLed) {
-            maxLed = s;
-            leader.push({ model: m.model, display: m.display_name || m.model, date: m.date, _d: d, score: s });
-        }
-    }
-    return { laggard, leader };
-}
-
-/* ---------- helpers shared by both Gap Over Time views ---------- */
-
-const DAYS_PER_MONTH = 365.25 / 12; // matches scripts/update_data.py
-// Beyond this many days without a newly scored release, the timeline's tail
-// is labelled as data staleness rather than measured progress.
-const STALE_AFTER_DAYS = 60;
-
-function daysBetween(later, earlier) {
-    return Math.round((later - earlier) / 86400000);
-}
-
-function monthsSince(t, ref) {
-    return daysBetween(t, ref) / DAYS_PER_MONTH;
-}
-
-function fmtMonthYear(d, long) {
-    return d.toLocaleDateString('en-US', { month: long ? 'long' : 'short', year: 'numeric', timeZone: 'UTC' });
-}
-
-/** Snap a timestamp to the start of its UTC day. */
-function toUTCDay(t) {
-    return new Date(Math.floor(t.getTime() / 86400000) * 86400000);
-}
-
-/**
- * Draw y tick labels, quarterly x tick labels and the two axis titles.
- * Shared by both Gap Over Time views so they stay visually identical.
- */
-function drawGapChartAxes(svg, g, titles) {
-    const { M, innerW, innerH, W, H, x, y, xMin, xMax, yMax } = g;
-    const yMin = g.yMin ?? 0;
-    const yStep = g.yStep ?? 3;
-
-    // y tick labels (no gridlines)
-    for (let v = yMin; v <= yMax + 1e-9; v += yStep) {
-        const t = svgEl('text', { class: 'axis-label', x: M.left - 8, y: y(v) + 3.5, 'text-anchor': 'end' });
-        t.appendChild(document.createTextNode(Number.isInteger(yStep) ? Math.round(v) : v.toFixed(1)));
-        svg.appendChild(t);
-    }
-
-    // x tick labels (quarterly, no gridlines)
-    const xTicks = [];
-    let cursor = new Date(Date.UTC(xMin.getUTCFullYear(), Math.floor(xMin.getUTCMonth() / 3) * 3, 1));
-    while (cursor <= xMax) {
-        if (cursor >= xMin) xTicks.push(new Date(cursor));
-        cursor = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 3, 1));
-    }
-    for (const d of xTicks) {
-        const xp = x(d);
-        const isJan = d.getUTCMonth() === 0;
-        const t = svgEl('text', {
-            class: 'axis-label',
-            x: xp,
-            y: M.top + innerH + 16,
-            'text-anchor': 'middle',
-            'font-weight': isJan ? '600' : '400',
-        });
-        t.appendChild(document.createTextNode(isJan ? fmtYear(d) : fmtMonthShort(d)));
-        svg.appendChild(t);
-    }
-
-    // axis titles
-    const yTitleX = 24;
-    const yTitleY = M.top + innerH / 2;
-    const yTitle = svgEl('text', {
-        class: 'axis-title',
-        x: yTitleX,
-        y: yTitleY,
-        'text-anchor': 'middle',
-        transform: `rotate(-90 ${yTitleX} ${yTitleY})`,
-    });
-    yTitle.appendChild(document.createTextNode(titles.yAxisTitle));
-    svg.appendChild(yTitle);
-
-    const xTitle = svgEl('text', {
-        class: 'axis-title',
-        x: M.left + innerW / 2,
-        y: H - 22,
-        'text-anchor': 'middle',
-    });
-    xTitle.appendChild(document.createTextNode(titles.xAxisTitle));
-    svg.appendChild(xTitle);
-}
-
-/**
- * Rotated release ticks + labels below the plot. Every release in range
- * gets a tick (so release density stays visible); labels are greedily
- * culled left to right so they never overlap. `events` carry `_d` (Date)
- * and `display`.
- */
-function drawReleaseTicks(svg, events, g, withLabels = true) {
-    const { M, innerH, W, x } = g;
-    const tickTopY = M.top + innerH;
-    const ROT_DEG = 40;
-    const ROT_COS = Math.cos((ROT_DEG * Math.PI) / 180);
-    const TICK_TOP = tickTopY + 28;
-    const TICK_BOTTOM = tickTopY + 36;
-    const LABEL_Y = tickTopY + 42;
-    let rightX = -Infinity;
-    for (const ev of events) {
-        const xp = x(ev._d);
-        if (xp < M.left || xp > W - M.right) continue;
-        svg.appendChild(svgEl('line', {
-            class: 'us-tick',
-            x1: xp, x2: xp, y1: TICK_TOP, y2: TICK_BOTTOM,
-        }));
-        if (!withLabels) continue;
-        // The bottom margin fits ~23 rotated characters before the label
-        // reaches the x-axis title; verbose names are truncated.
-        const fullText = shortenModelName(ev.display);
-        const labelText = fullText.length > 22 ? `${fullText.slice(0, 21)}…` : fullText;
-        const estW = labelText.length * 6.6 * ROT_COS + 8;
-        // Drop the label (keep the tick) if it would clip past the chart's
-        // right edge or overlap the previous label.
-        if (xp + estW > W - 6) continue;
-        if (xp < rightX + 6) continue;
-        rightX = xp + estW;
-        const labelW = labelText.length * 6.6 + 4;
-        svg.appendChild(svgEl('rect', {
-            class: 'label-us-box',
-            x: xp - 2,
-            y: LABEL_Y - 10,
-            width: labelW,
-            height: 14,
-            transform: `rotate(${ROT_DEG} ${xp} ${LABEL_Y})`,
-        }));
-        const t = svgEl('text', {
-            class: 'label-us',
-            x: xp,
-            y: LABEL_Y,
-            'text-anchor': 'start',
-            transform: `rotate(${ROT_DEG} ${xp} ${LABEL_Y})`,
-        });
-        t.appendChild(document.createTextNode(labelText));
-        svg.appendChild(t);
-    }
-}
-
-/**
- * Two-row collision-aware label band above the plot. Items carry `xp`,
- * `labelText` and `gapText`; returns them with `labelY` (null = dropped).
- * Prefers the lower row, falls back to the upper row, drops only if
- * neither fits (the marker is still drawn by the caller).
- */
-function placeLabelBand(items, M) {
-    const ROWS = [
-        { y: M.top - 60, rightX: -Infinity }, // upper
-        { y: M.top - 28, rightX: -Infinity }, // lower (preferred)
-    ];
-    const placed = [];
-    for (const it of items) {
-        const halfW = Math.max(it.labelText.length * 3.4, it.gapText.length * 3.1) + 6;
-        let rowIdx = 1;
-        if (it.xp - halfW < ROWS[1].rightX + 4) rowIdx = 0;
-        if (rowIdx === 0 && it.xp - halfW < ROWS[0].rightX + 4) {
-            placed.push({ ...it, labelY: null });
-            continue;
-        }
-        ROWS[rowIdx].rightX = it.xp + halfW;
-        placed.push({ ...it, labelY: ROWS[rowIdx].y });
-    }
-    return { placed, upperRowY: ROWS[0].y };
-}
-
-/**
- * Draw the label band: stub line, marker and two text rows per placed item.
- * `markerClass` may be overridden per item via `it.markerClass`.
- */
-function drawLabelBand(svg, placed, upperRowY, M, defaultMarkerClass) {
-    for (const it of placed) {
-        if (it.labelY != null) {
-            const stubY1 = it.labelY === upperRowY ? M.top - 4 : it.labelY + 18;
-            svg.appendChild(svgEl('line', { class: 'label-stub', x1: it.xp, x2: it.xp, y1: stubY1, y2: it.yp - 6 }));
-        }
-        svg.appendChild(svgEl('circle', { class: it.markerClass || defaultMarkerClass, cx: it.xp, cy: it.yp, r: 4 }));
-        if (it.labelY != null) {
-            const nameEl = svgEl('text', { class: 'label-cn', x: it.xp, y: it.labelY, 'text-anchor': 'middle' });
-            nameEl.appendChild(document.createTextNode(it.labelText));
-            svg.appendChild(nameEl);
-            const gapEl = svgEl('text', { class: 'label-cn-gap', x: it.xp, y: it.labelY + 14, 'text-anchor': 'middle' });
-            gapEl.appendChild(document.createTextNode(it.gapText));
-            svg.appendChild(gapEl);
-        }
-    }
-}
-
-/** Create, update or hide the methodology note under the chart. */
-function setHistoricalMethodNote(text) {
-    const container = document.getElementById('historical-chart-container');
-    let note = document.getElementById('historical-method-note');
-    if (!text) {
-        if (note) note.hidden = true;
-        return;
-    }
-    if (!note) {
-        if (!container) return;
-        note = document.createElement('p');
-        note.id = 'historical-method-note';
-        note.className = 'subtitle';
-        note.style.textAlign = 'center';
-        note.style.marginTop = 'var(--spacing-sm)';
-        container.appendChild(note);
-    }
-    note.textContent = text;
-    note.hidden = false;
-}
-
-/** Units for the score-gap view, from the benchmark metadata. */
-function scoreUnitLabels() {
-    const meta = getBenchmarkMetadata() || {};
-    if (appState.currentBenchmark === 'eci') return { long: 'ECI points', short: 'ECI pts' };
-    if (appState.currentBenchmark === 'metr_time_horizon') return { long: 'minutes', short: 'min' };
-    if (meta.scale === 100) return { long: 'percentage points', short: 'pp' };
-    const u = meta.unit || 'points';
-    return { long: u, short: u };
-}
-
-function getTimelineLabels(framing) {
-    const unit = scoreUnitLabels();
-    if (framing === 'china') {
-        return {
-            leader: 'US',
-            laggard: 'Chinese',
-            leadPhrase: 'The US lead over China',
-            leadNoun: 'US lead',
-            yAxisTitle: 'Months the Chinese frontier trailed the US frontier',
-            xAxisTitle: 'Date (ticks mark US frontier releases)',
-            behindHeader: 'months behind the US frontier',
-            laggardRow: 'Best Chinese model that day',
-            referenceRow: 'Most recent US model it had caught up to',
-            referenceRowUnmatched: 'Earliest US model (none matched yet)',
-            nextLeaderRow: 'Oldest US model not yet matched',
-            subtitle: 'How far the Chinese frontier trailed the US frontier on each date, and how that lead has changed. Measured release by release, so it moves in steps the headline trendline lag smooths over.',
-            matchesSubtitle: 'How long each US frontier release took to be matched by a Chinese model.',
-            matchesButton: 'Time to match each US release',
-            scoreSubtitle: `How far the best US model scored above the best Chinese model on each date (${unit.long}).`,
-            scoreLeadPhrase: 'The US frontier leads the Chinese frontier by',
-            scoreLeadPhraseInverted: 'The Chinese frontier leads the US frontier by',
-            scoreYAxisTitle: `Score gap in ${unit.long}: best US model minus best Chinese model`,
-            leaderRow: 'Best US model that day',
-            laggardRowScore: 'Best Chinese model that day',
-            unit,
-        };
-    }
-    return {
-        leader: 'closed',
-        laggard: 'open',
-        leadPhrase: 'The closed-model lead over open models',
-        leadNoun: 'closed-model lead',
-        yAxisTitle: 'Months the open frontier trailed the closed frontier',
-        xAxisTitle: 'Date (ticks mark closed frontier releases)',
-        behindHeader: 'months behind the closed frontier',
-        laggardRow: 'Best open model that day',
-        referenceRow: 'Most recent closed model it had caught up to',
-        referenceRowUnmatched: 'Earliest closed model (none matched yet)',
-        nextLeaderRow: 'Oldest closed model not yet matched',
-        subtitle: 'How far the open frontier trailed the closed frontier on each date, and how that lead has changed.',
-        matchesSubtitle: 'How long each closed frontier release took to be matched by an open model.',
-        matchesButton: 'Time to match each closed release',
-        scoreSubtitle: `How far the best closed model scored above the best open model on each date (${unit.long}).`,
-        scoreLeadPhrase: 'The closed frontier leads the open frontier by',
-        scoreLeadPhraseInverted: 'The open frontier leads the closed frontier by',
-        scoreYAxisTitle: `Score gap in ${unit.long}: best closed model minus best open model`,
-        leaderRow: 'Best closed model that day',
-        laggardRowScore: 'Best open model that day',
-        unit,
-    };
-}
-
-/**
- * Gap Over Time entry point: picks the view. The gap-by-date timeline is
- * the default whenever the server published one for this benchmark and
- * framing; otherwise the per-release "time to match" chart is shown and
- * the view toggle is hidden.
- */
-function renderHistoricalChart(data) {
-    const timeline = data && data.gap_timeline;
-    const scoreTl = data && data.score_gap_timeline;
-    const hasTimeline = !!(timeline && Array.isArray(timeline.segments) && timeline.segments.length);
-    const hasScore = !!(scoreTl && Array.isArray(scoreTl.steps) && scoreTl.steps.length);
-    let view = appState.historicalView;
-    if (view === 'timeline' && !hasTimeline) view = 'matches';
-    if (view === 'score' && !hasScore) view = 'matches';
-    const labels = getTimelineLabels(appState.framing);
-
-    // The toggle stays visible so a benchmark/framing without a published
-    // series does not silently swap chart semantics under one heading; the
-    // unavailable view is disabled and explains why.
-    const unavailable = 'No series is published for this benchmark and framing yet.';
-    const toggle = document.getElementById('historical-view-toggle');
-    if (toggle) {
-        toggle.hidden = false;
-        toggle.querySelectorAll('.toggle-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.value === view);
-            if (b.dataset.value === 'matches') b.textContent = labels.matchesButton;
-            if (b.dataset.value === 'timeline') {
-                b.disabled = !hasTimeline;
-                b.title = hasTimeline ? '' : unavailable;
-            }
-            if (b.dataset.value === 'score') {
-                b.disabled = !hasScore;
-                b.title = hasScore ? '' : unavailable;
-            }
-        });
-    }
-    const subtitles = { timeline: labels.subtitle, score: labels.scoreSubtitle, matches: labels.matchesSubtitle };
-    const titles = { timeline: 'Months behind, on each date', score: 'Score gap, on each date', matches: 'Time to match each release' };
-    const subtitle = document.getElementById('historical-subtitle');
-    if (subtitle) subtitle.textContent = subtitles[view];
-    const title = document.getElementById('historical-view-title');
-    if (title) title.textContent = titles[view];
-    const legend = document.getElementById('historical-legend');
-    if (legend && view === 'matches') { legend.hidden = true; legend.innerHTML = ''; }
-
-    if (view === 'timeline') {
-        renderGapContext(timeline, data, 'time');
-        renderGapTimelineChart(data, timeline);
-    } else if (view === 'score') {
-        renderGapContext(scoreTl, data, 'score');
-        renderScoreGapChart(data, scoreTl);
-    } else {
-        renderGapContext(null, data, 'time');
-        renderHistoricalMatchesChart(data);
-    }
-}
-
-/**
- * Context strip above the timeline: the lead sentence ("the last time the
- * US lead over China was this large was ...") and a row of stat tiles.
- * All numbers come from the server's gap_timeline.context block, which is
- * computed on the same daily series the chart draws.
- */
-function renderGapContext(tl, data, mode) {
-    const el = document.getElementById('gap-context');
-    if (!el) return;
-    const c = tl && tl.context;
-    const isScore = mode === 'score';
-    const vk = isScore ? 'gap_points' : 'gap_months';
-    const ck = isScore ? 'change_points' : 'change_months';
-    if (!c || c[`current_${vk}`] == null) {
-        el.hidden = true;
-        el.innerHTML = '';
-        return;
-    }
-    const labels = getTimelineLabels(appState.framing);
-    const unitLong = isScore ? labels.unit.long : 'months';
-    const unitShort = isScore ? labels.unit.short : 'mo';
-    const cur = Number(c[`current_${vk}`]);
-    const fmtV = (v) => `${Number(v).toFixed(1)} ${unitLong}`;
-    const fmtS = (v) => `${Number(v).toFixed(1)} ${unitShort}`;
-    const curText = fmtV(cur);
-    const my = (s) => fmtMonthYear(parseUTCDate(s), true);
-    const mys = (s) => fmtMonthYear(parseUTCDate(s), false);
-    const day = (s) => fmtDayLong(parseUTCDate(s));
-    const ago = (m) => (m < 1 ? 'less than a month ago' : `${Number(m).toFixed(1)} months ago`);
-    const name = (s) => escapeHTML(shortenModelName(s || ''));
-    const pair = (o) => (isScore
-        ? `${name(o.leader_model)} vs ${name(o.laggard_model)}`
-        : `${name(o.laggard_model)} vs ${name(o.reference_model)}`);
-    const stats = (data && data.statistics) || {};
-    const nUnmatched = Number(stats.total_unmatched || 0);
-    const est = stats.current_gap_estimate || null;
-    const estVal = est && Number.isFinite(Number(est.estimated_current_gap)) ? Number(est.estimated_current_gap) : null;
-
-    // ---- Sentence 1: the current value, named for what it measures ----
-    let lead = '';
-    const isZero = !isScore && cur < 0.05; // displays as 0.0: the laggard has matched the newest leader release
-    if (isScore) {
-        const phrase = cur < 0 ? labels.scoreLeadPhraseInverted : labels.scoreLeadPhrase;
-        lead = `<strong>${escapeHTML(phrase)} ${fmtV(Math.abs(cur))}</strong> as of ${escapeHTML(day(tl.as_of))}: ` +
-            `${name(c.current_leader_model)} (${Number(c.current_leader_score).toFixed(1)}, ${escapeHTML(mys(c.current_leader_date))}) ` +
-            `vs ${name(c.current_laggard_model)} (${Number(c.current_laggard_score).toFixed(1)}, ${escapeHTML(mys(c.current_laggard_date))}).`;
-    } else if (isZero) {
-        lead = `<strong>${escapeHTML(labels.leadPhrase)} is ${curText}</strong> as of ${escapeHTML(day(tl.as_of))}: the best ` +
-            `${escapeHTML(labels.laggard)} model (${name(c.current_laggard_model)}, ${escapeHTML(mys(c.current_laggard_date))}) ` +
-            `has caught up to the ${escapeHTML(labels.leader)} frontier model ${name(c.current_reference_model)}, ` +
-            `released ${escapeHTML(day(c.current_reference_date))}.`;
-    } else {
-        const lower = c.current_lower_months != null ? Number(c.current_lower_months) : null;
-        const hasRange = lower != null && c.current_next_leader_model && lower < cur - 0.05;
-        if (hasRange) {
-            lead = `<strong>${escapeHTML(labels.leadPhrase)} is between ${lower.toFixed(1)} and ${cur.toFixed(1)} months</strong> ` +
-                `as of ${escapeHTML(day(tl.as_of))}: the best ${escapeHTML(labels.laggard)} model ` +
-                `(${name(c.current_laggard_model)}, ${escapeHTML(mys(c.current_laggard_date))}) has caught up to ` +
-                `${name(c.current_reference_model)} (${escapeHTML(mys(c.current_reference_date))}) but not ` +
-                `${name(c.current_next_leader_model)} (${escapeHTML(mys(c.current_next_leader_date))}).`;
-        } else if (c.current_reference_matched) {
-            lead = `<strong>${escapeHTML(labels.leadPhrase)} is ${curText}</strong> as of ${escapeHTML(day(tl.as_of))}, ` +
-                `measured as the time since the most recent ${escapeHTML(labels.leader)} frontier model that the best ` +
-                `${escapeHTML(labels.laggard)} model (${name(c.current_laggard_model)}, ${escapeHTML(mys(c.current_laggard_date))}) ` +
-                `has caught up to (${name(c.current_reference_model)}, ${escapeHTML(mys(c.current_reference_date))}).`;
-        } else {
-            lead = `<strong>${escapeHTML(labels.leadPhrase)} is ${curText}</strong> as of ${escapeHTML(day(tl.as_of))}, ` +
-                `measured from the earliest ${escapeHTML(labels.leader)} frontier model ` +
-                `(${name(c.current_reference_model)}, ${escapeHTML(mys(c.current_reference_date))}) because the best ` +
-                `${escapeHTML(labels.laggard)} model (${name(c.current_laggard_model)}, ${escapeHTML(mys(c.current_laggard_date))}) ` +
-                `has not yet caught up to any of them.`;
-        }
-        if (appState.gapDetail && estVal != null && nUnmatched > 0) {
-            lead += ` Counting the ${nUnmatched} unmatched ${escapeHTML(labels.leader)} frontier model${nUnmatched === 1 ? '' : 's'} ` +
-                `by age, the expected eventual lead is <strong>${estVal.toFixed(1)} months</strong> (survival analysis, a forecast).`;
-        }
-    }
-
-    // ---- Data staleness ----
-    let staleNote = '';
-    const lastScored = tl.last_model_date ? parseUTCDate(tl.last_model_date) : null;
-    const staleDays = lastScored ? Math.max(0, daysBetween(parseUTCDate(tl.as_of), lastScored)) : 0;
-    if (staleDays > STALE_AFTER_DAYS) {
-        const benchName = (getBenchmarkMetadata() || {}).name || 'this benchmark';
-        staleNote = `No newly scored ${escapeHTML(benchName)} release since <strong>${escapeHTML(fmtDayLong(lastScored))}</strong> ` +
-            `(${(staleDays / DAYS_PER_MONTH).toFixed(1)} months): ` +
-            (isScore
-                ? 'the score gap has been flat since then for lack of new scores, not because progress stopped.'
-                : 'the rise in the lead after that date reflects missing scores, not measured progress.');
-    }
-
-    // ---- Sentence 2: the last time it was this large (the headline datapoint) ----
-    const al = c.last_at_least || {};
-    const subject = isScore ? 'the score gap' : 'the matched lead';
-    const noun = isScore ? `${escapeHTML(labels.leader)} score lead` : escapeHTML(labels.leadNoun);
-    let large = '';
-    if (isZero) {
-        large = '';
-    } else if (c.is_record_high) {
-        large = `This is the <strong>largest ${noun} in the tracked period</strong> (since ${escapeHTML(mys(tl.start))}).`;
-    } else if (al.run_since) {
-        large = `It has been at least this large since ${escapeHTML(day(al.run_since))}`;
-        large += al.date
-            ? `; before that, the last time ${subject} was this large was <strong>${escapeHTML(my(al.date))}</strong>, <strong>${escapeHTML(ago(al.months_ago))}</strong>.`
-            : `, and had never been this large before then.`;
-    } else if (al.date) {
-        large = `The last time ${subject} was this large was <strong>${escapeHTML(my(al.date))}</strong>, <strong>${escapeHTML(ago(al.months_ago))}</strong>.`;
-    }
-
-    // ---- Sentence 3 (muted): the last time it was this small ----
-    const am = c.last_at_most || {};
-    const median = c[`median_${vk}`];
-    const belowMedian = median != null && cur < Number(median);
-    let small = '';
-    if (!appState.gapDetail || (!belowMedian && !c.is_record_low)) {
-        small = '';
-    } else if (c.is_record_low) {
-        small = `This is the smallest ${noun} in the tracked period.`;
-    } else if (am.run_since && am.date) {
-        small = `It has stayed at or below ${curText} since ${escapeHTML(day(am.run_since))}; before that, the last time it was this small was ${escapeHTML(my(am.date))}, ${escapeHTML(ago(am.months_ago))}.`;
-    } else if (am.run_since) {
-        small = `It has stayed at or below ${curText} since ${escapeHTML(day(am.run_since))}, and had never been this small before then.`;
-    } else if (am.date) {
-        small = `The last time it was this small was ${escapeHTML(my(am.date))}, ${escapeHTML(ago(am.months_ago))}.`;
-    }
-
-    // ---- Tiles ----
-    const tiles = [];
-    if (isScore) {
-        tiles.push({
-            label: 'Current score gap',
-            value: fmtS(cur),
-            sub: `${name(c.current_leader_model)} vs ${name(c.current_laggard_model)} · since ${escapeHTML(mys(c.current_since))}`,
-        });
-    } else {
-        // One "today" tile: the matched lead, as a range when an unmatched
-        // leader release sets a lower bound (the shaded band on the chart).
-        const lowerToday = c.current_lower_months != null ? Number(c.current_lower_months) : null;
-        const rangeToday = lowerToday != null && c.current_next_leader_model && lowerToday < cur - 0.05;
-        tiles.push({
-            label: 'Gap today',
-            value: rangeToday ? `${lowerToday.toFixed(1)}–${cur.toFixed(1)} mo` : fmtS(cur),
-            sub: staleDays > STALE_AFTER_DAYS
-                ? `scores through ${escapeHTML(mys(tl.last_model_date))}`
-                : (rangeToday
-                    ? `${name(c.current_laggard_model)} has matched ${name(c.current_reference_model)}, not ${name(c.current_next_leader_model)}`
-                    : `rising since ${escapeHTML(mys(c.current_since))}`),
-        });
-        if (estVal != null) {
-            tiles.push({
-                detail: true,
-                label: 'Expected lead',
-                value: `${estVal.toFixed(1)} mo`,
-                sub: nUnmatched > 0
-                    ? `survival analysis · counts ${nUnmatched} unmatched ${escapeHTML(labels.leader)} model${nUnmatched === 1 ? '' : 's'}`
-                    : 'survival analysis · no unmatched models',
-            });
-        }
-    }
-    if (isZero) {
-        // no "last this large" tile at zero
-    } else if (c.is_record_high) {
-        tiles.push({ label: 'Last this large', value: 'Never', sub: `largest since tracking began (${escapeHTML(mys(tl.start))})` });
-    } else if (al.date && !al.run_since) {
-        tiles.push({ label: 'Last this large', value: escapeHTML(mys(al.date)), sub: `${escapeHTML(ago(al.months_ago))} · ${fmtS(al[vk])} then` });
-    } else if (al.run_since && al.date) {
-        tiles.push({
-            label: 'Last this large',
-            value: escapeHTML(mys(al.date)),
-            sub: `${escapeHTML(ago(al.months_ago))} · at or above this level since ${escapeHTML(mys(al.run_since))}`,
-        });
-    } else if (al.run_since) {
-        tiles.push({ label: 'Last this large', value: 'Never', sub: `at least this large since ${escapeHTML(mys(al.run_since))}, never before` });
-    }
-    if (c.peak) {
-        tiles.push({ label: 'Peak', value: fmtS(c.peak[vk]), sub: `${escapeHTML(mys(c.peak.date))} · ${pair(c.peak)}` });
-    }
-    if (c.trough) {
-        tiles.push({ detail: true, label: 'Low', value: fmtS(c.trough[vk]), sub: `${escapeHTML(mys(c.trough.date))} · ${pair(c.trough)}` });
-    }
-    const t12 = c.trailing_12m;
-    if (t12 && t12[`mean_${vk}`] != null) {
-        let sub = 'first full year of data';
-        if (t12[ck] != null) {
-            const ch = Number(t12[ck]);
-            const sign = ch > 0 ? '+' : (ch < 0 ? '−' : '±');
-            sub = `${sign}${Math.abs(ch).toFixed(1)} ${unitShort} vs. the 12 months before (${fmtS(t12[`prior_mean_${vk}`])})`;
-        }
-        // Detail only: the headline is already a 12-month average (to the
-        // latest release rather than today), so two near-identical figures
-        // would sit side by side.
-        tiles.push({ detail: true, label: 'Last 12 months, average', value: fmtS(t12[`mean_${vk}`]), sub });
-    }
-    if (median != null) {
-        tiles.push({
-            detail: true,
-            label: 'Median since tracking began',
-            value: fmtS(median),
-            sub: `today is at or above ${escapeHTML(String(c.percentile_of_current))}% of tracked days`,
-        });
-    }
-
-    el.innerHTML = `
-        <p class="gap-context__lead">${lead} ${large}</p>
-        ${staleNote ? `<p class="gap-context__note is-warning">${staleNote}</p>` : ''}
-        ${small ? `<p class="gap-context__note">${small}</p>` : ''}
-        <div class="gap-context__tiles">
-            ${tiles.filter(t => appState.gapDetail || !t.detail).map(t => `
-                <div class="gap-tile">
-                    <div class="gap-tile__label">${t.label}</div>
-                    <div class="gap-tile__value">${t.value}</div>
-                    <div class="gap-tile__sub">${t.sub}</div>
-                </div>`).join('')}
-        </div>`;
-    el.hidden = false;
-}
-
-/**
- * Gap-by-date timeline (default view): the day-by-day "months behind"
- * series behind the headline average, drawn as a sawtooth. Drops are
- * annotated with the release that caused them; leader releases are ticks
- * below the plot; the current value is marked at today, together with the
- * last date the gap was at least this large.
- */
-function renderGapTimelineChart(data, tl) {
-    const root = document.getElementById('historical-chart');
-    const tooltipEl = document.getElementById('historical-tooltip');
-    const container = document.getElementById('historical-chart-container');
-    if (!root) return;
-    root.innerHTML = '';
-    if (tooltipEl) tooltipEl.hidden = true;
-
-    const framing = appState.framing;
-    const labels = getTimelineLabels(framing);
-    const accent = getLaggardAccent(framing);
-    if (container) {
-        container.style.setProperty('--c-cn', accent.dot);
-        container.style.setProperty('--c-cn-soft', accent.area);
-    }
-
-    const stats = data.statistics || {};
-    // The survival forecast is drawn only in the detail view.
-    const currentEstimate = appState.gapDetail ? (stats.current_gap_estimate || null) : null;
-    const ctx = tl.context || {};
-    const asOf = parseUTCDate(tl.as_of);
-    const startDate = parseUTCDate(tl.start);
-
-    // Recompute exact daily values from the reference dates: the JSON
-    // rounds gap_start/gap_end to 0.1 months, and hover needs any day.
-    const segs = tl.segments.map(s => {
-        const start = parseUTCDate(s.start);
-        const end = parseUTCDate(s.end);
-        const ref = parseUTCDate(s.reference_date);
-        const nxt = s.next_leader_date ? parseUTCDate(s.next_leader_date) : null;
-        return {
-            ...s,
-            _start: start,
-            _end: end,
-            _ref: ref,
-            _nxt: nxt,
-            _lagDate: s.laggard_date ? parseUTCDate(s.laggard_date) : null,
-            gapStart: monthsSince(start, ref),
-            gapEnd: monthsSince(end, ref),
-            // Lower bound of the measured range: months since the oldest
-            // unmatched leader model (0 when the laggard has matched the newest).
-            lowerStart: nxt ? monthsSince(start, nxt) : 0,
-            lowerEnd: nxt ? monthsSince(end, nxt) : 0,
-        };
-    });
-    const expectedPts = ((tl.expected_lead && tl.expected_lead.points) || [])
-        .map(p => ({ _d: parseUTCDate(p.date), v: Number(p.months) }))
-        .filter(p => Number.isFinite(p.v))
-        .sort((a, b) => a._d - b._d);
-    if (!segs.length || !(asOf > startDate)) {
-        root.innerHTML =
-            '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">Not enough data to render chart.</p>';
-        setHistoricalMethodNote('');
-        return;
-    }
-    function segmentAt(t) {
-        let seg = segs[0];
-        for (const s of segs) {
-            if (s._start <= t) seg = s;
-            else break;
-        }
-        return seg;
-    }
-    function valueAt(t) {
-        const seg = segmentAt(t);
-        const tt = t < seg._start ? seg._start : (t > seg._end ? seg._end : t);
-        return monthsSince(tt, seg._ref);
-    }
-    function lowerAt(t) {
-        const seg = segmentAt(t);
-        if (!seg._nxt) return 0;
-        const tt = t < seg._start ? seg._start : (t > seg._end ? seg._end : t);
-        return monthsSince(tt, seg._nxt);
-    }
-    const cur = segs[segs.length - 1].gapEnd;
-    const curLower = segs[segs.length - 1].lowerEnd;
-
-    const usesBootstrap = (data.gaps || []).some(g => g.match_type === 'bootstrap');
-    setHistoricalMethodNote(
-        `Gap on each date: months since the most recent ${labels.leader} frontier model that the best ${labels.laggard} model ` +
-        `available that day had plausibly caught up to (Epoch AI's day-by-day method` +
-        `${usesBootstrap ? '; paired-bootstrap criterion for ECI' : ''}). The headline average is this line averaged over its stated window. ` +
-        `It counts only ${labels.leader} models the ${labels.laggard} frontier has already matched, so it can sit below the ` +
-        `survival-analysis current-gap estimate after a run of unmatched ${labels.leader} releases. ` +
-        `Drops mark ${labels.laggard} releases that matched a newer ${labels.leader} model, or ${labels.leader} releases ` +
-        `the ${labels.laggard} frontier had already matched.`);
-
-    // ---- legend (HTML, above the plot) ----
-    const legendEl = document.getElementById('historical-legend');
-    const hasReversal = (tl.events || []).some(ev => ev.reversal);
-    if (legendEl) {
-        const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-        const items = [
-            ['is-dot', `${cap(labels.laggard)} release that matched a newer ${labels.leader} model`],
-            ['is-ring', `${cap(labels.leader)} release the ${labels.laggard} frontier had already matched (gap resets to 0)`],
-        ];
-        if (hasReversal) items.push(['is-reversal', `Criterion reversal: new ${labels.laggard} record not significantly ahead of a model the previous one had matched`]);
-        items.push(['is-band', `Measured range: from the age of the oldest unmatched ${labels.leader} model up to the matched lead`]);
-        if (appState.gapDetail && expectedPts.length) items.push(['is-expected', `Expected lead: survival analysis counting unmatched ${labels.leader} models by age (a forecast)`]);
-        items.push(['is-tick', `${cap(labels.leader)} frontier release`]);
-        items.push(['is-lookback', "Last date the matched lead was at least today's"]);
-        // Only worth a legend entry once the dashed tail is visible (~2 weeks).
-        if (tl.last_model_date && daysBetween(asOf, parseUTCDate(tl.last_model_date)) >= 14) {
-            items.push(['is-stale', 'Dashed: after the last scored release (accrues by the calendar, no new scores)']);
-        }
-        legendEl.innerHTML = items.map(([cls, text]) =>
-            `<span class="gap-legend__item"><span class="gap-legend__swatch ${cls}" aria-hidden="true"></span>${escapeHTML(text)}</span>`).join('');
-        legendEl.hidden = false;
-    }
-
-    // ---- geometry (same conventions as the per-release view, plus a
-    // caption line at the top so the PNG export carries the numbers) ----
-    // The simple default drops the two-row drop-label band (top) and the
-    // rotated release names (bottom), so its margins, and height, shrink;
-    // the plot area itself is the same size in both modes.
-    const detail = appState.gapDetail;
-    const W = 1200;
-    // Wider right margin than the per-release view: the today block
-    // carries up to three short lines of text.
-    const M = detail
-        ? { top: 100, right: 132, bottom: 175, left: 84 }
-        : { top: 44, right: 132, bottom: 95, left: 84 };
-    const H = M.top + 405 + M.bottom;
-    const innerW = W - M.left - M.right;
-    const innerH = H - M.top - M.bottom;
-    const pad = (asOf - startDate) * 0.03;
-    const xMin = new Date(startDate.getTime() - pad);
-    const xMax = new Date(asOf.getTime() + pad);
-    const yValues = segs.flatMap(s => [s.gapStart, s.gapEnd]);
-    // The forecast only stretches the axis when it is drawn.
-    if (detail) {
-        if (currentEstimate && Number.isFinite(currentEstimate.estimated_current_gap)) {
-            yValues.push(currentEstimate.estimated_current_gap);
-        }
-        for (const p of expectedPts) yValues.push(p.v);
-    }
-    const yMax = Math.ceil(Math.max(...yValues, 1) / 3) * 3 + 1;
-    const yMin = 0;
-    const x = (d) => M.left + (innerW * (d - xMin)) / (xMax - xMin);
-    const y = (v) => M.top + innerH - (innerH * (v - yMin)) / (yMax - yMin);
-    const geom = { M, innerW, innerH, W, H, x, y, xMin, xMax, yMax };
-
-    const svg = svgEl('svg', {
-        class: 'gap-chart',
-        viewBox: `0 0 ${W} ${H}`,
-        width: W,
-        height: H,
-        preserveAspectRatio: 'xMidYMid meet',
-        role: 'img',
-        'aria-label': `Months the ${labels.laggard} frontier trailed the ${labels.leader} frontier, by date`,
-    });
-    svg.dataset.view = 'timeline';
-    svg.style.aspectRatio = `${W} / ${H}`;
-
-    // Caption + <title>: the exported PNG and screen readers get the
-    // framing, benchmark, date and headline numbers without the page.
-    const benchName = (getBenchmarkMetadata() || {}).name || appState.currentBenchmark;
-    const framingName = framing === 'china' ? 'China vs US' : 'Open vs closed';
-    const al0 = ctx.last_at_least || {};
-    let captionTail = '';
-    if (ctx.is_record_high) captionTail = ' · largest lead in tracked period';
-    else if (al0.date && !al0.run_since && cur >= 0.05) captionTail = ` · last ≥ this: ${fmtMonthYear(parseUTCDate(al0.date), false)} (${Number(al0.months_ago).toFixed(1)} mo ago)`;
-    const captionText = `${framingName} · ${benchName} · matched lead ${cur.toFixed(1)} mo as of ${fmtDayLong(asOf)}${captionTail}`;
-    const titleEl = svgEl('title');
-    titleEl.appendChild(document.createTextNode(captionText));
-    svg.appendChild(titleEl);
-    const caption = svgEl('text', { class: 'chart-caption', x: M.left, y: 22, 'text-anchor': 'start' });
-    caption.appendChild(document.createTextNode(captionText));
-    svg.appendChild(caption);
-
-    drawGapChartAxes(svg, geom, labels);
-
-    // ---- area + sawtooth line ----
-    // Each segment is a straight rise from (start, gapStart) to (end,
-    // gapEnd); consecutive segments share an x, so drops are vertical.
-    // The tail after the last scored release (which always falls inside
-    // the last segment) is drawn dashed and lighter: it accrues by the
-    // calendar, not from new scores.
-    const lastModelDate = tl.last_model_date ? parseUTCDate(tl.last_model_date) : null;
-    const staleDays = lastModelDate ? Math.max(0, daysBetween(asOf, lastModelDate)) : 0;
-    const splitDate = staleDays > 0 && lastModelDate > startDate ? lastModelDate : null;
-    const fmt = (p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`;
-    const solid = [];
-    const stale = [];
-    for (const s of segs) {
-        if (splitDate && s._end > splitDate) {
-            const cut = s._start > splitDate ? s._start : splitDate;
-            if (s._start <= splitDate) {
-                solid.push([x(s._start), y(s.gapStart)]);
-                solid.push([x(cut), y(monthsSince(cut, s._ref))]);
-            }
-            stale.push([x(cut), y(monthsSince(cut, s._ref))]);
-            stale.push([x(s._end), y(s.gapEnd)]);
-        } else {
-            solid.push([x(s._start), y(s.gapStart)]);
-            solid.push([x(s._end), y(s.gapEnd)]);
-        }
-    }
-    const solidStr = solid.map(fmt).join(' ');
-    const solidEndX = solid.length ? solid[solid.length - 1][0] : x(startDate);
-    svg.appendChild(svgEl('polygon', {
-        class: 'gap-area',
-        points: `${x(startDate).toFixed(1)},${y(0).toFixed(1)} ${solidStr} ${solidEndX.toFixed(1)},${y(0).toFixed(1)}`,
-    }));
-    svg.appendChild(svgEl('polyline', { class: 'gap-line', points: solidStr }));
-    if (stale.length) {
-        const staleStr = stale.map(fmt).join(' ');
-        svg.appendChild(svgEl('polygon', {
-            class: 'gap-area is-stale',
-            points: `${stale[0][0].toFixed(1)},${y(0).toFixed(1)} ${staleStr} ${x(asOf).toFixed(1)},${y(0).toFixed(1)}`,
-        }));
-        svg.appendChild(svgEl('polyline', { class: 'gap-line is-stale', points: staleStr }));
-        if (staleDays > STALE_AFTER_DAYS) {
-            const xs = x(splitDate);
-            svg.appendChild(svgEl('line', { class: 'stale-marker', x1: xs, x2: xs, y1: M.top, y2: M.top + innerH }));
-            const t = svgEl('text', { class: 'axis-label', x: xs + 5, y: M.top + 14, 'text-anchor': 'start' });
-            t.appendChild(document.createTextNode(`last scored release: ${fmtMonthYear(splitDate, false)}`));
-            svg.appendChild(t);
-        }
-    }
-
-    // ---- measured range band: lower bound (oldest unmatched leader) ----
-    // Drawn over the area so the band reads darker than the rest.
-    const upperPts = [];
-    const lowerPts = [];
-    for (const s of segs) {
-        upperPts.push([x(s._start), y(s.gapStart)], [x(s._end), y(s.gapEnd)]);
-        lowerPts.push([x(s._start), y(s.lowerStart)], [x(s._end), y(s.lowerEnd)]);
-    }
-    svg.appendChild(svgEl('polygon', {
-        class: 'gap-band',
-        points: [...upperPts, ...lowerPts.slice().reverse()].map(fmt).join(' '),
-    }));
-    svg.appendChild(svgEl('polyline', { class: 'gap-line is-lower', points: lowerPts.map(fmt).join(' ') }));
-
-    // ---- expected lead: survival estimate recomputed over time ----
-    if (detail && expectedPts.length >= 2) {
-        svg.appendChild(svgEl('polyline', {
-            class: 'expected-line',
-            points: expectedPts.map(p => fmt([x(p._d), y(p.v)])).join(' '),
-        }));
-    }
-
-    // ---- lookback: last date the gap was at least this large ----
-    // Ring on the line at that date, dotted guide at today's level across
-    // to the today marker; the text lives in the today block (right
-    // margin) where nothing else is drawn, so it cannot collide with the
-    // sawtooth or the label stubs.
-    const al = ctx.last_at_least || {};
-    const isZero = cur < 0.05; // displays as 0.0: "at least this large" is every day
-    let lookbackText = null;
-    if (al.date && !al.run_since && !ctx.is_record_high && !isZero) {
-        const d = parseUTCDate(al.date);
-        const xp = x(d);
-        const yp = y(valueAt(d));
-        svg.appendChild(svgEl('line', {
-            class: 'lookback-guide',
-            x1: xp, x2: x(asOf), y1: y(cur), y2: y(cur),
-        }));
-        svg.appendChild(svgEl('circle', { class: 'lookback-ring', cx: xp, cy: yp, r: 6 }));
-        lookbackText = `last ≥ this: ${fmtMonthYear(d, false)}`;
-    }
-
-    // ---- leader frontier releases as rotated bottom ticks ----
-    const leaderEvents = (tl.leader_frontier || [])
-        .map(r => ({ _d: parseUTCDate(r.date), display: r.model }))
-        .sort((a, b) => a._d - b._d);
-    drawReleaseTicks(svg, leaderEvents, geom, detail);
-
-    // ---- drop events: dots + 2-row labels (labels only with detail) ----
-    const items = (tl.events || [])
-        .map(ev => {
-            const d = parseUTCDate(ev.date);
-            return {
-                ev,
-                _d: d,
-                xp: x(d),
-                yp: y(valueAt(d)),
-                labelText: shortenModelName(ev.model),
-                gapText: `${Number(ev.gap_before).toFixed(1)} → ${Number(ev.gap_after).toFixed(1)} mo${ev.reversal ? ' · reversal' : ''}`,
-                markerClass: ev.reversal ? 'cn-dot is-reversal' : (ev.kind === 'leader_release' ? 'cn-dot is-leader' : 'cn-dot'),
-            };
-        })
-        .filter(it => it.xp >= M.left && it.xp <= W - M.right)
-        .sort((a, b) => a.xp - b.xp);
-    const { placed, upperRowY } = detail
-        ? placeLabelBand(items, M)
-        : { placed: items.map(it => ({ ...it, labelY: null })), upperRowY: null };
-    drawLabelBand(svg, placed, upperRowY, M, 'cn-dot');
-
-    // ---- today marker + text block in the right margin ----
-    // The block hangs from the marker; near the x-axis it is lifted so its
-    // last line stays inside the plot instead of colliding with the ticks.
-    const xToday = x(asOf);
-    const yToday = y(cur);
-    const rangeText = curLower < cur - 0.05 ? `range ${curLower.toFixed(1)} to ${cur.toFixed(1)}` : null;
-    const blockTexts = [
-        ctx.is_record_high ? 'matched lead · record high' : (ctx.is_record_low ? 'matched lead · record low' : 'matched lead today'),
-        rangeText,
-        lookbackText,
-    ].filter(Boolean);
-    const blockLines = 1 + blockTexts.length;
-    const blockBottom = yToday + 4 + 13 * (blockLines - 1) + 1;
-    const blockTop = yToday + 4 - Math.max(0, blockBottom - (M.top + innerH - 2));
-    svg.appendChild(svgEl('circle', { class: 'today-dot', cx: xToday, cy: yToday, r: 5 }));
-    const todayLabel = svgEl('text', { class: 'today-label', x: xToday + 10, y: blockTop, 'text-anchor': 'start' });
-    todayLabel.appendChild(document.createTextNode(`${cur.toFixed(1)} mo`));
-    svg.appendChild(todayLabel);
-    blockTexts.forEach((text, i) => {
-        const t = svgEl('text', { class: 'today-sub', x: xToday + 10, y: blockTop + 14 + 13 * i, 'text-anchor': 'start' });
-        t.appendChild(document.createTextNode(text));
-        svg.appendChild(t);
-    });
-
-    // ---- expected lead endpoint (or the survival star as a fallback) ----
-    // A different estimator (it also counts unmatched leader models), so it
-    // is named as such, never as "the gap".
-    const estFromSeries = expectedPts.length ? expectedPts[expectedPts.length - 1].v : null;
-    const estFallback = currentEstimate && Number.isFinite(currentEstimate.estimated_current_gap)
-        ? currentEstimate.estimated_current_gap : null;
-    const est = estFromSeries != null ? estFromSeries : estFallback;
-    if (detail && est != null) {
-        const yEst = y(est);
-        if (estFromSeries != null) {
-            svg.appendChild(svgEl('circle', { class: 'expected-dot', cx: xToday, cy: yEst, r: 4.5 }));
-        } else {
-            svg.appendChild(svgEl('polygon', { class: 'current-star', points: starPoints(xToday, yEst, 9, 4.2, 5) }));
-        }
-        // Keep the two-line label clear of the today block.
-        const blockH = 13 * blockLines + 4;
-        const collides = yEst + 4 > blockTop - 16 && yEst - 12 < blockTop + blockH;
-        const above = yEst <= yToday;
-        const ly = collides ? (above ? blockTop - 30 : blockTop + blockH + 12) : yEst + 4;
-        const estLabel = svgEl('text', { class: 'est-label', x: xToday + 12, y: ly, 'text-anchor': 'start' });
-        estLabel.appendChild(document.createTextNode(`Exp. ${Number(est).toFixed(1)} mo`));
-        svg.appendChild(estLabel);
-        const estSub = svgEl('text', { class: 'today-sub', x: xToday + 12, y: ly + 13, 'text-anchor': 'start' });
-        estSub.appendChild(document.createTextNode('survival forecast'));
-        svg.appendChild(estSub);
-    }
-
-    // ---- hover machinery: continuous crosshair, snapped to the day ----
-    const hoverLine = svgEl('line', { class: 'hover-line', x1: 0, x2: 0, y1: M.top, y2: M.top + innerH });
-    svg.appendChild(hoverLine);
-    const hoverDot = svgEl('circle', { class: 'hover-dot', cx: 0, cy: 0, r: 4 });
-    svg.appendChild(hoverDot);
-    const hoverArea = svgEl('rect', { class: 'hover-target', x: M.left, y: M.top, width: innerW, height: innerH });
-    svg.appendChild(hoverArea);
-
-    const scoreLabel = appState.currentBenchmark === 'eci' ? 'ECI' : 'Score';
-    const scoreMeta = (v) => (v != null && Number.isFinite(Number(v)) ? ` · ${scoreLabel} ${Number(v).toFixed(1)}` : '');
-
-    function showTooltipAt(svgX) {
-        if (!tooltipEl) return;
-        const tMs = xMin.getTime() + ((svgX - M.left) / innerW) * (xMax - xMin);
-        let t = toUTCDay(new Date(tMs));
-        if (t < startDate) t = startDate;
-        if (t > asOf) t = asOf;
-        const seg = segmentAt(t);
-        const v = valueAt(t);
-        const lo = lowerAt(t);
-        const xp = x(t);
-        const yp = y(v);
-        hoverLine.setAttribute('x1', xp);
-        hoverLine.setAttribute('x2', xp);
-        hoverLine.classList.add('is-active');
-        hoverDot.setAttribute('cx', xp);
-        hoverDot.setAttribute('cy', yp);
-        hoverDot.classList.add('is-active');
-        const rangeRow = seg._nxt ? `
-            <div class="tt-row">
-                <span class="tt-swatch us"></span>
-                <div>
-                    <div class="tt-label">${escapeHTML(labels.nextLeaderRow)}</div>
-                    <div class="tt-name">${escapeHTML(shortenModelName(seg.next_leader_model))}</div>
-                    <div class="tt-meta">${escapeHTML(fmtDayLong(seg._nxt))}${escapeHTML(scoreMeta(seg.next_leader_score))} · measured range ${lo.toFixed(1)} to ${v.toFixed(1)} months</div>
-                </div>
-            </div>` : '';
-        tooltipEl.innerHTML = `
-            <div class="tt-head">${v.toFixed(1)} ${escapeHTML(labels.behindHeader)}</div>
-            <div class="tt-date">${escapeHTML(fmtDayLong(t))}</div>
-            ${rangeRow}
-            <div class="tt-row">
-                <span class="tt-swatch cn"></span>
-                <div>
-                    <div class="tt-label">${escapeHTML(labels.laggardRow)}</div>
-                    <div class="tt-name">${escapeHTML(shortenModelName(seg.laggard_model))}</div>
-                    <div class="tt-meta">${seg._lagDate ? escapeHTML(fmtDayLong(seg._lagDate)) : ''}${escapeHTML(scoreMeta(seg.laggard_score))}</div>
-                </div>
-            </div>
-            <div class="tt-row">
-                <span class="tt-swatch us"></span>
-                <div>
-                    <div class="tt-label">${escapeHTML(seg.reference_matched ? labels.referenceRow : labels.referenceRowUnmatched)}</div>
-                    <div class="tt-name">${escapeHTML(shortenModelName(seg.reference_model))}</div>
-                    <div class="tt-meta">${escapeHTML(fmtDayLong(seg._ref))}${escapeHTML(scoreMeta(seg.reference_score))}</div>
-                </div>
-            </div>`;
-        const rect = svg.getBoundingClientRect();
-        tooltipEl.style.left = `${xp * (rect.width / W)}px`;
-        tooltipEl.style.top = `${yp * (rect.height / H)}px`;
-        tooltipEl.hidden = false;
-    }
-
-    hoverArea.addEventListener('mousemove', (ev) => {
-        const rect = svg.getBoundingClientRect();
-        const sx = ((ev.clientX - rect.left) * W) / rect.width;
-        if (sx < M.left || sx > W - M.right) return;
-        showTooltipAt(sx);
-    });
-    hoverArea.addEventListener('mouseleave', () => {
-        if (tooltipEl) tooltipEl.hidden = true;
-        hoverLine.classList.remove('is-active');
-        hoverDot.classList.remove('is-active');
-    });
-
-    root.appendChild(svg);
-    root.dataset.viewbox = `0 0 ${W} ${H}`;
-}
-
-/**
- * Score-gap view: best leader score minus best laggard score on each date,
- * in the benchmark's own units. A step chart: it rises the day the leader
- * releases a stronger model and falls the day the laggard does, so it
- * accounts for unmatched leader models directly.
- */
-function renderScoreGapChart(data, sg) {
-    const root = document.getElementById('historical-chart');
-    const tooltipEl = document.getElementById('historical-tooltip');
-    const container = document.getElementById('historical-chart-container');
-    if (!root) return;
-    root.innerHTML = '';
-    if (tooltipEl) tooltipEl.hidden = true;
-
-    const framing = appState.framing;
-    const labels = getTimelineLabels(framing);
-    const accent = getLaggardAccent(framing);
-    if (container) {
-        container.style.setProperty('--c-cn', accent.dot);
-        container.style.setProperty('--c-cn-soft', accent.area);
-    }
-    const ctx = sg.context || {};
-    const asOf = parseUTCDate(sg.as_of);
-    const startDate = parseUTCDate(sg.start);
-    const unit = labels.unit;
-
-    const steps = sg.steps.map(s => ({
-        ...s,
-        _start: parseUTCDate(s.start),
-        _end: parseUTCDate(s.end),
-        _ledDate: s.leader_date ? parseUTCDate(s.leader_date) : null,
-        _lagDate: s.laggard_date ? parseUTCDate(s.laggard_date) : null,
-        gap: Number(s.gap),
-    }));
-    if (!steps.length || !(asOf > startDate)) {
-        root.innerHTML =
-            '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">Not enough data to render chart.</p>';
-        setHistoricalMethodNote('');
-        return;
-    }
-    function stepAt(t) {
-        let st = steps[0];
-        for (const s of steps) {
-            if (s._start <= t) st = s;
-            else break;
-        }
-        return st;
-    }
-    const valueAt = (t) => stepAt(t).gap;
-    const cur = steps[steps.length - 1].gap;
-
-    setHistoricalMethodNote(
-        `Score gap on each date: the best ${labels.leader} frontier score minus the best ${labels.laggard} frontier score ` +
-        `available that day, in ${unit.long}. It rises the day the ${labels.leader} side releases a stronger model and falls ` +
-        `the day the ${labels.laggard} side does, so unmatched ${labels.leader} models count immediately. Unlike the ` +
-        `months-behind view it needs no matching criterion, but it is not a time gap.`);
-
-    // ---- legend ----
-    const legendEl = document.getElementById('historical-legend');
-    if (legendEl) {
-        const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-        const items = [
-            ['is-dot', `${cap(labels.laggard)} release that narrowed the score gap`],
-            ['is-rise', `${cap(labels.leader)} release that widened it`],
-            ['is-tick', `${cap(labels.leader)} frontier release`],
-            ['is-lookback', "Last date the score gap was at least today's"],
-        ];
-        legendEl.innerHTML = items.map(([cls, text]) =>
-            `<span class="gap-legend__item"><span class="gap-legend__swatch ${cls}" aria-hidden="true"></span>${escapeHTML(text)}</span>`).join('');
-        legendEl.hidden = false;
-    }
-
-    // ---- geometry ----
-    const W = 1200;
-    const H = 680;
-    const M = { top: 100, right: 132, bottom: 175, left: 84 };
-    const innerW = W - M.left - M.right;
-    const innerH = H - M.top - M.bottom;
-    const pad = (asOf - startDate) * 0.03;
-    const xMin = new Date(startDate.getTime() - pad);
-    const xMax = new Date(asOf.getTime() + pad);
-    const gaps = steps.map(s => s.gap);
-    const rawMax = Math.max(...gaps, 0);
-    const rawMin = Math.min(...gaps, 0);
-    // Nice tick step: ~6 ticks over the range.
-    const span = Math.max(rawMax - rawMin, 1e-9);
-    const candidates = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
-    const yStep = candidates.find(s => span / s <= 7) || candidates[candidates.length - 1];
-    const yMax = Math.ceil(rawMax / yStep) * yStep + (rawMax === Math.ceil(rawMax / yStep) * yStep ? yStep : 0);
-    const yMin = rawMin < 0 ? Math.floor(rawMin / yStep) * yStep : 0;
-    const x = (d) => M.left + (innerW * (d - xMin)) / (xMax - xMin);
-    const y = (v) => M.top + innerH - (innerH * (v - yMin)) / (yMax - yMin);
-    const geom = { M, innerW, innerH, W, H, x, y, xMin, xMax, yMax, yMin, yStep };
-
-    const svg = svgEl('svg', {
-        class: 'gap-chart',
-        viewBox: `0 0 ${W} ${H}`,
-        width: W,
-        height: H,
-        preserveAspectRatio: 'xMidYMid meet',
-        role: 'img',
-        'aria-label': `Score gap between the ${labels.leader} and ${labels.laggard} frontiers, by date`,
-    });
-    svg.dataset.view = 'score';
-
-    const benchName = (getBenchmarkMetadata() || {}).name || appState.currentBenchmark;
-    const framingName = framing === 'china' ? 'China vs US' : 'Open vs closed';
-    const al0 = ctx.last_at_least || {};
-    let captionTail = '';
-    if (ctx.is_record_high) captionTail = ' · largest score gap in tracked period';
-    else if (al0.date) captionTail = ` · last ≥ this: ${fmtMonthYear(parseUTCDate(al0.date), false)} (${Number(al0.months_ago).toFixed(1)} mo ago)`;
-    const captionText = `${framingName} · ${benchName} · score gap ${cur.toFixed(1)} ${unit.short} as of ${fmtDayLong(asOf)}${captionTail}`;
-    const titleEl = svgEl('title');
-    titleEl.appendChild(document.createTextNode(captionText));
-    svg.appendChild(titleEl);
-    const caption = svgEl('text', { class: 'chart-caption', x: M.left, y: 22, 'text-anchor': 'start' });
-    caption.appendChild(document.createTextNode(captionText));
-    svg.appendChild(caption);
-
-    drawGapChartAxes(svg, geom, { yAxisTitle: labels.scoreYAxisTitle, xAxisTitle: labels.xAxisTitle });
-
-    // ---- zero line when the range includes negatives ----
-    if (yMin < 0) {
-        svg.appendChild(svgEl('line', { class: 'grid-line', x1: M.left, x2: W - M.right, y1: y(0), y2: y(0) }));
-    }
-
-    // ---- step area + line ----
-    const fmt = (p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`;
-    const pts = [];
-    for (const s of steps) {
-        pts.push([x(s._start), y(s.gap)]);
-        pts.push([x(s._end), y(s.gap)]);
-    }
-    const lineStr = pts.map(fmt).join(' ');
-    svg.appendChild(svgEl('polygon', {
-        class: 'gap-area',
-        points: `${x(startDate).toFixed(1)},${y(0).toFixed(1)} ${lineStr} ${x(asOf).toFixed(1)},${y(0).toFixed(1)}`,
-    }));
-    svg.appendChild(svgEl('polyline', { class: 'gap-line', points: lineStr }));
-
-    // ---- lookback ----
-    // A step series usually reaches today's level on a release day and
-    // stays there, so the "current run" is short and the informative date
-    // is the one before it; draw it whenever an earlier date exists.
-    const al = ctx.last_at_least || {};
-    let lookbackText = null;
-    if (al.date && !ctx.is_record_high) {
-        const d = parseUTCDate(al.date);
-        svg.appendChild(svgEl('line', { class: 'lookback-guide', x1: x(d), x2: x(asOf), y1: y(cur), y2: y(cur) }));
-        svg.appendChild(svgEl('circle', { class: 'lookback-ring', cx: x(d), cy: y(valueAt(d)), r: 6 }));
-        lookbackText = `last ≥ this: ${fmtMonthYear(d, false)}`;
-    }
-
-    // ---- leader release ticks ----
-    const leaderEvents = (sg.leader_frontier || [])
-        .map(r => ({ _d: parseUTCDate(r.date), display: r.model }))
-        .sort((a, b) => a._d - b._d);
-    drawReleaseTicks(svg, leaderEvents, geom);
-
-    // ---- events: every release moves the step; label the largest moves ----
-    const allEvents = (sg.events || []).map(ev => {
-        const d = parseUTCDate(ev.date);
-        const delta = Number(ev.gap_after) - Number(ev.gap_before);
-        return {
-            ev, _d: d, xp: x(d), yp: y(Number(ev.gap_after)), delta,
-            labelText: shortenModelName(ev.model),
-            gapText: `${Number(ev.gap_before).toFixed(1)} → ${Number(ev.gap_after).toFixed(1)} ${unit.short}`,
-            markerClass: ev.kind === 'leader_release' ? 'cn-dot is-rise' : 'cn-dot',
-        };
-    }).filter(it => it.xp >= M.left && it.xp <= W - M.right);
-    const MAX_LABELS = 14;
-    const labelled = new Set([...allEvents]
-        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
-        .slice(0, MAX_LABELS));
-    if (allEvents.length) labelled.add(allEvents[allEvents.length - 1]);
-    const labelItems = allEvents.filter(it => labelled.has(it)).sort((a, b) => a.xp - b.xp);
-    const { placed, upperRowY } = placeLabelBand(labelItems, M);
-    drawLabelBand(svg, placed, upperRowY, M, 'cn-dot');
-    for (const it of allEvents) {
-        if (labelled.has(it)) continue;
-        svg.appendChild(svgEl('circle', { class: it.markerClass, cx: it.xp, cy: it.yp, r: 3 }));
-    }
-
-    // ---- today block ----
-    const xToday = x(asOf);
-    const yToday = y(cur);
-    const blockLines = 2 + (lookbackText ? 1 : 0);
-    const blockBottom = yToday + 4 + 13 * (blockLines - 1) + 1;
-    const blockTop = yToday + 4 - Math.max(0, blockBottom - (M.top + innerH - 2));
-    svg.appendChild(svgEl('circle', { class: 'today-dot', cx: xToday, cy: yToday, r: 5 }));
-    const todayLabel = svgEl('text', { class: 'today-label', x: xToday + 10, y: blockTop, 'text-anchor': 'start' });
-    todayLabel.appendChild(document.createTextNode(`${cur.toFixed(1)} ${unit.short}`));
-    svg.appendChild(todayLabel);
-    const todaySub = svgEl('text', { class: 'today-sub', x: xToday + 10, y: blockTop + 14, 'text-anchor': 'start' });
-    todaySub.appendChild(document.createTextNode(
-        ctx.is_record_high ? 'score gap · record high' : (ctx.is_record_low ? 'score gap · record low' : 'score gap today')));
-    svg.appendChild(todaySub);
-    if (lookbackText) {
-        const lb = svgEl('text', { class: 'today-sub', x: xToday + 10, y: blockTop + 27, 'text-anchor': 'start' });
-        lb.appendChild(document.createTextNode(lookbackText));
-        svg.appendChild(lb);
-    }
-
-    // ---- hover ----
-    const hoverLine = svgEl('line', { class: 'hover-line', x1: 0, x2: 0, y1: M.top, y2: M.top + innerH });
-    svg.appendChild(hoverLine);
-    const hoverDot = svgEl('circle', { class: 'hover-dot', cx: 0, cy: 0, r: 4 });
-    svg.appendChild(hoverDot);
-    const hoverArea = svgEl('rect', { class: 'hover-target', x: M.left, y: M.top, width: innerW, height: innerH });
-    svg.appendChild(hoverArea);
-    const scoreMeta = (v) => (v != null && Number.isFinite(Number(v)) ? ` · ${Number(v).toFixed(1)}` : '');
-
-    function showTooltipAt(svgX) {
-        if (!tooltipEl) return;
-        const tMs = xMin.getTime() + ((svgX - M.left) / innerW) * (xMax - xMin);
-        let t = toUTCDay(new Date(tMs));
-        if (t < startDate) t = startDate;
-        if (t > asOf) t = asOf;
-        const st = stepAt(t);
-        const v = st.gap;
-        const xp = x(t);
-        const yp = y(v);
-        hoverLine.setAttribute('x1', xp);
-        hoverLine.setAttribute('x2', xp);
-        hoverLine.classList.add('is-active');
-        hoverDot.setAttribute('cx', xp);
-        hoverDot.setAttribute('cy', yp);
-        hoverDot.classList.add('is-active');
-        const head = v >= 0
-            ? `${v.toFixed(1)} ${escapeHTML(unit.long)} ahead: ${escapeHTML(labels.leader)} frontier`
-            : `${Math.abs(v).toFixed(1)} ${escapeHTML(unit.long)} ahead: ${escapeHTML(labels.laggard)} frontier`;
-        tooltipEl.innerHTML = `
-            <div class="tt-head">${head}</div>
-            <div class="tt-date">${escapeHTML(fmtDayLong(t))}</div>
-            <div class="tt-row">
-                <span class="tt-swatch us"></span>
-                <div>
-                    <div class="tt-label">${escapeHTML(labels.leaderRow)}</div>
-                    <div class="tt-name">${escapeHTML(shortenModelName(st.leader_model))}</div>
-                    <div class="tt-meta">${st._ledDate ? escapeHTML(fmtDayLong(st._ledDate)) : ''}${escapeHTML(scoreMeta(st.leader_score))}</div>
-                </div>
-            </div>
-            <div class="tt-row">
-                <span class="tt-swatch cn"></span>
-                <div>
-                    <div class="tt-label">${escapeHTML(labels.laggardRowScore)}</div>
-                    <div class="tt-name">${escapeHTML(shortenModelName(st.laggard_model))}</div>
-                    <div class="tt-meta">${st._lagDate ? escapeHTML(fmtDayLong(st._lagDate)) : ''}${escapeHTML(scoreMeta(st.laggard_score))}</div>
-                </div>
-            </div>`;
-        const rect = svg.getBoundingClientRect();
-        tooltipEl.style.left = `${xp * (rect.width / W)}px`;
-        tooltipEl.style.top = `${yp * (rect.height / H)}px`;
-        tooltipEl.hidden = false;
-    }
-    hoverArea.addEventListener('mousemove', (ev) => {
-        const rect = svg.getBoundingClientRect();
-        const sx = ((ev.clientX - rect.left) * W) / rect.width;
-        if (sx < M.left || sx > W - M.right) return;
-        showTooltipAt(sx);
-    });
-    hoverArea.addEventListener('mouseleave', () => {
-        if (tooltipEl) tooltipEl.hidden = true;
-        hoverLine.classList.remove('is-active');
-        hoverDot.classList.remove('is-active');
-    });
-
-    root.appendChild(svg);
-    root.dataset.viewbox = `0 0 ${W} ${H}`;
-}
-
-/**
- * Per-release view: one dot per matched leader-side frontier model at its
- * release date, y = months until the first laggard-side model matched it.
- */
-function renderHistoricalMatchesChart(data) {
-    const root = document.getElementById('historical-chart');
-    const tooltipEl = document.getElementById('historical-tooltip');
-    const container = document.getElementById('historical-chart-container');
-    if (!root) return;
-    root.innerHTML = '';
-    if (tooltipEl) tooltipEl.hidden = true;
-
-    const framing = appState.framing;
-    const labels = getHistoricalLabels(framing);
-    const accent = getLaggardAccent(framing);
-
-    // expose accent via CSS variables on the wrapper so all elements pick it up
-    if (container) {
-        container.style.setProperty('--c-cn', accent.dot);
-        container.style.setProperty('--c-cn-soft', accent.area);
-    }
-
-    const stats = data.statistics || {};
-    const isCurrentGapMode = appState.gapDetail;
-    const currentEstimate = isCurrentGapMode ? (stats.current_gap_estimate || null) : null;
-
-    // ---- datapoints: the server-computed per-reference-model matches ----
-    // One dot per matched reference (leader-side) frontier model, from the
-    // current framing's `gaps`: gap = months until the first laggard-side
-    // model plausibly caught up (Epoch's bootstrap criterion for ECI, the
-    // score threshold for other benchmarks). X = the reference release date.
-    const benchmark = appState.data?.benchmarks?.[appState.currentBenchmark];
-    const allModels = benchmark?.models || [];
-    // Laggard-side frontier releases still provide the bottom timeline ticks.
-    const { laggard: matcherTimeline } = buildFrontierEvents(allModels, framing, null);
-
-    const getGapClosedScore = (g) => g.closed_eci ?? g.closed_score;
-    const getGapOpenScore = (g) => g.open_eci ?? g.open_score;
-    const gapPoints = (data.gaps || [])
-        .filter(g => g && g.matched && g.open_model && g.closed_date && g.open_date
-                     && g.gap_months != null)
-        .map(g => ({
-            model: g.closed_model,
-            display: g.closed_model,
-            _d: parseUTCDate(g.closed_date),
-            score: getGapClosedScore(g),
-            gap: g.gap_months,
-            matcher: {
-                model: g.open_model,
-                display: g.open_model,
-                _d: parseUTCDate(g.open_date),
-                score: getGapOpenScore(g),
-            },
-        }))
-        .sort((a, b) => a._d - b._d);
-    gapPoints.forEach((ev, i) => {
-        ev.prevGap = i > 0 ? gapPoints[i - 1].gap : null;
-    });
-
-    // Methodology note for the bootstrap-matched (ECI) view.
-    const usesBootstrap = (data.gaps || []).some(g => g.match_type === 'bootstrap');
-    setHistoricalMethodNote(usesBootstrap
-        ? "Matches use Epoch AI's paired bootstrap (open model ahead in at least 5% of resamples). " +
-          "Plotted scores are Epoch's published ECI point estimates."
-        : '');
-
-    if (gapPoints.length === 0) {
-        root.innerHTML =
-            '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">No matched reference models to chart yet.</p>';
-        return;
-    }
-
-    // ---- geometry ----
-    const W = 1200;
-    const H = 680;
-    // Bottom margin reserves room for: tick (8) + gap (6) + rotated leader
-    // labels (up to ~65px diagonal extent) + breathing room (10) + x-axis
-    // title (~14) + safety (10). Total ≈ 175.
-    const M = { top: 76, right: 110, bottom: 175, left: 84 };
-    const innerW = W - M.left - M.right;
-    const innerH = H - M.top - M.bottom;
-
-    // X range: first → last laggard release (or today in current mode).
-    // We give the chart a small horizontal pad on each side so the first/last
-    // dots don't sit flush against the plot edges.
-    const firstPointDate = gapPoints[0]._d;
-    const lastPointDate = gapPoints[gapPoints.length - 1]._d;
-    const today = new Date();
-    const rawMin = firstPointDate;
-    const rawMax = isCurrentGapMode && currentEstimate ? today : lastPointDate;
-    if (rawMax <= rawMin) {
-        root.innerHTML =
-            '<p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">Not enough data to render chart.</p>';
-        return;
-    }
-    const pad = (rawMax - rawMin) * 0.03;
-    const xMin = new Date(rawMin.getTime() - pad);
-    const xMax = new Date(rawMax.getTime() + pad);
-
-    // Y range
-    const yValues = gapPoints.map(p => p.gap);
-    if (currentEstimate) yValues.push(currentEstimate.estimated_current_gap, currentEstimate.min_current_gap);
-    const yMaxRaw = Math.max(...yValues, 1);
-    const yMax = Math.ceil(yMaxRaw / 3) * 3 + 1;
-    const yMin = 0;
-
-    const x = (d) => M.left + (innerW * (d - xMin)) / (xMax - xMin);
-    const y = (v) => M.top + innerH - (innerH * (v - yMin)) / (yMax - yMin);
-
-    // ---- SVG root ----
-    // width/height attributes give the SVG a well-defined intrinsic aspect
-    // ratio. Without them, some browsers compute `height: auto` to a default
-    // (~150px) instead of deriving height from the viewBox, which lets the
-    // chart's bottom content overflow into the next section.
-    const svg = svgEl('svg', {
-        class: 'gap-chart',
-        viewBox: `0 0 ${W} ${H}`,
-        width: W,
-        height: H,
-        preserveAspectRatio: 'xMidYMid meet',
-        role: 'img',
-        'aria-label': `Gap in months between ${labels.leader} and ${labels.laggard} frontier models over time`,
-    });
-    svg.dataset.view = 'matches';
-    drawGapChartAxes(svg, { M, innerW, innerH, W, H, x, y, xMin, xMax, yMax }, labels);
-
-    // ---- gap area + line (step function) ----
-    // Between consecutive reference releases the plotted gap holds at the
-    // previous reference model's time-to-match, then steps to the new value
-    // at the next release. Each dot anchors a vertex. The final segment
-    // extends flat to xMax (today, or last release + pad in average mode).
-    const stepXY = [];
-    for (let i = 0; i < gapPoints.length; i++) {
-        const ev = gapPoints[i];
-        if (i === 0) {
-            stepXY.push([x(ev._d), y(ev.gap)]);
-        } else {
-            const prev = gapPoints[i - 1];
-            stepXY.push([x(ev._d), y(prev.gap)]);
-            stepXY.push([x(ev._d), y(ev.gap)]);
-        }
-    }
-    const lastEv = gapPoints[gapPoints.length - 1];
-    if (xMax > lastEv._d) {
-        stepXY.push([x(xMax), y(lastEv.gap)]);
-    }
-    const linePts = stepXY.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
-    if (gapPoints.length >= 1) {
-        const leftX = x(gapPoints[0]._d);
-        const rightX = stepXY[stepXY.length - 1][0];
-        const areaPts =
-            `${leftX.toFixed(1)},${y(0).toFixed(1)} ` +
-            linePts +
-            ` ${rightX.toFixed(1)},${y(0).toFixed(1)}`;
-        svg.appendChild(svgEl('polygon', { class: 'gap-area', points: areaPts }));
-        svg.appendChild(svgEl('polyline', { class: 'gap-line', points: linePts }));
-    }
-
-    // ---- current-gap projection (only in current mode) ----
-    if (currentEstimate && gapPoints.length) {
-        const last = gapPoints[gapPoints.length - 1];
-        const minBound = currentEstimate.min_current_gap;
-        const est = currentEstimate.estimated_current_gap;
-        // Soft wedge: from last release at minBound up to today at est, back along baseline to last
-        const wedgePts =
-            `${x(last._d).toFixed(1)},${y(last.gap).toFixed(1)} ` +
-            `${x(today).toFixed(1)},${y(est).toFixed(1)} ` +
-            `${x(today).toFixed(1)},${y(minBound).toFixed(1)} ` +
-            `${x(last._d).toFixed(1)},${y(last.gap).toFixed(1)}`;
-        svg.appendChild(svgEl('polygon', {
-            class: 'gap-area is-projection',
-            points: wedgePts,
-        }));
-        // Dashed projection line to the estimate
-        svg.appendChild(svgEl('polyline', {
-            class: 'gap-line is-projection',
-            points: `${x(last._d).toFixed(1)},${y(last.gap).toFixed(1)} ${x(today).toFixed(1)},${y(est).toFixed(1)}`,
-        }));
-        // Star marker at today (rendered after dots so it stays on top)
-    }
-
-    // ---- laggard frontier releases as rotated bottom ticks ----
-    drawReleaseTicks(svg, matcherTimeline, { M, innerH, W, x });
-
-    // ---- reference-model dots + 2-row labels above ----
-    const items = gapPoints
-        .map(p => ({
-            p,
-            xp: x(p._d),
-            yp: y(p.gap),
-            labelText: shortenModelName(p.display),
-            gapText: p.prevGap != null && Number.isFinite(p.prevGap)
-                ? `${p.prevGap.toFixed(1)} → ${p.gap.toFixed(1)} mo`
-                : `${p.gap.toFixed(1)} mo`,
-        }))
-        .filter(it => it.xp >= M.left && it.xp <= W - M.right);
-    const { placed, upperRowY } = placeLabelBand(items, M);
-    drawLabelBand(svg, placed, upperRowY, M, 'cn-dot');
-
-    // ---- current-gap star marker (after dots so it sits on top) ----
-    if (currentEstimate) {
-        const est = currentEstimate.estimated_current_gap;
-        const cx = x(today);
-        const cy = y(est);
-        svg.appendChild(svgEl('polygon', {
-            class: 'current-star',
-            points: starPoints(cx, cy, 9, 4.2, 5),
-        }));
-    }
-
-    // ---- hover machinery ----
-    const hoverLine = svgEl('line', {
-        class: 'hover-line',
-        x1: 0, x2: 0, y1: M.top, y2: M.top + innerH,
-    });
-    svg.appendChild(hoverLine);
-    const hoverDot = svgEl('circle', { class: 'hover-dot', cx: 0, cy: 0, r: 4 });
-    svg.appendChild(hoverDot);
-    const hoverArea = svgEl('rect', {
-        class: 'hover-target',
-        x: M.left, y: M.top, width: innerW, height: innerH,
-    });
-    svg.appendChild(hoverArea);
-
-    // Each gap point already carries its first matcher from the server data.
-    function matcherFor(pt) {
-        return pt.matcher || null;
-    }
-
-    function nearestLaggard(d) {
-        if (gapPoints.length === 0) return null;
-        let best = gapPoints[0];
-        let bd = Math.abs(d - best._d);
-        for (const ev of gapPoints) {
-            const diff = Math.abs(d - ev._d);
-            if (diff < bd) { best = ev; bd = diff; }
-        }
-        return best;
-    }
-
-    function showTooltipAt(svgX) {
-        if (!tooltipEl) return;
-        const tMs = xMin.getTime() + ((svgX - M.left) / innerW) * (xMax - xMin);
-        const t = new Date(tMs);
-        const lag = nearestLaggard(t);
-        if (!lag) {
-            tooltipEl.hidden = true;
-            hoverLine.classList.remove('is-active');
-            hoverDot.classList.remove('is-active');
+            const response = await fetch('data.json', { cache: 'no-cache' });
+            if (!response.ok) throw new Error(`data.json returned ${response.status}`);
+            site = prepare(await response.json());
+        } catch (error) {
+            console.error(error);
+            lede.textContent = 'The latest figures did not load. Reload the page to try again.';
+            $('figure').hidden = true;
             return;
         }
-        const xp = x(lag._d);
-        const yp = y(lag.gap);
-        hoverLine.setAttribute('x1', xp);
-        hoverLine.setAttribute('x2', xp);
-        hoverLine.classList.add('is-active');
-        hoverDot.setAttribute('cx', xp);
-        hoverDot.setAttribute('cy', yp);
-        hoverDot.classList.add('is-active');
-        const ld = matcherFor(lag);
-        tooltipEl.innerHTML = buildTooltipHTML(lag, ld, labels);
-        // Position tooltip in container coords
-        const rect = svg.getBoundingClientRect();
-        const scaleX = rect.width / W;
-        const scaleY = rect.height / H;
-        tooltipEl.style.left = `${xp * scaleX}px`;
-        tooltipEl.style.top = `${yp * scaleY}px`;
-        tooltipEl.hidden = false;
-    }
 
-    function buildTooltipHTML(pt, matcher, lbls) {
-        const scoreLabel = appState.currentBenchmark === 'eci' ? 'ECI' : 'Score';
-        const scoreMeta = (v) => (v != null && Number.isFinite(v) ? ` · ${scoreLabel} ${v.toFixed(1)}` : '');
-        const matcherRow = matcher ? `
-            <div class="tt-row">
-                <span class="tt-swatch us"></span>
-                <div>
-                    <div class="tt-label">${escapeHTML(lbls.matcherModel)}</div>
-                    <div class="tt-name">${escapeHTML(shortenModelName(matcher.display))}</div>
-                    <div class="tt-meta">${escapeHTML(fmtDayLong(matcher._d))}${escapeHTML(scoreMeta(matcher.score))}</div>
-                </div>
-            </div>` : '';
-        return `
-            <div class="tt-head">${pt.gap.toFixed(1)} ${escapeHTML(lbls.behindHeader)}</div>
-            <div class="tt-date">${escapeHTML(shortenModelName(pt.display))}</div>
-            <div class="tt-row">
-                <span class="tt-swatch cn"></span>
-                <div>
-                    <div class="tt-label">${escapeHTML(lbls.referenceModel)}</div>
-                    <div class="tt-name">${escapeHTML(shortenModelName(pt.display))}</div>
-                    <div class="tt-meta">${escapeHTML(fmtDayLong(pt._d))}${escapeHTML(scoreMeta(pt.score))}</div>
-                </div>
-            </div>
-            ${matcherRow}
-        `;
-    }
-
-    hoverArea.addEventListener('mousemove', (ev) => {
-        const rect = svg.getBoundingClientRect();
-        const sx = ((ev.clientX - rect.left) * W) / rect.width;
-        if (sx < M.left || sx > W - M.right) return;
-        showTooltipAt(sx);
-    });
-    hoverArea.addEventListener('mouseleave', () => {
-        if (tooltipEl) tooltipEl.hidden = true;
-        hoverLine.classList.remove('is-active');
-        hoverDot.classList.remove('is-active');
-    });
-
-    root.appendChild(svg);
-    // Stash a serializable reference for PNG export
-    root.dataset.viewbox = `0 0 ${W} ${H}`;
-}
-
-/**
- * Build N-pointed star polygon points centered at (cx, cy).
- */
-function starPoints(cx, cy, outer, inner, points) {
-    const step = Math.PI / points;
-    const parts = [];
-    for (let i = 0; i < points * 2; i++) {
-        const r = i % 2 === 0 ? outer : inner;
-        const a = i * step - Math.PI / 2;
-        parts.push(`${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`);
-    }
-    return parts.join(' ');
-}
-
-/**
- * Serialize the gap-over-time SVG with computed styles inlined and rasterize
- * it to a PNG at 2x device pixels for sharing in reports.
- */
-function setupHistoricalChartDownload() {
-    const btn = document.getElementById('historical-chart-download');
-    if (!btn) return;
-    btn.addEventListener('click', async () => {
-        const svg = document.querySelector('#historical-chart svg.gap-chart');
-        if (!svg) return;
-        btn.disabled = true;
-        try {
-            await downloadSvgAsPng(svg, gapChartFilename());
-        } catch (e) {
-            console.error('PNG export failed:', e);
-        } finally {
-            btn.disabled = false;
-        }
-    });
-}
-
-function gapChartFilename() {
-    const today = new Date().toISOString().slice(0, 10);
-    const framing = appState.framing === 'china' ? 'china-us' : 'open-closed';
-    const svg = document.querySelector('#historical-chart svg.gap-chart');
-    const slugs = { matches: 'time-to-match', score: 'score-gap', timeline: 'months-behind' };
-    const view = slugs[(svg && svg.dataset.view) || 'timeline'] || 'months-behind';
-    return `gap-over-time-${framing}-${view}-${today}.png`;
-}
-
-/**
- * Inline computed styles for elements we draw, then rasterize the SVG.
- * Inlining is required because the off-DOM Image loader doesn't read
- * external stylesheets.
- */
-async function downloadSvgAsPng(svgEl, filename) {
-    const vb = (svgEl.getAttribute('viewBox') || '0 0 1200 680').split(/\s+/).map(Number);
-    const W = vb[2] || 1200;
-    const H = vb[3] || 680;
-    const SCALE = 2;
-    const clone = svgEl.cloneNode(true);
-    clone.setAttribute('xmlns', SVG_NS);
-    clone.setAttribute('width', W);
-    clone.setAttribute('height', H);
-    inlineComputedStyles(svgEl, clone);
-    // Ensure background is paper-colored (transparent rasterizes weird)
-    const bg = document.createElementNS(SVG_NS, 'rect');
-    bg.setAttribute('x', 0); bg.setAttribute('y', 0);
-    bg.setAttribute('width', W); bg.setAttribute('height', H);
-    bg.setAttribute('fill', getComputedStyle(document.body).backgroundColor || '#fff');
-    clone.insertBefore(bg, clone.firstChild);
-    const svgString = new XMLSerializer().serializeToString(clone);
-    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    try {
-        const img = await loadImage(url);
-        const canvas = document.createElement('canvas');
-        canvas.width = W * SCALE;
-        canvas.height = H * SCALE;
-        const ctx = canvas.getContext('2d');
-        ctx.scale(SCALE, SCALE);
-        ctx.drawImage(img, 0, 0, W, H);
-        const pngBlob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-        const pngUrl = URL.createObjectURL(pngBlob);
-        const a = document.createElement('a');
-        a.href = pngUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(pngUrl), 1000);
-    } finally {
-        URL.revokeObjectURL(url);
-    }
-}
-
-function loadImage(src) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = src;
-    });
-}
-
-/**
- * Walk the source SVG and copy resolved SVG presentation properties onto
- * matching elements in the clone via the style attribute. We only need
- * properties that affect rendering of paint/stroke/text.
- */
-const SVG_STYLE_PROPS = [
-    'fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-dasharray',
-    'stroke-linecap', 'stroke-linejoin', 'stroke-opacity', 'opacity',
-    'font-family', 'font-size', 'font-weight', 'letter-spacing',
-    'text-anchor', 'dominant-baseline', 'paint-order',
-];
-function inlineComputedStyles(source, target) {
-    const srcEls = source.querySelectorAll('*');
-    const tgtEls = target.querySelectorAll('*');
-    if (srcEls.length !== tgtEls.length) return;
-    for (let i = 0; i < srcEls.length; i++) {
-        const cs = getComputedStyle(srcEls[i]);
-        const parts = [];
-        for (const prop of SVG_STYLE_PROPS) {
-            const v = cs.getPropertyValue(prop);
-            if (v && v !== 'normal' && v !== 'auto') parts.push(`${prop}:${v}`);
-        }
-        if (parts.length) tgtEls[i].setAttribute('style', parts.join(';'));
-    }
-}
-
-/**
- * Stat cards: the headline average and its score-gap counterpart (both
- * over the headline window), the gap today (the same measured range as the
- * Gap Over Time chart), and how many leader releases are still unmatched.
- */
-function updateStats(currentData) {
-    const stats = currentData.statistics || {};
-    const h = stats.headline_gap;
-    const labels = getFramingLabels();
-    const unit = scoreUnitLabels();
-    const since = !h ? ''
-        : (h.full_history
-            ? ` since ${fmtMonthYear(parseUTCDate(h.window_start), false)}`
-            : `, ${h.window_months || 12} months to ${fmtMonthYear(parseUTCDate(h.window_end), false)}`);
-    const setCard = (id, value, label) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.textContent = value;
-        const lab = el.closest('.stat-card')?.querySelector('.stat-label');
-        if (lab) lab.textContent = label;
-    };
-
-    const avg = h ? h.months : stats.avg_horizontal_gap_months;
-    setCard('stat-avg-gap', avg != null ? `${Number(avg).toFixed(1)} mo` : '--', `Average gap${since}`);
-    const scoreGap = h ? h.score_gap : stats.avg_vertical_gap;
-    setCard('stat-score-gap', scoreGap != null ? `${Number(scoreGap).toFixed(1)} ${unit.short}` : '--',
-        `Average score gap${since}`);
-
-    const c = currentData.gap_timeline?.context;
-    let today = '--';
-    if (c && c.current_gap_months != null) {
-        const cur = Number(c.current_gap_months);
-        const lower = c.current_lower_months != null ? Number(c.current_lower_months) : null;
-        today = lower != null && c.current_next_leader_model && lower < cur - 0.05
-            ? `${lower.toFixed(1)}–${cur.toFixed(1)} mo`
-            : `${cur.toFixed(1)} mo`;
-    }
-    setCard('stat-today', today, 'Gap today');
-    setCard('stat-unmatched', String(stats.total_unmatched ?? '--'), `Unmatched ${labels.closed} models`);
-}
-
-/**
- * Update the main title with the average gap
- */
-function updateTitle(avgGap) {
-    document.getElementById('gap-value').textContent = avgGap;
-}
-
-/**
- * Update the last updated timestamp
- */
-function updateLastUpdated(timestamp) {
-    const date = new Date(timestamp);
-    const formatted = date.toLocaleString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZoneName: 'short'
-    });
-    document.getElementById('last-updated').textContent = formatted;
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', init);
-
-/**
- * Render the raw data table
- */
-const TABLE_SORT_ACCESSORS = {
-    model: (r) => String(r.display_name || r.model || '').toLowerCase(),
-    date: (r) => new Date(r.date).getTime(),
-    score: (r) => r._score,
-    type: (r) => (r.is_open ? 1 : 0),
-    org: (r) => String(r.organization || '').toLowerCase(),
-};
-
-function setupTableSorting() {
-    document.querySelectorAll('#eci-table th[data-sort-key]').forEach(th => {
-        th.addEventListener('click', () => {
-            const key = th.dataset.sortKey;
-            if (appState.tableSort.key === key) {
-                appState.tableSort.dir = appState.tableSort.dir === 'asc' ? 'desc' : 'asc';
-            } else {
-                // Text columns start ascending; numeric/date columns descending.
-                const ascFirst = ['model', 'org', 'type'].includes(key);
-                appState.tableSort = { key, dir: ascFirst ? 'asc' : 'desc' };
+        const value = $('readout-value');
+        const detail = $('readout-detail');
+        const chartNode = $('chart');
+        const chart = createChart(chartNode, (view, state) => {
+            const text = describe(view, state);
+            value.replaceChildren(document.createTextNode(text.value));
+            if (text.aside) {
+                const aside = document.createElement('span');
+                aside.className = 'readout-aside';
+                aside.textContent = text.aside;
+                value.appendChild(aside);
             }
-            if (appState.tableData) {
-                renderTable(appState.tableData.models);
-            }
+            detail.textContent = text.detail;
         });
-    });
-}
+        // Announce the readout only while someone is steering the chart by keyboard.
+        const readout = $('readout');
+        chartNode.addEventListener('focus', () => readout.setAttribute('aria-live', 'polite'));
+        chartNode.addEventListener('blur', () => readout.removeAttribute('aria-live'));
 
-function updateSortIndicators() {
-    const { key, dir } = appState.tableSort;
-    document.querySelectorAll('#eci-table th[data-sort-key]').forEach(th => {
-        th.classList.toggle('sorted-asc', th.dataset.sortKey === key && dir === 'asc');
-        th.classList.toggle('sorted-desc', th.dataset.sortKey === key && dir === 'desc');
-    });
-}
-
-function renderTable(models) {
-    appState.tableData = { models };
-    const tableBody = document.querySelector('#eci-table tbody');
-    tableBody.innerHTML = '';
-
-    // Get score field for current benchmark
-    const scoreField = getScoreField();
-
-    const rows = models.map(model => {
-        const score = model[scoreField] ?? model.eci ?? model.score;
-        return {
-            ...model,
-            _score: score !== null && score !== undefined ? score : null,
+        fillNotes(site);
+        const showView = () => {
+            const view = site.views[HASHES[window.location.hash] || 'open_closed'];
+            document.documentElement.dataset.view = view.key;
+            renderText(site, view);
+            renderTable(view);
+            chart.show(view);
         };
-    });
+        window.addEventListener('hashchange', showView);
+        showView();
+    }
 
-    const { key, dir } = appState.tableSort;
-    const accessor = TABLE_SORT_ACCESSORS[key] || TABLE_SORT_ACCESSORS.date;
-    const sign = dir === 'asc' ? 1 : -1;
-    rows.sort((a, b) => {
-        const va = accessor(a);
-        const vb = accessor(b);
-        const aMissing = va === null || va === undefined || (typeof va === 'number' && isNaN(va));
-        const bMissing = vb === null || vb === undefined || (typeof vb === 'number' && isNaN(vb));
-        if (aMissing && bMissing) return 0;
-        if (aMissing) return 1;  // missing values always sort last
-        if (bMissing) return -1;
-        if (va < vb) return -sign;
-        if (va > vb) return sign;
-        return 0;
-    });
-
-    rows.forEach(model => {
-        const row = document.createElement('tr');
-
-        const typeClass = model.is_open ? 'type-open' : 'type-closed';
-        const typeLabel = model.is_open ? 'Open' : 'Closed';
-        const scoreValue = model._score !== null ? model._score.toFixed(1) : '-';
-
-        // For METR, show additional info in the score cell
-        let scoreDisplay = scoreValue;
-        if (appState.currentBenchmark === 'metr_time_horizon' && model.average_score !== undefined) {
-            scoreDisplay = `${scoreValue} min`;
-        }
-
-        // Show source version for METR
-        const orgDisplay = model.source_version
-            ? `${model.organization} <span style="color: #999; font-size: 0.85em;">(v${model.source_version})</span>`
-            : model.organization;
-
-        row.innerHTML = `
-            <td>${model.display_name || model.model}</td>
-            <td>${new Date(model.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</td>
-            <td>${scoreDisplay}</td>
-            <td><span class=\"model-type ${typeClass}\">${typeLabel}</span></td>
-            <td>${orgDisplay}</td>
-        `;
-        tableBody.appendChild(row);
-    });
-
-    updateSortIndicators();
-}
-
+    main();
+})();

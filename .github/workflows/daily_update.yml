@@ -26,15 +26,13 @@ jobs:
           pip install -r requirements.txt
 
       # Best-effort: a git/install failure here must NOT abort the daily build.
-      # update_data.py falls back to the analytical ECI criterion if eci is absent.
+      # update_data.py falls back to the analytical test if eci is absent and
+      # flags the run with a warning.
       - name: Install optional ECI bootstrap dependency
         continue-on-error: true
         run: pip install -r requirements-optional.txt
 
       - name: Run update script
-        env:
-          AIRTABLE_BASE_ID: ${{ secrets.AIRTABLE_BASE_ID }}
-          AIRTABLE_PERSONAL_ACCESS_TOKEN: ${{ secrets.AIRTABLE_PERSONAL_ACCESS_TOKEN }}
         run: python scripts/update_data.py
 
       - name: Commit and push changes

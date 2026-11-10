@@ -1,8 +1,7 @@
-# Optional dependency: eci-public powers the ECI paired-bootstrap "caught up"
-# criterion (ECI benchmark only). It is installed best-effort (continue-on-error)
-# in the daily workflow so a git/install failure NEVER aborts the build --
-# scripts/update_data.py falls back to the analytical criterion when `eci` is
-# absent. Pin matches docs/specs/2026-06-02-eci-bootstrap-gap-criterion-design.md.
+# eci-public reruns Epoch's ECI fit so the "caught up" test can use the paired
+# bootstrap (scripts/eci_bootstrap.py). It is optional: the daily workflow
+# installs it with continue-on-error, and without it scripts/update_data.py
+# falls back to the analytical test and flags the run. It brings scipy and tqdm.
 #
-# Local dev:  pip install -r requirements-optional.txt   (after requirements.txt)
+# Local use:  pip install -r requirements.txt -r requirements-optional.txt
 eci @ git+https://github.com/epoch-research/eci-public.git@ae5a5db79560bd61c354202abf4d37a148335f20
