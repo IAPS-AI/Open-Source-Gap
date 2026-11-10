@@ -2,7 +2,10 @@
    One typeface (Archivo) used at three widths: wide for the name, regular for
    reading, narrow for chart annotation. Ink on paper plus one accent, which
    marks the group being tracked: blue for open-weight models, red for Chinese
-   models. The group it is measured against is always ink. */
+   models. The group it is measured against is always ink.
+
+   Light or dark follows the system setting unless the reader picks one with
+   the button in the masthead, which sets data-theme on the root element. */
 
 :root {
     color-scheme: light;
@@ -21,8 +24,10 @@
     --laggard: #dc4433;
 }
 
+/* Dark, twice: when the system asks for it and the reader has not chosen
+   light, and when the reader has chosen dark. Keep the two blocks the same. */
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
         color-scheme: dark;
         --paper: #0f1420;
         --ink: #e8ecf4;
@@ -34,9 +39,25 @@
         --laggard: #6b89ff;
     }
 
-    :root[data-view="china_us"] {
+    :root:not([data-theme="light"])[data-view="china_us"] {
         --laggard: #e66767;
     }
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #0f1420;
+    --ink: #e8ecf4;
+    --ink-2: #aab3c6;
+    --ink-3: #8690a6;
+    --rule: #1e2637;
+    --axis: #3a4660;
+    --leader: #d9dee9;
+    --laggard: #6b89ff;
+}
+
+:root[data-theme="dark"][data-view="china_us"] {
+    --laggard: #e66767;
 }
 
 *,
@@ -108,31 +129,12 @@ a:hover {
 }
 
 .wordmark {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
     font-size: 0.9375rem;
     font-weight: 650;
     font-stretch: 122%;
     letter-spacing: 0.005em;
     text-decoration: none;
     white-space: nowrap;
-}
-
-.wordmark-glyph {
-    width: 2.125rem;
-    height: 0.75rem;
-    flex: none;
-}
-
-.glyph-leader {
-    fill: var(--leader);
-}
-
-.glyph-laggard {
-    fill: var(--paper);
-    stroke: var(--laggard);
-    stroke-width: 2;
 }
 
 /* The two comparisons. The current one is underlined in its own accent. */
@@ -165,6 +167,27 @@ a:hover {
     color: var(--ink-3);
     font-size: 0.8125rem;
     white-space: nowrap;
+}
+
+/* Names the theme it switches to. */
+.theme-toggle {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink-3);
+    font: inherit;
+    font-size: 0.8125rem;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--axis);
+    text-underline-offset: 0.18em;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.theme-toggle:hover {
+    color: var(--ink);
+    text-decoration-color: currentColor;
 }
 
 /* Headline */
@@ -639,13 +662,23 @@ td:last-child {
 /* Small screens */
 
 @media (max-width: 40rem) {
+    /* Name and date on the first row, the two views and the theme switch on the second. */
     .masthead {
         column-gap: 0.75rem;
     }
 
+    .updated {
+        flex: 1 1 auto;
+        text-align: right;
+    }
+
     .views {
         order: 3;
-        flex-basis: 100%;
+    }
+
+    .theme-toggle {
+        order: 4;
+        margin-left: auto;
     }
 
     .readout {

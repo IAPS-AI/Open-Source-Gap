@@ -6,6 +6,15 @@
     <title>Open Source Gap</title>
     <meta name="description" content="How many months open-weight AI models trail the most capable closed models, and Chinese models trail U.S. ones, on the Epoch Capabilities Index. Updated daily from Epoch AI data.">
     <meta name="color-scheme" content="light dark">
+    <script>
+        // Apply a saved light or dark choice before the page paints, so it never flashes the other one.
+        try {
+            const saved = window.localStorage.getItem('theme');
+            if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+        } catch (error) {
+            // Storage is unavailable: follow the system setting.
+        }
+    </script>
     <meta property="og:type" content="website">
     <meta property="og:title" content="Open Source Gap">
     <meta property="og:description" content="How many months open-weight AI models trail the most capable closed models, and Chinese models trail U.S. ones, on the Epoch Capabilities Index. Updated daily.">
@@ -15,23 +24,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="static/style.css?v=35">
+    <link rel="stylesheet" href="static/style.css?v=36">
 </head>
 <body>
     <div class="page">
         <header class="masthead">
-            <a class="wordmark" href="./" aria-label="Open Source Gap, home">
-                <svg class="wordmark-glyph" viewBox="0 0 34 12" aria-hidden="true">
-                    <circle class="glyph-leader" cx="6" cy="6" r="5"/>
-                    <circle class="glyph-laggard" cx="28" cy="6" r="4"/>
-                </svg>
-                Open Source Gap
-            </a>
+            <a class="wordmark" href="./" aria-label="Open Source Gap, home">Open Source Gap</a>
             <nav class="views" aria-label="Comparison">
                 <a href="#open-closed" data-view-link="open_closed" aria-current="true">Open vs closed</a>
                 <a href="#china-us" data-view-link="china_us">China vs U.S.</a>
             </nav>
             <p class="updated">Updated <time id="updated">daily</time></p>
+            <!-- Shown by the script, which is what makes it work. -->
+            <button type="button" class="theme-toggle" id="theme-toggle" hidden>Dark theme</button>
         </header>
 
         <main>
@@ -111,6 +116,6 @@
         </footer>
     </div>
 
-    <script src="static/script.js?v=35" defer></script>
+    <script src="static/script.js?v=36" defer></script>
 </body>
 </html>

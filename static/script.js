@@ -761,9 +761,48 @@
         return { show };
     }
 
+    /* ------------------------------------------------------------ theme */
+
+    /** Light or dark follows the system until the reader picks one; the pick is
+        remembered. index.html applies a remembered pick before the page paints. */
+    function setUpTheme() {
+        const button = $('theme-toggle');
+        const root = document.documentElement;
+        const system = window.matchMedia('(prefers-color-scheme: dark)');
+        const shown = () => root.dataset.theme || (system.matches ? 'dark' : 'light');
+        const other = () => (shown() === 'dark' ? 'light' : 'dark');
+        const label = () => {
+            button.textContent = other() === 'dark' ? 'Dark theme' : 'Light theme';
+        };
+        const remember = (theme) => {
+            try {
+                if (theme) window.localStorage.setItem('theme', theme);
+                else window.localStorage.removeItem('theme');
+            } catch (error) {
+                // Storage is unavailable, so the choice lasts for this visit only.
+            }
+        };
+        button.addEventListener('click', () => {
+            const next = other();
+            // Picking what the system already shows goes back to following the system.
+            if ((next === 'dark') === system.matches) {
+                delete root.dataset.theme;
+                remember(null);
+            } else {
+                root.dataset.theme = next;
+                remember(next);
+            }
+            label();
+        });
+        system.addEventListener('change', label);
+        label();
+        button.hidden = false;
+    }
+
     /* ------------------------------------------------------------- page */
 
     async function main() {
+        setUpTheme();   // before the data loads, so it works even if that fails
         const lede = $('lede');
         let site;
         try {

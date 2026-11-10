@@ -37,7 +37,7 @@ Models are counted the way the ECI scores them: one entry per `model_group` in E
 
 | Path | What it is |
 | --- | --- |
-| `index.html`, `static/` | The page. Plain HTML, CSS, and JavaScript with no dependencies; the charts are hand-drawn SVG. |
+| `index.html`, `static/` | The page. Plain HTML, CSS, and JavaScript with no dependencies; the charts are hand-drawn SVG. Light or dark follows the system setting unless the reader switches with the button in the masthead, and the choice is remembered in the browser. |
 | `data.json` | Everything the page shows, written by the pipeline. |
 | `scripts/update_data.py` | Entry point: fetch, compute, write `data.json`. |
 | `scripts/gap.py` | The gap calculation and the two comparisons. Pure Python. |

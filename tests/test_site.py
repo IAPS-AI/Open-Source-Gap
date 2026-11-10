@@ -32,8 +32,7 @@ def test_every_element_the_script_looks_up_exists_on_the_page():
 
 
 def test_the_page_loads_only_its_own_script_and_a_versioned_stylesheet():
-    (script,) = re.findall(r'<script[^>]*\bsrc="([^"]+)"', INDEX)
-    assert "<script>" not in INDEX                      # nothing inline, nothing third-party
+    (script,) = re.findall(r'<script[^>]*\bsrc="([^"]+)"', INDEX)       # nothing third-party
     (sheet,) = re.findall(r'<link[^>]*rel="stylesheet"[^>]*href="(static/[^"]+)"', INDEX)
     # Pages serves the branch as committed, so this number is what busts caches.
     assert re.fullmatch(r"static/script\.js\?v=\d+", script)
@@ -66,14 +65,50 @@ def test_chart_height_is_reserved_with_the_sums_the_script_uses():
     assert "clamp(Math.round(width * 0.22), 150, 230)" in SCRIPT
 
 
+def rule(selector):
+    """The declarations of the one rule in the stylesheet with exactly this selector."""
+    (body,) = re.findall(re.escape(selector) + r"\s*\{([^}]*)\}", STYLE)
+    return dict(re.findall(r"([a-z0-9-]+)\s*:\s*([^;]+);", body))
+
+
 def test_both_themes_define_the_same_colour_tokens():
-    light, dark = re.findall(r":root\s*\{([^}]*)\}", STYLE)[:2]
-    names = lambda block: set(re.findall(r"(--[a-z0-9-]+)\s*:", block))
-    assert names(dark) == names(light) - {"--font"}
+    light = rule("\n:root")
+    dark_by_system = rule(':root:not([data-theme="light"])')
+    dark_by_choice = rule(':root[data-theme="dark"]')
+    # The dark values are written twice (system setting, reader's choice) and must not drift.
+    assert dark_by_system == dark_by_choice
+    assert set(dark_by_choice) == set(light) - {"--font"}
+    assert (light["color-scheme"], dark_by_choice["color-scheme"]) == ("light", "dark")
     used = set(re.findall(r"var\((--[a-z0-9-]+)\)", STYLE))
-    assert used <= names(light), f"undefined tokens: {sorted(used - names(light))}"
-    # Each comparison's accent is set for both themes.
-    assert len(re.findall(r':root\[data-view="china_us"\]\s*\{\s*--laggard:', STYLE)) == 2
+    assert used <= set(light), f"undefined tokens: {sorted(used - set(light))}"
+    # The China view's accent is set for light and for both routes to dark.
+    china = [rule(selector)["--laggard"] for selector in (
+        '\n:root[data-view="china_us"]',
+        ':root:not([data-theme="light"])[data-view="china_us"]',
+        ':root[data-theme="dark"][data-view="china_us"]')]
+    assert china[1] == china[2] and china[0] != china[1]
+    assert light["--laggard"] not in china and dark_by_choice["--laggard"] not in china
+
+
+def test_the_theme_switch_is_wired_the_same_way_in_the_page_and_the_script():
+    # The page's one inline script only restores a saved theme before first paint.
+    (inline,) = re.findall(r"<script>(.*?)</script>", INDEX, re.S)
+    assert "localStorage.getItem('theme')" in inline and "dataset.theme = saved" in inline
+    assert "fetch(" not in inline and "http" not in inline
+    assert INDEX.index("<script>") < INDEX.index('rel="stylesheet"')        # ahead of anything painted
+    # The script stores under the same key, and only the two values the page accepts.
+    assert "localStorage.setItem('theme', theme)" in SCRIPT and "localStorage.removeItem('theme')" in SCRIPT
+    assert "saved === 'light' || saved === 'dark'" in inline
+    # The button cannot work without the script, so it stays hidden until the script shows it.
+    assert '<button type="button" class="theme-toggle" id="theme-toggle" hidden>' in INDEX
+    assert "button.hidden = false;" in SCRIPT
+
+
+def test_the_wordmark_is_plain_text():
+    """A logo mark of two dots read as a light/dark switch, so the name stands alone."""
+    (wordmark,) = re.findall(r'<a class="wordmark"[^>]*>(.*?)</a>', INDEX, re.S)
+    assert wordmark.strip() == "Open Source Gap"
+    assert "glyph" not in INDEX and "glyph" not in STYLE
 
 
 def test_nothing_from_the_old_multi_benchmark_site_is_left():
