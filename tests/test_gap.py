@@ -14,6 +14,7 @@ from gap import (
     UNITED_STATES,
     Criterion,
     Model,
+    Rolling,
     build_comparison,
     build_payload,
     build_segments,
@@ -274,39 +275,56 @@ def test_headline_window_uses_all_history_when_there_is_under_a_year():
 # -------------------------------------------------------- rolling average
 
 @pytest.mark.parametrize("seed", range(6))
-def test_rolling_average_is_the_mean_of_the_prior_twelve_months_each_day(seed):
+def test_rolling_figures_summarise_the_prior_twelve_months_each_day(seed):
     models, shares, as_of = random_models(seed)
     segs = build_segments(record_setters(m for m in models if m.is_open),
                           record_setters(m for m in models if not m.is_open),
                           Criterion(FakeDraws(shares)), as_of)
-    first, values = rolling_average(segs, as_of)
-    by_day = {day: seg.months(day) for day, seg in daily(segs, segs[0].start, as_of)}
+    rolling = rolling_average(segs, as_of)
+    start = segs[0].start
+    by_day = {day: seg.months(day) for day, seg in daily(segs, start, as_of)}
 
-    assert months_before(first, 12) > segs[0].start                 # a full window behind it
-    assert months_before(first - timedelta(days=1), 12) <= segs[0].start
-    assert len(values) == (as_of - first).days + 1
-    for offset in range(0, len(values), 17):                         # spot-check through the series
-        day = first + timedelta(days=offset)
-        window = [by_day[months_before(day, 12) + timedelta(days=i)]
-                  for i in range((day - months_before(day, 12)).days + 1)]
-        assert values[offset] == pytest.approx(sum(window) / len(window)), day
+    assert rolling.start == start
+    assert len(rolling.mean) == len(rolling.spread) == (as_of - start).days + 1
+    full = rolling.full_from
+    assert months_before(full, 12) > start                           # a full window behind it
+    assert months_before(full - timedelta(days=1), 12) <= start
+    for offset in range(0, len(rolling.mean), 17):                   # spot-check through the series
+        day = start + timedelta(days=offset)
+        first = max(months_before(day, 12), start)                   # everything so far in the first year
+        window = [by_day[first + timedelta(days=i)] for i in range((day - first).days + 1)]
+        assert rolling.mean[offset] == pytest.approx(sum(window) / len(window)), day
+        assert rolling.spread[offset] == pytest.approx(float(np.std(window)), abs=1e-9), day
 
 
-def test_rolling_average_is_empty_without_a_full_year():
+def test_rolling_figures_cover_every_day_so_far_until_there_is_a_full_year():
     segs = series([closed("C1", "2025-01-01", 120), opened("O1", "2025-02-01", 110)], "2025-12-31")
-    assert rolling_average(segs, date(2025, 12, 31)) == (None, [])
+    rolling = rolling_average(segs, date(2025, 12, 31))
+    assert (rolling.start, rolling.full_from) == (date(2025, 2, 1), None)
+    assert len(rolling.mean) == 334                                  # February 1 to December 31
+    # Never matched, so the gap is the time since C1: 31 days on the first day, 364 on the last.
+    assert rolling.mean[0] == pytest.approx(31 / DAYS_PER_MONTH)
+    assert rolling.spread[0] == 0.0                                  # one day does not vary
+    gaps = [days / DAYS_PER_MONTH for days in range(31, 365)]
+    assert rolling.mean[-1] == pytest.approx(sum(gaps) / len(gaps))
+    assert rolling.spread[-1] == pytest.approx(float(np.std(gaps)))
+    # The last average is the headline's own, over the same days.
+    assert rolling.mean[-1] == pytest.approx(summarize(segs, date(2025, 2, 1), date(2025, 12, 31))["months"])
+    assert rolling_average(segs, date(2025, 1, 31)) == Rolling(None, None, [], [])   # before the series
 
 
 def test_rolling_average_becomes_firm_a_year_after_the_first_match():
     models = [closed("C1", "2023-01-01", 120), opened("O1", "2023-02-01", 100),
               opened("O2", "2024-06-15", 125)]                       # first match: June 15, 2024
     segs = series(models, "2026-01-01")
-    first, _ = rolling_average(segs, date(2026, 1, 1))
-    assert first == date(2024, 2, 2)                                 # one year and a day after Feb 1, 2023
-    assert firm_from(segs, first, date(2026, 1, 1)) == date(2025, 6, 15)
-    assert firm_from(segs, first, date(2025, 6, 14)) is None         # not reached yet
+    rolling = rolling_average(segs, date(2026, 1, 1))
+    assert rolling.start == date(2023, 2, 1)
+    assert rolling.full_from == date(2024, 2, 2)                     # one year and a day after Feb 1, 2023
+    assert firm_from(segs, rolling.full_from, date(2026, 1, 1)) == date(2025, 6, 15)
+    assert firm_from(segs, rolling.full_from, date(2025, 6, 14)) is None   # not reached yet
     never = series(models[:2], "2026-01-01")
     assert firm_from(never, date(2024, 2, 2), date(2026, 1, 1)) is None
+    assert firm_from(never, None, date(2026, 1, 1)) is None          # no full window to start from
 
 
 # ---------------------------------------------------------------- matches
@@ -344,7 +362,7 @@ def payload_models():
 def test_payload_is_plain_json_with_both_comparisons():
     payload = build_payload(payload_models(), date(2025, 6, 30))
     assert json.loads(json.dumps(payload)) == payload
-    assert set(payload) == {"schema", "as_of", "days_per_month", "test", "comparisons"}
+    assert set(payload) == {"schema", "as_of", "days_per_month", "test", "comparisons", "models"}
     assert payload["schema"] == 2 and payload["as_of"] == "2025-06-30"
     assert payload["test"] == {"paired_bootstrap": False, "resamples": None, "min_share": 0.05}
     assert list(payload["comparisons"]) == ["open_closed", "china_us"]
@@ -354,6 +372,18 @@ def test_payload_is_plain_json_with_both_comparisons():
         assert comparison["trend"] is None                                   # too few records since 2024
         assert comparison["models_scored"] == {"laggard": 2, "leader": 3}   # the 2030 model is not out yet
     assert payload["comparisons"]["open_closed"] == payload["comparisons"]["china_us"]
+
+
+def test_payload_lists_every_released_model_newest_first():
+    models = build_payload(payload_models(), date(2025, 6, 30))["models"]
+    assert [m["model"] for m in models] == ["C3", "O2", "C2", "O1", "C1"]     # the 2030 model is not out yet
+    assert models[1] == {"model": "O2", "released": "2024-08-01", "eci": 129.5, "ci_low": 127.5,
+                         "ci_high": 131.5, "organization": "", "country": CHINA, "open": True}
+    assert (models[0]["open"], models[0]["country"]) == (False, UNITED_STATES)
+    # Of several released on one day, the highest score comes first.
+    same_day = build_payload([closed("low", "2024-01-01", 120), closed("high", "2024-01-01", 130),
+                              opened("open", "2024-01-01", 110)], date(2024, 2, 1))["models"]
+    assert [m["model"] for m in same_day] == ["high", "low", "open"]
 
 
 def test_comparison_today_matches_the_last_segment_and_frontier_lists():
@@ -370,10 +400,12 @@ def test_comparison_today_matches_the_last_segment_and_frontier_lists():
     assert [m["model"] for m in comparison["laggard_frontier"]] == ["O1", "O2"]
     c1, c2, c3 = comparison["leader_frontier"]
     assert c3 == {"model": "C3", "released": "2025-01-15", "eci": 142.35, "ci_low": 140.35,
-                  "ci_high": 144.35, "organization": "", "matched_by": None,
+                  "ci_high": 144.35, "organization": "", "matched_by": None, "matched_eci": None,
                   "matched_on": None, "lag_months": None, "test": None}
     assert (c1["matched_by"], c1["matched_on"], c1["lag_months"]) == ("O1", "2023-02-01", 1.0)
     assert (c2["matched_by"], c2["lag_months"]) == ("O2", round(months("2024-08-01", "2024-05-01"), 1))
+    # The matching model's own score, which here is just below each record's.
+    assert (c1["matched_eci"], c2["matched_eci"]) == (119.5, 129.5)
 
 
 def test_comparison_headline_is_the_trailing_year_average():
@@ -390,15 +422,23 @@ def test_comparison_headline_is_the_trailing_year_average():
         day += timedelta(days=1)
     assert headline["months"] == round(sum(values) / len(values), 1)
     assert headline["months_p95"] == round(float(np.quantile(values, 0.95)), 1)
+    # The rolling series ends on the same days: their average, and how much they varied.
+    average = comparison["average"]
+    assert average["months"][-1] == round(sum(values) / len(values), 3)
+    assert average["spread"][-1] == round(float(np.std(values)), 2)
 
 
 def test_the_rolling_average_ends_on_the_headline():
     comparison = build_payload(payload_models(), date(2025, 6, 30))["comparisons"]["open_closed"]
     average, headline = comparison["average"], comparison["headline"]
+    assert set(average) == {"start", "full_from", "firm_from", "months", "spread"}
     first = date.fromisoformat(average["start"])
-    assert first == date(2024, 2, 2)                                 # a full year after the series starts
+    assert first == date(2023, 2, 1)                                 # the first day both groups exist
+    assert average["full_from"] == "2024-02-02"                      # a full year after it
+    assert len(average["months"]) == len(average["spread"])
     assert first + timedelta(days=len(average["months"]) - 1) == date.fromisoformat(headline["window_end"])
-    assert round(average["months"][-1], 1) == headline["months"]
+    # Not round(..., 1) of the stored value: rounding twice can land on the other side of a half.
+    assert average["months"][-1] == pytest.approx(headline["months"], abs=0.0505)
     assert average["firm_from"] == "2024-02-02"                      # matched from the first day
 
 
@@ -422,7 +462,12 @@ def test_china_us_groups_by_country_whatever_the_licence():
         opened("FR open", "2024-05-01", 150, country="France"),             # neither group
         closed("Nowhere", "2024-05-02", 160, country=""),                   # no country label
     ]
-    comparisons = build_payload(models, date(2024, 12, 31))["comparisons"]
+    payload = build_payload(models, date(2024, 12, 31))
+    comparisons = payload["comparisons"]
+    # The list of every model keeps the ones that are in neither country group.
+    assert {m["model"]: m["country"] for m in payload["models"]} == {
+        "US closed": UNITED_STATES, "US open": UNITED_STATES, "CN closed": CHINA, "CN open": CHINA,
+        "FR open": "France", "Nowhere": ""}
 
     china_us = comparisons["china_us"]
     assert [m["model"] for m in china_us["leader_frontier"]] == ["US closed", "US open"]

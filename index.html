@@ -24,7 +24,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="static/style.css?v=36">
+    <link rel="stylesheet" href="static/style.css?v=37">
 </head>
 <body>
     <div class="page">
@@ -60,7 +60,7 @@
                      aria-label="Charts of the two frontiers and the gap over time. Use the left and right arrow keys to move through time, Shift with an arrow to jump between releases, and Escape to return to the latest day."
                      aria-describedby="readout"></div>
                 <figcaption id="chart-caption">
-                    Top: each dot is a model that set a new record on the Epoch Capabilities Index, and the bracket runs from the release of the newest closed model that the best open-weight model has matched to the selected day. Bottom: the gap on each day and its average over the 12 months before.
+                    Top: each dot is a model that set a new record on the Epoch Capabilities Index, and the bracket runs from the release of the newest closed model that the best open-weight model has matched to the selected day. Bottom: the gap averaged over the 12 months to each day, starting when the first closed record was matched. The band shows how far a single day typically sat from that average: one standard deviation either side.
                 </figcaption>
             </figure>
 
@@ -83,7 +83,7 @@
                     <h2 id="method-title-country">How the gap is measured</h2>
                     <p data-show="trend">The headline compares trendlines. Models are grouped by where Epoch AI records their developer as based, with open-weight and closed models counted alike. For each country, a straight line is fitted to the models released since 2024 that set a new record on the <a href="https://epoch.ai/eci">Epoch Capabilities Index</a> (ECI). The gap is how much earlier the U.S. line reached the level the Chinese line stood at on the date of the latest Chinese record.</p>
                     <p data-show="no-trend" hidden>Models are grouped by where Epoch AI records their developer as based, with open-weight and closed models counted alike. There are too few record-setting models since 2024 to fit a trendline for each country, so the headline is the average of the daily gap described below, on the <a href="https://epoch.ai/eci">Epoch Capabilities Index</a> (ECI).</p>
-                    <p>The lower chart measures the gap model by model instead, with <a href="https://epoch.ai/data-insights/open-closed-eci-gap">Epoch AI's open-versus-closed method</a>. Each day, it is the time since the release of the newest record-setting U.S. model that the best Chinese model has plausibly caught up to, meaning that it scores higher in at least 5% of <span data-fill="resamples">500</span> paired bootstrap resamples of the benchmark results. That gap averaged <span data-fill="average-months">several</span> months over the 12 months to the latest record-setting release<span data-show="points" hidden>, and the best U.S. model led by an average of <span data-fill="eci-points"></span> ECI points</span>.</p>
+                    <p>The lower chart measures the gap model by model instead, with <a href="https://epoch.ai/data-insights/open-closed-eci-gap">Epoch AI's open-versus-closed method</a>, and plots its 12-month average. Each day, the gap is the time since the release of the newest record-setting U.S. model that the best Chinese model has plausibly caught up to, meaning that it scores higher in at least 5% of <span data-fill="resamples">500</span> paired bootstrap resamples of the benchmark results. That gap averaged <span data-fill="average-months">several</span> months over the 12 months to the latest record-setting release<span data-show="points" hidden>, and the best U.S. model led by an average of <span data-fill="eci-points"></span> ECI points</span>.</p>
                     <p data-show="fallback" hidden>Today's build could not rerun the bootstrap, so matches use a normal approximation from the published intervals, which is slightly more permissive.</p>
                 </section>
                 <section aria-labelledby="limits-title-country">
@@ -95,13 +95,15 @@
 
             <section class="releases" aria-labelledby="releases-title" id="releases" hidden>
                 <h2 id="releases-title">Every closed record and the open-weight model that matched it</h2>
+                <p class="section-note" id="releases-note">A match is statistical: the open-weight model counts as level when the closed model is not significantly better, so its score can be the lower of the two.</p>
                 <div class="table-wrap">
-                    <table>
+                    <table class="records-table">
                         <thead>
                             <tr>
                                 <th scope="col" id="releases-leader">Closed model</th>
                                 <th scope="col" class="num">ECI</th>
                                 <th scope="col">First matched by</th>
+                                <th scope="col" class="num wide-only">Its ECI</th>
                                 <th scope="col" class="num">Lag (months)</th>
                             </tr>
                         </thead>
@@ -109,6 +111,26 @@
                     </table>
                 </div>
             </section>
+
+            <!-- Filled and shown by the script. -->
+            <details class="models" id="models" hidden>
+                <summary><h2 id="models-title">All models and their ECI scores</h2></summary>
+                <p class="section-note">Every model the two comparisons draw on, newest first. Each has a score on the Epoch Capabilities Index and a label saying whether its weights are open. <span class="wide-only">The range under each score is its 90% interval. </span>Select a column heading to sort by it.</p>
+                <div class="table-wrap">
+                    <table class="models-table">
+                        <thead>
+                            <tr>
+                                <th scope="col"><button type="button" class="sort" data-sort="model">Model</button></th>
+                                <th scope="col" aria-sort="descending"><button type="button" class="sort" data-sort="released">Released</button></th>
+                                <th scope="col" class="wide-only"><button type="button" class="sort" data-sort="weights">Weights</button></th>
+                                <th scope="col" class="wide-only"><button type="button" class="sort" data-sort="country">Country</button></th>
+                                <th scope="col" class="num"><button type="button" class="sort" data-sort="eci">ECI</button></th>
+                            </tr>
+                        </thead>
+                        <tbody id="models-body"></tbody>
+                    </table>
+                </div>
+            </details>
         </main>
 
         <footer class="colophon">
@@ -116,6 +138,6 @@
         </footer>
     </div>
 
-    <script src="static/script.js?v=36" defer></script>
+    <script src="static/script.js?v=37" defer></script>
 </body>
 </html>

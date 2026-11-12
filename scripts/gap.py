@@ -13,7 +13,9 @@ written here for any two groups: a leader group and a laggard group.
 
 "Plausibly caught up" means the laggard model scores higher in at least 5% of
 paired bootstrap resamples of the benchmark data (`Criterion`). The headline
-is the daily time gap averaged over the trailing 12 months.
+is the daily time gap averaged over the trailing 12 months, and
+`rolling_average` gives that average as it stood on every earlier day, with
+how much the daily gap varied around it.
 
 Two comparisons are published (`COMPARISONS`): open-weight models against
 closed ones, which is Epoch's, and Chinese models against U.S. ones, which
@@ -285,36 +287,54 @@ def headline_window(segments: Sequence[Segment], laggards: Sequence[Model],
     return segments[0].start, last, True
 
 
-def rolling_average(segments: Sequence[Segment], last: date) -> tuple[Optional[date], list[float]]:
-    """The 12-month average of the daily gap, as it stood on each day.
+@dataclass(frozen=True)
+class Rolling:
+    """The headline's figures as they stood on each day from `start`."""
 
-    Returns (first day, one value per day up to `last`). The value on day `t`
-    averages the daily gap over the 12 months to `t`, the headline's own
-    window, so the final value is the headline when `last` is the headline's
-    last day. The series starts on the first day with a full 12 months behind
-    it and is empty if there is no such day."""
+    start: Optional[date]           # None when there is no day to report
+    full_from: Optional[date]       # first day with a full 12 months behind it
+    mean: list[float]               # one value per day
+    spread: list[float]             # standard deviation of the days averaged
+
+
+def rolling_average(segments: Sequence[Segment], last: date) -> Rolling:
+    """The headline average as it stood on each day up to `last`, and how much
+    the daily gap varied around it.
+
+    The values for day `t` summarise the daily gap over the 12 months to `t`,
+    the headline's own window: its mean, and its standard deviation. The daily
+    gap is a sawtooth (a day older every day, then a drop when a newer record
+    is matched), so the standard deviation says how far a single day typically
+    sits from the average. Until the series is 12 months old the window is
+    every day so far, which is also the headline's rule (`headline_window`).
+    So the final mean is the headline when `last` is the headline's last day."""
     start = segments[0].start
     if last < start:
-        return None, []
+        return Rolling(None, None, [], [])
+    gaps = [s.months(day) for day, s in daily(segments, start, last)]
     cumulative = [0.0]
-    for day, s in daily(segments, start, last):
-        cumulative.append(cumulative[-1] + s.months(day))
+    for gap in gaps:
+        cumulative.append(cumulative[-1] + gap)
 
-    first_day, values = None, []
-    day = start
-    while day <= last:
+    full_from = None
+    means, spreads = [], []
+    for hi in range(len(gaps)):
+        day = start + timedelta(days=hi)
         window_first = months_before(day, HEADLINE_WINDOW_MONTHS)
+        lo = 0
         if window_first > start:
-            if first_day is None:
-                first_day = day
-            lo, hi = (window_first - start).days, (day - start).days
-            values.append((cumulative[hi + 1] - cumulative[lo]) / (hi - lo + 1))
-        day += timedelta(days=1)
-    return first_day, values
+            lo = (window_first - start).days
+            full_from = full_from or day
+        window = gaps[lo:hi + 1]
+        mean = (cumulative[hi + 1] - cumulative[lo]) / len(window)
+        means.append(mean)
+        spreads.append(math.sqrt(sum((gap - mean) ** 2 for gap in window) / len(window)))
+    return Rolling(start, full_from, means, spreads)
 
 
 def firm_from(segments: Sequence[Segment], first: Optional[date], last: date) -> Optional[date]:
-    """First day of the rolling average whose whole window is measured.
+    """First day, from `first` on, whose 12-month window is all measured days.
+    `first` is the first day with a full window (`Rolling.full_from`).
 
     Before any leader record has been matched the daily gap is only a lower
     bound, and so is an average that includes those days."""
@@ -449,6 +469,10 @@ def _r(value: Optional[float], digits: int = 1) -> Optional[float]:
     return None if value is None else round(float(value), digits)
 
 
+def _iso(day: Optional[date]) -> Optional[str]:
+    return day.isoformat() if day else None
+
+
 def _model_json(m: Model) -> dict:
     return {
         "model": m.name,
@@ -458,6 +482,12 @@ def _model_json(m: Model) -> dict:
         "ci_high": _r(m.ci_high, 2),
         "organization": m.organization,
     }
+
+
+def _model_row(m: Model) -> dict:
+    """A model as the page's list of every model shows it: its score and the
+    two labels the comparisons group it by."""
+    return {**_model_json(m), "country": m.country, "open": m.is_open}
 
 
 def build_comparison(laggard_models: Iterable[Model], leader_models: Iterable[Model],
@@ -472,19 +502,22 @@ def build_comparison(laggard_models: Iterable[Model], leader_models: Iterable[Mo
     first, last, full_history = headline_window(segments, laggards, leaders, as_of)
     headline = summarize(segments, first, last)
     now = segments[-1]
-    average_first, average = rolling_average(segments, last)
+    rolling = rolling_average(segments, last)
 
     leaders_json = []
     for match in first_matches(laggards, leaders, criterion):
         leaders_json.append({
             **_model_json(match.record),
             "matched_by": match.by.name if match.by else None,
-            "matched_on": match.on.isoformat() if match.on else None,
+            # The matching model's own score. A match is statistical, so this
+            # can be lower than the record's.
+            "matched_eci": _r(match.by.eci, 2) if match.by else None,
+            "matched_on": _iso(match.on),
             "lag_months": _r(match.lag_months),
             "test": match.test,
         })
 
-    firm = firm_from(segments, average_first, last)
+    firm = firm_from(segments, rolling.full_from, last)
     return {
         "headline": {
             "months": _r(headline["months"]),
@@ -516,11 +549,14 @@ def build_comparison(laggard_models: Iterable[Model], leader_models: Iterable[Mo
             "matched": s.matched,
             "unmatched_model": s.unmatched.name if s.unmatched else None,
         } for s in segments],
-        # One value per day from `start`; the last is the headline.
+        # One value per day from `start` in each list; the last average is the headline.
         "average": {
-            "start": average_first.isoformat() if average_first else None,
-            "firm_from": firm.isoformat() if firm else None,
-            "months": [round(v, 2) for v in average],
+            "start": _iso(rolling.start),
+            "full_from": _iso(rolling.full_from),
+            "firm_from": _iso(firm),
+            # Three decimals, so a value shown to one decimal rounds as the headline does.
+            "months": [round(v, 3) for v in rolling.mean],
+            "spread": [round(v, 2) for v in rolling.spread],
         },
         "leader_frontier": leaders_json,
         "laggard_frontier": [_model_json(m) for m in laggards],
@@ -549,4 +585,7 @@ def build_payload(models: Iterable[Model], as_of: date, draws=None) -> dict:
             "min_share": MIN_PAIRED_SHARE,
         },
         "comparisons": comparisons,
+        # Every model the comparisons draw on, newest first.
+        "models": [_model_row(m) for m in
+                   sorted(models, key=lambda m: (-m.released.toordinal(), -m.eci, m.name))],
     }

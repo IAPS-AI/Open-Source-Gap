@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -71,25 +72,30 @@ def build(as_of: Optional[date] = None) -> dict:
 
 def to_json(payload: dict) -> str:
     """Indented JSON, except that a long list of numbers (the daily rolling
-    average) stays on one line instead of taking a line per day."""
+    average) stays on one line instead of taking a line per day, and the list
+    of every model takes one line per model, so a new model is a one-line diff."""
     rows: dict[str, str] = {}
 
-    def stash(node):
+    def keep(text: str) -> str:
+        token = f"@@row{len(rows)}@@"
+        rows[token] = text
+        return token
+
+    def stash(node, key=None):
         if isinstance(node, dict):
-            return {key: stash(value) for key, value in node.items()}
+            return {name: stash(value, name) for name, value in node.items()}
         if isinstance(node, list):
+            if key == "models":
+                return [keep(json.dumps(row, ensure_ascii=False)) for row in node]
             numbers = all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in node)
             if numbers and len(node) > 8:
-                token = f"@@row{len(rows)}@@"
-                rows[token] = json.dumps(node)
-                return token
+                return keep(json.dumps(node))
             return [stash(value) for value in node]
         return node
 
     text = json.dumps(stash(payload), indent=2, ensure_ascii=False)
-    for token, row in rows.items():
-        text = text.replace(f'"{token}"', row)
-    return text + "\n"
+    # One pass, so text inside a row that has been put back is never looked at again.
+    return re.sub(r'"(@@row\d+@@)"', lambda found: rows.get(found.group(1), found.group(0)), text) + "\n"
 
 
 def write(payload: dict, path: Path) -> None:

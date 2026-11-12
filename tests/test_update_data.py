@@ -30,6 +30,8 @@ def offline(monkeypatch, tmp_path):
 def test_build_returns_the_payload_stamped_with_the_build_time(offline):
     payload = update_data.build(as_of=date(2025, 9, 1))
     assert list(payload)[:3] == ["schema", "generated_at", "as_of"]
+    assert list(payload)[-1] == "models"                    # the long list goes last in the file
+    assert [m["model"] for m in payload["models"]] == ["Open B", "Closed B", "Open A", "Closed A"]
     assert payload["as_of"] == "2025-09-01"
     assert payload["generated_at"].endswith("Z") and len(payload["generated_at"]) == 20
     assert list(payload["comparisons"]) == ["open_closed", "china_us"]
@@ -47,6 +49,21 @@ def test_main_writes_readable_utf8_json(offline):
     assert payload["schema"] == 2
     assert len(payload["comparisons"]["open_closed"]["leader_frontier"]) == 2
     assert not update_data.DATA_JSON.with_suffix(".json.tmp").exists()
+    # One line per model, so a new model is a one-line change in the daily commit.
+    rows = [line.strip().rstrip(",") for line in text.splitlines() if line.lstrip().startswith('{"model"')]
+    assert [json.loads(row) for row in rows] == payload["models"] and len(rows) == 4
+    assert '"organization": "Tülu Lab", "country": "China", "open": true}' in rows[2]
+
+
+def test_long_runs_of_numbers_stay_on_one_line():
+    text = update_data.to_json({"months": [0.5] * 9, "short": [1, 2], "flags": [True] * 9,
+                                "models": [{"model": "A @@row0@@"}, {"model": "B"}]})
+    assert json.loads(text) == {"months": [0.5] * 9, "short": [1, 2], "flags": [True] * 9,
+                                "models": [{"model": "A @@row0@@"}, {"model": "B"}]}
+    lines = text.splitlines()
+    assert '  "months": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],' in lines
+    assert '    {"model": "B"}' in lines
+    assert len([line for line in lines if line.strip() in ("true,", "true")]) == 9    # not numbers
 
 
 def test_main_leaves_data_json_alone_when_the_labels_are_missing(offline):

@@ -14,6 +14,11 @@
     const DAY = 86400000;
     const SVG_NS = 'http://www.w3.org/2000/svg';
 
+    // Epoch's names for the two countries compared, as scripts/gap.py has them.
+    const CHINA = 'China';
+    const UNITED_STATES = 'United States of America';
+
+    // `side` says which group of a comparison a model is in, the way gap.py groups them.
     const WORDS = {
         open_closed: {
             laggard: 'open-weight',
@@ -22,6 +27,7 @@
             leaders: 'Closed models',
             frontier: 'the closed frontier',
             title: 'Open Source Gap',
+            side: (m) => (m.open ? 'laggard' : 'leader'),
         },
         china_us: {
             laggard: 'Chinese',
@@ -30,9 +36,12 @@
             leaders: 'U.S. models',
             frontier: 'the U.S. frontier',
             title: 'China vs U.S. | Open Source Gap',
+            side: (m) => ({ [CHINA]: 'laggard', [UNITED_STATES]: 'leader' }[m.country] || null),
         },
     };
     const HASHES = { '#open-closed': 'open_closed', '#china-us': 'china_us' };
+    // Country names the page writes its own way.
+    const COUNTRY_NAMES = { [UNITED_STATES]: 'U.S.', 'United Kingdom': 'UK' };
 
     const $ = (id) => document.getElementById(id);
     const all = (selector) => Array.from(document.querySelectorAll(selector));
@@ -48,7 +57,7 @@
     /* ------------------------------------------------------------- data */
 
     function prepare(data) {
-        if (!data || data.schema !== SCHEMA || !data.comparisons) {
+        if (!data || data.schema !== SCHEMA || !data.comparisons || !Array.isArray(data.models)) {
             throw new Error('data.json has an unexpected format');
         }
         const asOf = toTime(data.as_of);
@@ -60,6 +69,8 @@
             daysPerMonth: data.days_per_month,
             test: data.test,
             views: {},
+            // Every scored model, newest first.
+            models: data.models.map((m) => ({ ...m, t: toTime(m.released) })),
         };
         for (const key of Object.keys(WORDS)) {
             if (!data.comparisons[key]) throw new Error(`data.json has no ${key} comparison`);
@@ -93,6 +104,10 @@
         }));
         if (!segments.length) throw new Error(`data.json has no ${key} series`);
         const average = comparison.average;
+        if (!Array.isArray(average.spread) || average.spread.length !== average.months.length) {
+            throw new Error(`data.json has no spread for the ${key} average`);
+        }
+        const firstMatch = segments.find((s) => s.matched);
         return {
             key,
             words: WORDS[key],
@@ -105,11 +120,18 @@
             laggards: laggards.records,
             segments,
             start: segments[0].t,
+            // Until a leader record has been matched the gap is only a lower bound.
+            matchedSince: firstMatch ? firstMatch.t : null,
             windowEnd: toTime(comparison.headline.window_end),
+            // The headline as it stood on each day from `start`: the average of the daily
+            // gap over the 12 months before (or every day so far, until `fullFrom`), and
+            // the standard deviation of those days. Before `firmFrom` it includes lower bounds.
             average: {
                 start: average.start ? toTime(average.start) : null,
+                fullFrom: average.full_from ? toTime(average.full_from) : null,
                 firmFrom: average.firm_from ? toTime(average.firm_from) : null,
                 months: average.months,
+                spread: average.spread,
             },
             averageName: comparison.headline.full_history
                 ? 'average so far'
@@ -149,13 +171,36 @@
         };
     }
 
+    /** First day the page shows an average for: the day of the first match, since an
+        average of lower bounds alone says little. (If nothing was ever matched, all of it.) */
+    const averageFrom = (view) => view.matchedSince ?? view.average.start;
+
     /** The headline average as it stood on day `t`, or null before there was one. */
     function averageAt(view, t) {
+        const { start, months } = view.average;
+        const from = averageFrom(view);
+        if (from !== null && t < from) return null;
         // From its last day the headline holds until the next record-setting release.
         if (t >= view.windowEnd) return view.headline.months;
-        const { start, months } = view.average;
         if (start === null || t < start) return null;
         return months[Math.round((t - start) / DAY)];
+    }
+
+    /** What that average covers: 12 months, or every day so far while the series is young. */
+    function averageNameAt(view, t) {
+        const { fullFrom } = view.average;
+        if (t >= view.windowEnd) return view.averageName;
+        return fullFrom !== null && t >= fullFrom ? `${view.headline.window_months}-month average` : 'average so far';
+    }
+
+    /** Whether that average takes in days from before the first match. Those days are
+        lower bounds, so the average is one too. */
+    function averageIsBound(view, t) {
+        const { fullFrom, firmFrom } = view.average;
+        if (view.matchedSince === null) return true;
+        const day = Math.min(t, view.windowEnd);
+        if (fullFrom === null || day < fullFrom) return view.start < view.matchedSince;   // it covers every day so far
+        return firmFrom === null || day < firmFrom;
     }
 
     /** ECI of the latest record released on or before `t`, or null. */
@@ -240,21 +285,30 @@
         $('legend-leader').textContent = words.leaders;
         $('legend-laggard').textContent = words.laggards;
 
-        const lowerBound = view.segments.some((s) => !s.matched);
         const top = trend
             ? 'Top: each dot is a model that set a new record on the Epoch Capabilities Index. The dashed lines '
                 + `are straight-line fits to the ${words.leader} and ${words.laggard} records since `
                 + `${new Date(trend.since).getUTCFullYear()}, and the bracket shows how much earlier the `
                 + `${words.leader} line reached the level the ${words.laggard} line stood at on ${shortDate(trend.on)}. `
-                + 'Bottom: the gap on each day, matched model by model, and its average '
+                + 'Bottom: the gap matched model by model, averaged over '
             : 'Top: each dot is a model that set a new record on the Epoch Capabilities Index, and the bracket '
                 + `runs from the release of the newest ${words.leader} model that the best ${words.laggard} model `
-                + 'has matched to the selected day. Bottom: the gap on each day and its average ';
-        $('chart-caption').textContent = `${top}over the ${headline.window_months} months before.`
-            + (lowerBound ? ` Paler stretches are lower bounds, from before any ${words.leader} model had been matched.` : '')
+                + 'has matched to the selected day. Bottom: the gap averaged over ';
+        const span = headline.full_history ? 'every day so far' : `the ${headline.window_months} months to each day`;
+        const matched = view.matchedSince !== null;
+        // Early on the average is provisional: it covers a short stretch, or days with only a lower bound.
+        const { firmFrom } = view.average;
+        const provisional = firmFrom === null || firmFrom > averageFrom(view);
+        $('chart-caption').textContent = `${top}${span}`
+            + (matched ? `, starting when the first ${words.leader} record was matched (${shortDate(view.matchedSince)})` : '')
+            + '. The band shows how far a single day typically sat from that average: one standard deviation either side.'
+            + (provisional ? ` Paler stretches are provisional: they cover less than ${headline.window_months} months `
+                + `or include days before ${matched ? 'that first match' : `any ${words.leader} record had been matched`}.` : '')
             + ' Point at or tap the chart to pick a day.';
 
         $('releases-title').textContent = `Every ${words.leader} record and the ${words.laggard} model that matched it`;
+        $('releases-note').textContent = `A match is statistical: the ${words.laggard} model counts as level when the `
+            + `${words.leader} model is not significantly better, so its score can be the lower of the two.`;
         $('releases-leader').textContent = `${words.leader[0].toUpperCase()}${words.leader.slice(1)} model`;
 
         for (const notes of all('.notes')) notes.hidden = notes.dataset.view !== view.key;
@@ -314,13 +368,16 @@
             cell(tr, 'num').textContent = one(m.eci);
 
             const by = cell(tr);
+            const score = cell(tr, 'num wide-only');   // on a narrow screen it goes under the name instead
             const lag = cell(tr, 'num');
             if (m.matched_by) {
                 by.className = 'keyed';
                 line(by, '', 'swatch swatch-laggard');
                 by.appendChild(document.createTextNode(m.matched_by));
+                line(by, `ECI ${one(m.matched_eci)}`, 'sub narrow-only');
                 const sameDay = m.matched_on === m.released;
                 line(by, sameDay ? 'Already level at release' : shortDate(toTime(m.matched_on)), 'sub');
+                score.textContent = one(m.matched_eci);
                 lag.textContent = one(m.lag_months);
             } else {
                 by.className = 'pending';
@@ -335,12 +392,89 @@
         $('releases').hidden = false;
     }
 
+    /* ------------------------------------------------------ all models */
+
+    const countryName = (m) => COUNTRY_NAMES[m.country] || m.country;
+
+    // How each column of the list sorts, and which way round a first click puts it.
+    const SORTS = {
+        model: { key: (m) => m.model.toLowerCase(), descending: false },
+        released: { key: (m) => m.t, descending: true },
+        weights: { key: (m) => (m.open ? 0 : 1), descending: false },
+        country: { key: (m) => countryName(m).toLowerCase() || '\uffff', descending: false },   // unlabelled last
+        eci: { key: (m) => m.eci, descending: true },
+    };
+
+    /** The list of every scored model, behind a disclosure. A column heading sorts it. */
+    function createModelList(site) {
+        const body = $('models-body');
+        const buttons = all('#models [data-sort]');
+        let sort = { by: 'released', descending: true };
+        let view = null;
+
+        function row(m) {
+            const tr = document.createElement('tr');
+
+            const name = cell(tr, 'keyed');
+            const side = view.words.side(m);   // the same keys as the chart, for the comparison on screen
+            if (side) line(name, '', `swatch swatch-${side}`);
+            name.appendChild(document.createTextNode(m.model));
+            if (m.organization) line(name, m.organization, 'sub');
+            const weights = m.open ? 'Open' : 'Closed';
+            line(name, [`${weights} weights`, countryName(m)].filter(Boolean).join(', '), 'sub narrow-only');
+
+            cell(tr).textContent = shortDate(m.t);
+            cell(tr, 'wide-only').textContent = weights;
+            cell(tr, 'wide-only').textContent = countryName(m);
+
+            const score = cell(tr, 'num');
+            score.textContent = one(m.eci);
+            if (m.ci_low !== null && m.ci_high !== null) {
+                line(score, `${one(m.ci_low)}–${one(m.ci_high)}`, 'sub wide-only');
+            }
+            return tr;
+        }
+
+        function render() {
+            const { key } = SORTS[sort.by];
+            const sign = sort.descending ? -1 : 1;
+            // Ties keep the order of the file: newest first, then the higher score.
+            const sorted = site.models
+                .map((m, i) => ({ m, i, k: key(m) }))
+                .sort((a, b) => (a.k < b.k ? -sign : a.k > b.k ? sign : a.i - b.i));
+            body.replaceChildren(...sorted.map(({ m }) => row(m)));
+            for (const button of buttons) {
+                const heading = button.closest('th');
+                if (button.dataset.sort !== sort.by) heading.removeAttribute('aria-sort');
+                else heading.setAttribute('aria-sort', sort.descending ? 'descending' : 'ascending');
+            }
+        }
+
+        for (const button of buttons) {
+            button.addEventListener('click', () => {
+                const by = button.dataset.sort;
+                sort = { by, descending: by === sort.by ? !sort.descending : SORTS[by].descending };
+                render();
+            });
+        }
+        $('models-title').textContent = `All ${site.models.length} models and their ECI scores`;
+
+        return {
+            show(next) {
+                view = next;
+                render();
+                $('models').hidden = false;
+            },
+        };
+    }
+
     function describe(view, state) {
         const { laggard, reference, matched } = state.segment;
         const when = state.t === view.asOf && view.fresh ? 'today' : `on ${shortDate(state.t)}`;
         return {
             value: `${matched ? '' : 'At least '}${one(state.months)} months behind ${when}`,
-            aside: state.average === null ? '' : ` (${view.averageName} ${one(state.average)})`,
+            aside: state.average === null ? '' : ` (${averageNameAt(view, state.t)} `
+                + `${averageIsBound(view, state.t) ? 'at least ' : ''}${one(state.average)})`,
             detail: matched
                 ? `${laggard.model} matches ${reference.model}, released ${shortDate(reference.t)}`
                 : `${laggard.model} has not matched ${reference.model}, released ${shortDate(reference.t)}`,
@@ -403,7 +537,8 @@
             view = next;
             selected = view.asOf;
             const models = view.leaders.concat(view.laggards);
-            // The gap peaks on the last day of a segment, just before the next release.
+            // The lower panel has room for any single day, so the selected day's own value
+            // always fits. The gap peaks on the last day of a segment, just before the next release.
             const peak = view.segments.reduce((most, s, i) => {
                 const end = i + 1 < view.segments.length ? view.segments[i + 1].t : view.asOf;
                 return Math.max(most, (end - s.reference.t) / DAY / view.daysPerMonth);
@@ -411,7 +546,7 @@
             domain = {
                 tMin: Math.min(view.leaders[0].t, view.laggards[0].t),
                 eciTicks: niceTicks(Math.min(...models.map((m) => m.eci)), Math.max(...models.map((m) => m.eci)), 5),
-                gapTicks: niceTicks(0, peak, 3),
+                gapTicks: niceTicks(0, peak, 4),
                 ends: [view.leaders[view.leaders.length - 1], view.laggards[view.laggards.length - 1]],
             };
             if (container.clientWidth) render();
@@ -419,7 +554,7 @@
 
         function render() {
             if (!view) return;
-            const { leaders, laggards, segments, asOf, headline, average } = view;
+            const { leaders, laggards, asOf, headline, average } = view;
             const { tMin, eciTicks, gapTicks, ends } = domain;
             const now = stateAt(view, asOf);
 
@@ -456,7 +591,6 @@
             const gapBottom = gapTop + gapHeight;
             const gapHigh = gapTicks[gapTicks.length - 1];
             const yGap = (v) => gapBottom - (v / gapHigh) * gapHeight;
-            const months = (s, t) => (t - s.reference.t) / DAY / view.daysPerMonth;
 
             const root = svg('svg', {
                 viewBox: `0 0 ${width} ${height}`,
@@ -466,8 +600,8 @@
                 'aria-label': `Two aligned charts from ${longDate(tMin)} to ${longDate(asOf)}. Top: the highest ECI `
                     + `score among ${view.words.leader} models rose from ${one(leaders[0].eci)} to ${one(ends[0].eci)}, `
                     + `and among ${view.words.laggard} models from ${one(laggards[0].eci)} to ${one(ends[1].eci)}. `
-                    + `Bottom: months behind, ${one(now.months)} on the last day, with a ${view.averageName} of `
-                    + `${one(headline.months)}.`,
+                    + `Bottom: months behind as a ${view.averageName}, ${one(headline.months)} on the last day, when `
+                    + `the gap for that day alone was ${one(now.months)}.`,
             });
 
             /* grid, axes, titles */
@@ -494,17 +628,13 @@
             }
 
             // Key to the lower panel: beside its title, or under it on a narrow chart.
-            const keys = [['area', 'Each day'], ['average', view.averageName]];
+            const keys = [['average', view.averageName], ['band', 'Typical daily range']];
             const keyWidths = keys.map(([, text]) => 24 + textWidth(text, 'panel-key'));
             let keyX = narrow ? 0 : x1 - keyWidths.reduce((sum, w) => sum + w, 0) - 18 * (keys.length - 1);
             const keyY = gapTop - 10;
             keys.forEach(([kind, text], i) => {
-                if (kind === 'area') {
-                    svg('rect', { class: 'gap-area', x: keyX, y: keyY - 9, width: 16, height: 9 }, chrome);
-                    svg('path', { class: 'gap-line', d: `M${keyX},${keyY - 9}h16` }, chrome);
-                } else {
-                    svg('path', { class: 'avg-line', d: `M${keyX},${keyY - 4}h16` }, chrome);
-                }
+                if (kind === 'band') svg('rect', { class: 'gap-band', x: keyX, y: keyY - 9, width: 16, height: 9 }, chrome);
+                else svg('path', { class: 'avg-line', d: `M${keyX},${keyY - 4}h16` }, chrome);
                 label(chrome, text, { class: 'panel-key', x: keyX + 22, y: keyY });
                 keyX += keyWidths[i] + 18;
             });
@@ -567,45 +697,52 @@
                 });
             }
 
-            /* gap on each day: climbs a day per day and falls when a newer record is matched */
-            const runs = [];   // consecutive segments with the same matched flag share a shape
-            segments.forEach((s, i) => {
-                const end = i + 1 < segments.length ? segments[i + 1].t : asOf;
-                const points = [[x(s.t), yGap(months(s, s.t))], [x(end), yGap(months(s, end))]];
-                const last = runs[runs.length - 1];
-                if (last && last.matched === s.matched) last.points.push(...points);
-                else runs.push({ matched: s.matched, points: last ? [last.points[last.points.length - 1], ...points] : points });
-            });
-            for (const run of runs) {
-                const soft = run.matched ? '' : ' gap-soft';
-                const first = run.points[0];
-                const last = run.points[run.points.length - 1];
-                svg('path', {
-                    class: `gap-area${soft}`,
-                    d: `${trace(run.points)}L${last[0].toFixed(1)},${gapBottom}L${first[0].toFixed(1)},${gapBottom}Z`,
-                }, marks);
-                svg('path', { class: `gap-line${soft}`, d: trace(run.points) }, marks);
-            }
-
-            /* its 12-month average, ending on the headline */
-            const count = average.months.length;
-            if (average.start !== null && count > 1) {
-                const point = (i) => [x(average.start + i * DAY), yGap(average.months[i])];
+            /* The gap over time, as the headline stood on each day: a line for the average of
+               the daily gap over the 12 months before, in a band one standard deviation of
+               those days either side. The daily gap itself is a sawtooth (a day older every
+               day, then a drop when a newer record is matched), so it is drawn only for the
+               selected day. */
+            const last = average.months.length - 1;
+            const index = (t) => clamp(Math.round((t - average.start) / DAY), 0, last);
+            const first = average.start === null ? last : index(averageFrom(view));
+            if (first < last) {
                 // One value a day is finer than the screen: draw about one point per pixel and a half.
-                const stride = Math.max(1, Math.floor(count / Math.max(40, xSpan / 1.5)));
-                const stretch = (from, to) => {
+                const stride = Math.max(1, Math.floor((last - first) / Math.max(40, xSpan / 1.5)));
+                // `side` is 0 for the average itself, 1 or -1 for an edge of the band, which
+                // stays inside the panel (a gap is never negative).
+                const along = (from, to, side) => {
                     const points = [];
-                    for (let i = from; i < to; i += stride) points.push(point(i));
-                    points.push(point(to));
-                    return points;
+                    for (let i = from; i < to; i += stride) points.push(i);
+                    points.push(to);
+                    const out = points.map((i) => [
+                        x(average.start + i * DAY),
+                        yGap(clamp(average.months[i] + side * average.spread[i], 0, gapHigh)),
+                    ]);
+                    // The headline holds from its last day until the next record-setting release.
+                    if (to === last && asOf > view.windowEnd) out.push([x(asOf), out[out.length - 1][1]]);
+                    return out;
                 };
-                const last = count - 1;
-                const firm = average.firmFrom === null
-                    ? last
-                    : clamp(Math.round((average.firmFrom - average.start) / DAY), 0, last);
-                if (firm > 0) svg('path', { class: 'avg-line avg-soft', d: trace(stretch(0, firm)) }, marks);
-                if (firm < last) svg('path', { class: 'avg-line', d: trace(stretch(firm, last)) }, marks);
-                svg('circle', { class: 'avg-dot', cx: x(view.windowEnd), cy: yGap(headline.months), r: 4.5 }, marks);
+                // Provisional until `firm`: drawn paler, and the band's tint eases in there
+                // rather than changing at an edge.
+                const firm = average.firmFrom === null ? last : clamp(index(average.firmFrom), first, last);
+                const band = { class: 'gap-band' };
+                if (firm === last) {
+                    band.class = 'gap-band gap-soft';
+                } else if (firm > first) {
+                    const fade = svg('linearGradient', {
+                        id: 'band-fade', gradientUnits: 'userSpaceOnUse',
+                        x1: x(average.start + firm * DAY) - 14, x2: x(average.start + firm * DAY) + 14, y1: 0, y2: 0,
+                    }, svg('defs', {}, marks));
+                    svg('stop', { class: 'band-stop band-stop-soft', offset: 0 }, fade);
+                    svg('stop', { class: 'band-stop', offset: 1 }, fade);
+                    band.class = 'gap-fade';
+                    band.fill = 'url(#band-fade)';
+                }
+                const back = along(first, last, -1).reverse().map((p) => `L${p[0].toFixed(1)},${p[1].toFixed(1)}`);
+                svg('path', { ...band, d: `${trace(along(first, last, 1))}${back.join('')}Z` }, marks);
+                if (firm > first) svg('path', { class: 'avg-line avg-soft', d: trace(along(first, firm, 0)) }, marks);
+                if (firm < last) svg('path', { class: 'avg-line', d: trace(along(firm, last, 0)) }, marks);
+                svg('circle', { class: 'avg-dot', cx: x(asOf), cy: yGap(headline.months), r: 4.5 }, marks);
             }
             if (!narrow) {
                 const [yAverage, yDay] = spread(yGap(headline.months), yGap(now.months), 34);
@@ -654,8 +791,9 @@
 
             svg('line', { class: 'crosshair', x1: xt, x2: xt, y1: f.eciTop, y2: f.gapBottom }, g);
 
-            // The same day in the lower panel: its average (until the line ends), then the day itself.
-            if (state.average !== null && selected < view.windowEnd) {
+            // The same day in the lower panel: its average (the line's last day has a dot
+            // already), then the day's own gap.
+            if (state.average !== null && selected < view.asOf) {
                 svg('circle', { class: 'avg-dot', cx: xt, cy: f.yGap(state.average), r: 4 }, g);
             }
             svg('circle', { class: 'gap-dot', cx: xt, cy: f.yGap(state.months), r: 4 }, g);
@@ -836,11 +974,13 @@
         chartNode.addEventListener('blur', () => readout.removeAttribute('aria-live'));
 
         fillNotes(site);
+        const modelList = createModelList(site);
         const showView = () => {
             const view = site.views[HASHES[window.location.hash] || 'open_closed'];
             document.documentElement.dataset.view = view.key;
             renderText(site, view);
             renderTable(view);
+            modelList.show(view);
             chart.show(view);
         };
         window.addEventListener('hashchange', showView);

@@ -117,6 +117,69 @@ def test_nothing_from_the_old_multi_benchmark_site_is_left():
         assert leftover not in SCRIPT.lower()
 
 
+def test_every_class_the_chart_draws_with_is_styled():
+    drawn = set()
+    for literal in re.findall(r"(?:class: |\.class = )'([^']+)'", SCRIPT):
+        drawn.update(literal.split())
+    assert {"gap-band", "gap-soft", "gap-fade", "band-stop", "avg-line", "avg-dot", "gap-dot"} <= drawn
+    missing = sorted(name for name in drawn if not re.search(r"\." + re.escape(name) + r"\b", STYLE))
+    assert not missing, f"no style for: {missing}"
+
+
+# ----------------------------------------------------------------- tables
+
+def cell_classes(start, end):
+    """The class given to each cell of a row, in the order the script adds them."""
+    block = SCRIPT[SCRIPT.index(start):SCRIPT.index(end)]
+    return [classes or "" for classes in re.findall(r"\bcell\(tr(?:, '([^']*)')?\)", block)]
+
+
+def heading_tags(table):
+    (head,) = re.findall(rf'<table class="{table}">\s*<thead>(.*?)</thead>', INDEX, re.S)
+    return re.findall(r"<th\b[^>]*>", head)
+
+
+@pytest.mark.parametrize("table, start, end", [
+    ("records-table", "function renderTable(view)", "function createModelList(site)"),
+    ("models-table", "function row(m)", "function render()"),
+])
+def test_each_table_has_a_heading_for_every_cell_the_script_writes(table, start, end):
+    headings, cells = heading_tags(table), cell_classes(start, end)
+    assert len(headings) == len(cells) == 5
+    # A column dropped on a narrow screen is dropped in the heading and in every row, and
+    # numbers line up under a right-aligned heading.
+    for mark in ("wide-only", "num"):
+        assert [mark in tag for tag in headings] == [mark in classes.split() for classes in cells], mark
+
+
+def test_narrow_screens_swap_the_dropped_columns_for_lines_under_the_name():
+    start = STYLE.index("@media (max-width: 40rem)")
+    wide, narrow = STYLE[:start], STYLE[start:STYLE.index("@media print")]
+    assert re.search(r"\.narrow-only \{\s*display: none;", wide)
+    assert re.search(r"\.wide-only \{\s*display: none;", narrow)
+    assert re.search(r"\.narrow-only \{\s*display: block;", narrow)
+    # Whatever a dropped column held is also written under the name, for those screens.
+    assert "line(by, `ECI ${one(m.matched_eci)}`, 'sub narrow-only');" in SCRIPT
+    assert "'sub narrow-only');" in SCRIPT[SCRIPT.index("function row(m)"):SCRIPT.index("function render()")]
+
+
+def test_the_sort_headings_match_the_orders_the_script_knows():
+    in_page = re.findall(r'data-sort="(\w+)"', INDEX)
+    block = SCRIPT[SCRIPT.index("const SORTS = {"):SCRIPT.index("function createModelList(site)")]
+    assert in_page == re.findall(r"^        (\w+): \{", block, re.M)
+    assert len(set(in_page)) == 5
+    # The list arrives newest first, and the page says so before the script runs.
+    assert ('<th scope="col" aria-sort="descending"><button type="button" class="sort" '
+            'data-sort="released">Released</button></th>') in INDEX
+    assert "let sort = { by: 'released', descending: true };" in SCRIPT
+    assert INDEX.count("aria-sort=") == 1
+
+
+def test_the_list_of_every_model_waits_for_the_script():
+    assert '<details class="models" id="models" hidden>' in INDEX
+    assert "$('models').hidden = false;" in SCRIPT
+
+
 # ------------------------------------------------------------------ views
 
 def test_the_page_script_and_data_agree_on_the_comparisons():
@@ -140,7 +203,7 @@ def test_only_the_default_views_notes_show_before_the_script_runs():
 
 def test_data_json_is_the_schema_the_script_reads():
     assert f"const SCHEMA = {DATA['schema']};" in SCRIPT
-    for key in ("as_of", "days_per_month", "test", "comparisons"):
+    for key in ("as_of", "days_per_month", "test", "comparisons", "models"):
         assert key in DATA
     assert {"paired_bootstrap", "resamples"} <= set(DATA["test"])
     assert list(DATA["comparisons"]) == ["open_closed", "china_us"]
@@ -154,7 +217,40 @@ def test_comparison_has_the_fields_the_script_reads(name, comparison):
         assert key in comparison["headline"]
     for key in ("months", "eci_points", "matched"):
         assert key in comparison["today"]
-    assert set(comparison["average"]) == {"start", "firm_from", "months"}
+    assert set(comparison["average"]) == {"start", "full_from", "firm_from", "months", "spread"}
+
+
+# ----------------------------------------------------------------- models
+
+def test_data_json_lists_every_scored_model_newest_first():
+    models = DATA["models"]
+    assert len({m["model"] for m in models}) == len(models) > 0
+    for m in models:
+        assert set(m) == {"model", "released", "eci", "ci_low", "ci_high", "organization", "country", "open"}
+        assert m["released"] <= DATA["as_of"] and isinstance(m["open"], bool)
+    order = [(m["released"], m["eci"]) for m in models]
+    assert order == sorted(order, reverse=True)
+    # Every record-setter in either comparison is in the list, with the same score.
+    scores = {m["model"]: m["eci"] for m in models}
+    for comparison in DATA["comparisons"].values():
+        for m in comparison["leader_frontier"] + comparison["laggard_frontier"]:
+            assert scores[m["model"]] == m["eci"]
+
+
+def test_the_script_puts_each_model_on_the_side_the_pipeline_counted_it_on():
+    """The page keys each row of that list to the comparison on screen with
+    rules of its own, which have to agree with scripts/gap.py."""
+    from gap import CHINA, UNITED_STATES
+    assert f"const CHINA = '{CHINA}';" in SCRIPT
+    assert f"const UNITED_STATES = '{UNITED_STATES}';" in SCRIPT
+    assert "side: (m) => (m.open ? 'laggard' : 'leader')," in SCRIPT
+    assert "side: (m) => ({ [CHINA]: 'laggard', [UNITED_STATES]: 'leader' }[m.country] || null)," in SCRIPT
+    models = DATA["models"]
+    counted = {name: comparison["models_scored"] for name, comparison in DATA["comparisons"].items()}
+    assert counted["open_closed"] == {"laggard": sum(m["open"] for m in models),
+                                      "leader": sum(not m["open"] for m in models)}
+    assert counted["china_us"] == {"laggard": sum(m["country"] == CHINA for m in models),
+                                   "leader": sum(m["country"] == UNITED_STATES for m in models)}
 
 
 def test_only_china_vs_us_carries_a_trendline():
@@ -254,31 +350,46 @@ def test_published_figures_follow_from_the_published_series(name, comparison):
     assert headline["months"] == round(sum(window) / len(window), 1)
 
 
+def year_before(when):
+    try:
+        return when.replace(year=when.year - 1)
+    except ValueError:                                          # 29 February
+        return when.replace(year=when.year - 1, day=28)
+
+
 @each_comparison
 def test_rolling_average_runs_daily_to_the_headline(name, comparison):
     average, headline = comparison["average"], comparison["headline"]
     start, end = day(average["start"]), day(headline["window_end"])
-    values = average["months"]
+    values, spread = average["months"], average["spread"]
+    assert start == day(comparison["segments"][0]["start"])     # from the first day of the series
     assert start + timedelta(days=len(values) - 1) == end       # one value a day, ending on the headline's day
-    assert round(values[-1], 1) == headline["months"]
-    assert average["firm_from"] is None or start <= day(average["firm_from"]) <= end
+    assert len(spread) == len(values) and min(spread) >= 0
+    # Not round(..., 1) of the stored value: rounding twice can land on the other side of a half.
+    assert values[-1] == pytest.approx(headline["months"], abs=0.0505)
+    full, firm = average["full_from"], average["firm_from"]
+    assert full is None or start < day(full) <= end
+    assert firm is None or (full is not None and day(full) <= day(firm) <= end)
 
     months = daily_months(comparison)
     for offset in (0, len(values) // 3, len(values) - 1):       # spot-check against the series
         when = start + timedelta(days=offset)
-        first = when.replace(year=when.year - 1)                # no 29 February among these days
+        first = max(year_before(when), start)                   # every day so far, in the first year
         window = [months[first + timedelta(days=i)] for i in range((when - first).days + 1)]
-        assert values[offset] == pytest.approx(sum(window) / len(window), abs=0.006)
+        mean = sum(window) / len(window)
+        assert values[offset] == pytest.approx(mean, abs=0.0006)
+        deviation = (sum((value - mean) ** 2 for value in window) / len(window)) ** 0.5
+        assert spread[offset] == pytest.approx(deviation, abs=0.006)
 
 
 @each_comparison
 def test_matched_records_report_a_consistent_lag(name, comparison):
-    laggards = {m["model"] for m in comparison["laggard_frontier"]}
+    laggards = {m["model"]: m["eci"] for m in comparison["laggard_frontier"]}
     for m in comparison["leader_frontier"]:
         if m["matched_by"] is None:
-            assert m["matched_on"] is None and m["lag_months"] is None
+            assert m["matched_on"] is None and m["lag_months"] is None and m["matched_eci"] is None
             continue
-        assert m["matched_by"] in laggards
+        assert m["matched_eci"] == laggards[m["matched_by"]]    # the matching model's own score
         assert m["matched_on"] >= m["released"]
         lag = (day(m["matched_on"]) - day(m["released"])).days / DATA["days_per_month"]
         assert m["lag_months"] == round(lag, 1)

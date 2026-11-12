@@ -12,7 +12,7 @@ The method is Epoch AI's, from [Open models lag state-of-the-art closed models b
 2. Find the newest record-setting leader model that it has plausibly caught up to. The gap that day is the time since that leader model's release.
 3. A laggard model has caught up when it scores higher than the leader model in at least 5% of 500 paired bootstrap resamples of the benchmark results. The pipeline reruns Epoch's fit with [eci-public](https://github.com/epoch-research/eci-public) to get those resamples; displayed scores stay Epoch's published ones.
 
-For open vs closed, the headline is the daily gap averaged over the 12 months to the latest record-setting release. The page also shows today's gap, the daily series with its 12-month rolling average, and each leader record with the first laggard model to match it.
+For open vs closed, the headline is the daily gap averaged over the 12 months to the latest record-setting release. The page also shows today's gap, how that 12-month average has moved over time, each leader record with the first laggard model to match it and that model's own score, and a sortable list of every scored model.
 
 Two comparisons are published:
 
@@ -28,8 +28,10 @@ The trendline gap smooths over single releases and is read at the latest Chinese
 Three properties of the daily series are worth knowing:
 
 - It falls when a laggard model catches up to a newer leader record, and it falls to zero on the day a leader sets a record that the best laggard model had already caught up to.
-- Until a laggard model has caught up to any leader record (before April 2024 for open vs closed), the gap counts from the first leader record and is a lower bound. The chart draws that stretch paler, along with the part of the rolling average that includes it.
-- The test is statistical, so a new laggard record can fail a comparison its predecessor passed, which moves the gap up.
+- Until a laggard model has caught up to any leader record (before April 2024 for open vs closed), the gap counts from the first leader record and is a lower bound. The lower chart starts at the first match, and draws the part of the rolling average that still includes those days paler.
+- The test is statistical, so a new laggard record can fail a comparison its predecessor passed, which moves the gap up. For the same reason the model that matches a record can have the lower score of the two.
+
+The daily series is a sawtooth, so the page does not plot it. The lower chart shows the 12-month average as it stood on each day, inside a band one standard deviation of the daily gap either side, which is how far a single day typically sat from the average. The gap on the selected day itself appears as a dot and in the line above the chart.
 
 Models are counted the way the ECI scores them: one entry per `model_group` in Epoch's data, dated by its earliest version. Dated releases of one family, such as GPT-4o (May 2024) and GPT-4o (Nov 2024), are separate entries.
 
@@ -72,15 +74,15 @@ Browsers cache the script and stylesheet for 10 minutes, so bump the `?v=` numbe
 
 ## data.json
 
-Top level: `as_of` (build date, the last day of every series), `days_per_month`, `test` (whether the paired bootstrap ran and with how many resamples), and `comparisons`, which holds `open_closed` and `china_us`. Each comparison has:
+Top level: `as_of` (build date, the last day of every series), `days_per_month`, `test` (whether the paired bootstrap ran and with how many resamples), `comparisons`, which holds `open_closed` and `china_us`, and `models`. `models` lists every model the comparisons draw on, newest first, one per line: its name, release date, `eci` with its 90% interval (`ci_low`, `ci_high`), `organization`, `country`, and whether its weights are `open`. Each comparison has:
 
 | Field | Meaning |
 | --- | --- |
 | `headline` | Average months behind and average ECI-point gap over the window, with the window's dates and the 5th and 95th percentiles of the daily values. |
 | `today` | Gap on `as_of`, with the best laggard model, the leader model it is measured against, and the oldest leader record it has not matched. |
 | `segments` | The daily series. Each segment starts on `start` and runs to the next one; within it, months behind on a day is the time since `reference_model` was released, divided by `days_per_month`. |
-| `average` | The 12-month rolling average of the daily series: one value per day from `start`, ending on the headline's last day, where it equals the headline. Values before `firm_from` include lower-bound days. |
-| `leader_frontier` | Every record-setting leader model, with the first laggard model to catch up, the date, the lag in months, and the test that decided it. |
+| `average` | The headline average as it stood on each day: `months` has one value per day from `start`, the first day of the series, to the headline's last day, where it equals the headline. Each value averages the daily gap over the 12 months before, or over every day so far until `full_from`. `spread` is the standard deviation of the same days. Values before `firm_from` include lower-bound days. |
+| `leader_frontier` | Every record-setting leader model, with the first laggard model to catch up (`matched_by`), that model's own score (`matched_eci`), the date, the lag in months, and the test that decided it. |
 | `laggard_frontier` | Every record-setting laggard model. |
 | `trend` | The trendline gap (`china_us` only; `null` for `open_closed`): `lag_months`, `change_months_per_year` (positive means widening), the date it is read `on`, the `level` of the laggards' line that day, when the leaders' line reached it (`leader_reached`), and for each group the number of fitted `records`, the slope in `eci_per_month`, `r2`, and the two end points of the fitted `line`. |
 
