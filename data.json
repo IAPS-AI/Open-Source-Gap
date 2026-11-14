@@ -1,7 +1,7 @@
 {
   "schema": 2,
-  "generated_at": "2026-11-13T04:21:14Z",
-  "as_of": "2026-11-13",
+  "generated_at": "2026-11-14T04:17:29Z",
+  "as_of": "2026-11-14",
   "days_per_month": 30.4375,
   "test": {
     "paired_bootstrap": true,
@@ -885,7 +885,7 @@
       ],
       "models_scored": {
         "laggard": 114,
-        "leader": 123
+        "leader": 124
       },
       "trend": null
     },
@@ -1730,7 +1730,7 @@
       ],
       "models_scored": {
         "laggard": 67,
-        "leader": 155
+        "leader": 156
       },
       "trend": {
         "since": "2024-01-01",
@@ -1774,17 +1774,18 @@
     }
   },
   "models": [
+    {"model": "Gemini 4 Carbon", "released": "2026-11-10", "eci": 169.76, "ci_low": 166.48, "ci_high": 173.5, "organization": "Google DeepMind", "country": "United States of America", "open": false},
     {"model": "Claude Fable 5.2", "released": "2026-11-09", "eci": 173.44, "ci_low": 169.93, "ci_high": 177.49, "organization": "Anthropic", "country": "United States of America", "open": false},
     {"model": "Mistral Large 4", "released": "2026-10-29", "eci": 154.62, "ci_low": 151.79, "ci_high": 157.54, "organization": "Mistral AI", "country": "France", "open": true},
     {"model": "GPT-6.1 Terra", "released": "2026-10-26", "eci": 167.67, "ci_low": 164.73, "ci_high": 170.98, "organization": "OpenAI", "country": "United States of America", "open": false},
     {"model": "Kimi K3.1 Pro", "released": "2026-10-23", "eci": 161.37, "ci_low": 158.99, "ci_high": 164.0, "organization": "Moonshot", "country": "China", "open": true},
     {"model": "DeepSeek V4.1 Flash 1017", "released": "2026-10-17", "eci": 159.41, "ci_low": 157.01, "ci_high": 162.0, "organization": "DeepSeek", "country": "China", "open": true},
     {"model": "Muse Spark Open", "released": "2026-10-15", "eci": 155.42, "ci_low": 153.36, "ci_high": 157.7, "organization": "Meta AI", "country": "United States of America", "open": true},
+    {"model": "Gemini 4 Argon", "released": "2026-10-13", "eci": 166.48, "ci_low": 163.77, "ci_high": 169.46, "organization": "Google DeepMind", "country": "United States of America", "open": false},
     {"model": "Muse Wonder", "released": "2026-10-12", "eci": 161.68, "ci_low": 159.36, "ci_high": 164.34, "organization": "Meta AI", "country": "United States of America", "open": false},
     {"model": "Claude Haiku 5.5", "released": "2026-10-07", "eci": 160.43, "ci_low": 158.27, "ci_high": 162.87, "organization": "Anthropic", "country": "United States of America", "open": false},
     {"model": "Mistral Large 4 Preview", "released": "2026-10-06", "eci": 152.69, "ci_low": 150.85, "ci_high": 154.7, "organization": "Mistral AI", "country": "France", "open": true},
     {"model": "Beam 1.0", "released": "2026-10-05", "eci": 150.91, "ci_low": 148.73, "ci_high": 153.16, "organization": "Reflection", "country": "United States of America", "open": true},
-    {"model": "Gemini 4 Argon", "released": "2026-09-30", "eci": 166.48, "ci_low": 163.77, "ci_high": 169.46, "organization": "Google DeepMind", "country": "United States of America", "open": false},
     {"model": "GPT-6.1 Sol", "released": "2026-09-29", "eci": 168.48, "ci_low": 165.49, "ci_high": 171.8, "organization": "OpenAI", "country": "United States of America", "open": false},
     {"model": "Claude Sonnet 5.5", "released": "2026-09-28", "eci": 166.56, "ci_low": 163.76, "ci_high": 169.58, "organization": "Anthropic", "country": "United States of America", "open": false},
     {"model": "Claude Opus 5.5", "released": "2026-09-22", "eci": 168.54, "ci_low": 165.63, "ci_high": 171.83, "organization": "Anthropic", "country": "United States of America", "open": false},
